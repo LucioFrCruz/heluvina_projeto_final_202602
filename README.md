@@ -1,5 +1,6 @@
-# Nome do Projeto
+# Mapa do Potencial Bancário Brasileiro
 Onde expandir um banco digital?
+Análise dos municípios brasileiros por meio da construção do Índice de Potencial Bancário (IPB).
 
 ## Sobre o projeto
 O projeto quer responder a seguinte pergunta: Quais municípios brasileiros apresentam maior potencial para expansão de um banco digital?
