@@ -22,13 +22,7 @@ IPB = renda + crescimento + população + emprego + urbanização
 
 O resultado final poderia ser um ranking:
 
-Município	   População	 Renda	    Crescimento	Urbanização	    IPB
-Cidade A	   520 mil	   R$ 3.200	    8,2%	     96%	          87,4
-Cidade B	   380 mil	   R$ 2.950	    12,1%	     93%	          84,1
-Cidade C	   610 mil	   R$ 2.400	    5,8%	     91%	          78,7
-
 <img width="359" height="68" alt="image" src="https://github.com/user-attachments/assets/36f880c8-dbae-439a-9e2e-19e97d8fbaa9" />
-
 
 
 Possível continuação
