@@ -17,6 +17,8 @@ Descrever o principal objetivo da solução.
 
 ## Tecnologias
 
+-- Dê preferência para tecnologias gratuitas
+
 - Python
 - SQL
 - Git/GitHub
