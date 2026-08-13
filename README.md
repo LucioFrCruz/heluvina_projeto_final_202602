@@ -31,6 +31,10 @@ Com esse rank de cidades, verificar quais tem menor presença/uso de serviços f
 "Onde há população e potencial econômico, mas menor presença/uso de serviços financeiros?"
 adicionando informações do sistema financeiro, usando dados públicos do Banco Central do Brasil
 
+Possível continuação
+Nível de Conectividade das cidades
+Numero de dispositivos móveis x população - base de estudo FGV
+
 ## Integrantes
 
 - Hermes Augusto
