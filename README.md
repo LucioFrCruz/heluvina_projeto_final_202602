@@ -10,12 +10,18 @@ O projeto quer responder a seguinte pergunta: Quais municípios brasileiros apre
 Criar um Índice de Potencial Bancário (IPB) e as cidades serão rankeadas por esse índice.
 
 Levando em consideração
-- População - https://dados.gov.br/dados/conjuntos-dados/cd-censo-demografico
+- População - https://dados.gov.br/dados/conjuntos-dados/cd-censo-demografico & https://www.ibge.gov.br/estatisticas/sociais/rendimento-despesa-e-consumo/22827-censo-demografico-2022.html?edicao=35938
+
 - crescimento populacional
+
 - renda média
+
 - população economicamente ativa
+
 - emprego
+
 - escolaridade
+
 - urbanização
 
 IPB = renda + crescimento + população + emprego + urbanização
