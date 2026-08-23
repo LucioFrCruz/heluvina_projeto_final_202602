@@ -1,0 +1,335 @@
+# Guia de Coleta — IPB
+
+Este documento contém o passo a passo para acessar cada fonte de dados do NÚCLEO do IPB.  
+Inclui resultados de testes de conectividade feitos em `2026-08-22` e indica quais fontes podem ser coletadas via API e quais exigem download manual.
+
+---
+
+## 1. Resumo dos testes
+
+| Fonte | Tipo | Status | Como coletar |
+|---|---|---|---|
+| IBGE — Localidades | API | ✅ Funciona | `GET` direto; retorna JSON com 5.570 municípios. |
+| IBGE — SIDRA Censo 2022 | API | ✅ Funciona | `GET` com `localidades=N6[all]`; colchetes devem ser URL-encoded. |
+| BCB — Pix por município | API | ✅ Funciona | `GET` no endpoint Olinda; exige `$filter=AnoMes eq YYYYMM`. |
+| IBGE — PIB dos Municípios | XLSX | ⚠️ Download manual | Site do IBGE bloqueia requisições automatizadas; baixar pelo navegador. |
+| Anatel — Banda Larga | CSV | ⚠️ Download manual | Disponível no dados.gov.br / painel Anatel; URL direta varia. |
+| BCB — Estban | CSV | ⚠️ Download manual | Disponível no portal de dados abertos do BCB. |
+| PNUD — IDHM | XLSX | ⚠️ Download manual | Atlas Brasil apresentou instabilidade (HTTP 500); usar navegador ou UNDP. |
+
+---
+
+## 2. Fontes via API
+
+### 2.1 IBGE — Localidades (tabela-mestra)
+
+**URL base**: `https://servicodados.ibge.gov.br/api/v1/localidades/municipios`
+
+**Teste realizado**:
+
+```bash
+curl -s --max-time 15 "https://servicodados.ibge.gov.br/api/v1/localidades/municipios"
+```
+
+**Resultado**: `HTTP 200`, retorna array JSON com todos os municípios.
+
+**Exemplo de retorno**:
+
+```json
+[
+  {
+    "id": 1100015,
+    "nome": "Alta Floresta D'Oeste",
+    "microrregiao": { ... },
+    "regiao-imediata": { ... }
+  }
+]
+```
+
+**Observações**:
+- O campo `id` já é o código IBGE de 7 dígitos.
+- Útil para padronizar nomes de municípios e fazer joins.
+
+---
+
+### 2.2 IBGE — SIDRA (Censo 2022)
+
+**URL base**: `https://servicodados.ibge.gov.br/api/v3/agregados/{id_agregado}/periodos/{ano}/variaveis/{id_variavel}?localidades=N6[all]`
+
+**Agregado e variável testados**:
+- Agregado: `9605` (População residente)
+- Variável: `93` (População residente)
+- Período: `2022`
+
+**Teste realizado**:
+
+```bash
+curl -s --max-time 60 \
+  "https://servicodados.ibge.gov.br/api/v3/agregados/9605/periodos/2022/variaveis/93?localidades=N6%5Ball%5D"
+```
+
+**Resultado**: `HTTP 200`, retornou **5.570 municípios**.
+
+**Exemplo de retorno**:
+
+```json
+[
+  {
+    "id": "93",
+    "variavel": "População residente",
+    "unidade": "Pessoas",
+    "resultados": [
+      {
+        "classificacoes": [...],
+        "series": [
+          {
+            "localidade": {
+              "id": "1100015",
+              "nivel": {"id": "N6", "nome": "Município"},
+              "nome": "Alta Floresta D'Oeste - RO"
+            },
+            "serie": {"2022": "21494"}
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
+**Observações importantes**:
+- Os **colchetes** na URL (`N6[all]`) devem ser codificados como `%5B` e `%5D`. Sem isso a requisição falha.
+- `N6[all]` retorna todos os municípios de uma só vez.
+- Outras variáveis do Censo 2022 (rendimento, idade, internet, urbanização) usam agregados/variáveis diferentes, mas seguem o mesmo padrão de endpoint.
+
+---
+
+### 2.3 BCB — Pix por município
+
+**URL base**: `https://olinda.bcb.gov.br/olinda/servico/Pix_DadosAbertos/versao/v1/odata/TransacoesPixPorMunicipio(DataBase=@DataBase)`
+
+**Teste realizado**:
+
+```bash
+curl -s --max-time 60 \
+  "https://olinda.bcb.gov.br/olinda/servico/Pix_DadosAbertos/versao/v1/odata/TransacoesPixPorMunicipio(DataBase=@DataBase)?\$format=json&@DataBase='202401'&\$filter=AnoMes%20eq%20202401"
+```
+
+**Resultado**: `HTTP 200`, retornou **5.569 registros** para jan/2024.
+
+**Exemplo de retorno**:
+
+```json
+{
+  "@odata.context": "...",
+  "value": [
+    {
+      "AnoMes": 202401,
+      "Municipio_Ibge": 3201803,
+      "Municipio": "DIVINO DE SÃO LOURENÇO",
+      "Estado_Ibge": 32,
+      "Estado": "ESPÍRITO SANTO",
+      "Sigla_Regiao": "SE",
+      "Regiao": "SUDESTE",
+      "VL_PagadorPF": 8053560.83,
+      "QT_PagadorPF": 50326,
+      "VL_PagadorPJ": 3248257.82,
+      "QT_PagadorPJ": 3300,
+      "VL_RecebedorPF": 7500024.69,
+      "QT_RecebedorPF": 30653,
+      "VL_RecebedorPJ": 2651048.12,
+      "QT_RecebedorPJ": 10791,
+      "QT_PES_PagadorPF": 2082,
+      "QT_PES_PagadorPJ": 159,
+      "QT_PES_RecebedorPF": 2048,
+      "QT_PES_RecebedorPJ": 151
+    }
+  ]
+}
+```
+
+**Observações importantes**:
+- O parâmetro `@DataBase` é obrigatório, mas **não filtra** sozinho. Sem o `$filter`, a API retorna dados de vários meses misturados.
+- Para obter apenas um mês, usar: `$filter=AnoMes eq YYYYMM`.
+- A chave `Municipio_Ibge` é o código IBGE de 7 dígitos.
+- Recomenda-se fazer loop pelos últimos 12–24 meses e agregar por município.
+
+---
+
+## 3. Fontes de download manual
+
+### 3.1 IBGE — PIB dos Municípios
+
+**URL de acesso**: [https://www.ibge.gov.br/estatisticas/economicas/contas-nacionais/9088-produto-interno-bruto-dos-municipios.html](https://www.ibge.gov.br/estatisticas/economicas/contas-nacionais/9088-produto-interno-bruto-dos-municipios.html)
+
+**Status do teste**: `HTTP 403` ao tentar acessar via `curl`. O site bloqueia requisições automatizadas.
+
+**Passo a passo**:
+1. Acessar a URL acima em um navegador.
+2. Localizar a seção de downloads (geralmente "Downloads" ou "Resultados").
+3. Baixar o arquivo compactado da "Base de dados 2010–2023" (formato XLSX ou ZIP).
+4. Extrair e identificar a planilha principal (geralmente `base_de_dados_2010_2023_xls.xlsx` ou similar).
+5. Salvar o arquivo em `data/raw/ibge_pib_municipios/` para processamento posterior.
+
+**Observações**:
+- O arquivo contém séries anuais de 2010 a 2023.
+- Colunas esperadas: código IBGE, nome do município, ano, PIB, PIB per capita, valor adicionado por setor.
+
+---
+
+### 3.2 Anatel — Banda Larga
+
+**URL de acesso**: [https://www.gov.br/anatel/pt-br/dados/dados-abertos](https://www.gov.br/anatel/pt-br/dados/dados-abertos)
+
+**Status do teste**: Página acessível (`HTTP 200`). Download direto depende do dataset específico.
+
+**Passo a passo**:
+1. Acessar a URL acima.
+2. Navegar até o conjunto "Acessos - Banda Larga Fixa" e/ou "Acessos - Telefonia Móvel".
+3. Baixar o CSV mais recente (mensal).
+4. Recomenda-se também consultar o painel: [https://informacoes.anatel.gov.br/paineis/acessos/banda-larga-fixa](https://informacoes.anatel.gov.br/paineis/acessos/banda-larga-fixa)
+5. Salvar em `data/raw/anatel_banda_larga/`.
+
+**URL alternativa do inventário** (funciona via `curl`):
+
+```bash
+curl -s --max-time 15 \
+  "https://www.anatel.gov.br/dadosabertos/PDA/Bases_Publicadas/Inventario_de_Bases_de_Dados.csv"
+```
+
+Esse CSV lista todos os conjuntos de dados e links para o dados.gov.br.
+
+**Observações**:
+- A Anatel pode publicar os dados por nome de município, sem código IBGE. Será necessário fazer fuzzy matching com a tabela-mestra do IBGE.
+- Banda larga fixa e móvel podem estar em arquivos separados.
+
+---
+
+### 3.3 BCB — Estban (Estatísticas Bancárias por Município)
+
+**URL de acesso**: [https://www.bcb.gov.br/estatisticas/estatisticabancariamunicipios](https://www.bcb.gov.br/estatisticas/estatisticabancariamunicipios)
+
+**Portal de Dados Abertos**: [https://dadosabertos.bcb.gov.br](https://dadosabertos.bcb.gov.br)
+
+**Status do teste**: Página acessível (`HTTP 200`), mas o conteúdo é carregado dinamicamente.
+
+**Passo a passo**:
+1. Acessar a URL `https://www.bcb.gov.br/estatisticas/estatisticabancariamunicipios`.
+2. Localizar o link para download do CSV mensal ("Saldos Estban por município").
+3. Baixar o arquivo mais recente.
+4. Salvar em `data/raw/bcb_estban/`.
+
+**Observações**:
+- Esta é a fonte de maior risco de mudança de formato. Validar imediatamente ao começar a implementação.
+- Colunas esperadas: código IBGE, mês/ano, agências, depósitos, operações de crédito.
+- Plano B: se o Estban não estiver disponível, usar o cadastro de agências no Portal de Dados Abertos do BCB.
+
+---
+
+### 3.4 PNUD — IDHM
+
+**URL de acesso**: [https://www.atlasbrasil.org.br](https://www.atlasbrasil.org.br)
+
+**URL alternativa**: [https://www.undp.org/pt/brazil/atlas-dos-municipios](https://www.undp.org/pt/brazil/atlas-dos-municipios)
+
+**Status do teste**:
+- Atlas Brasil: `HTTP 500` (instável no momento do teste).
+- UNDP: `HTTP 403` ao tentar via `curl` (bloqueio de bot).
+
+**Passo a passo**:
+1. Tentar primeiro o Atlas Brasil (`https://www.atlasbrasil.org.br`) no navegador.
+2. Navegar até a seção de downloads ou "Perfil dos municípios".
+3. Baixar a planilha com IDHM 2022 por município (formato XLSX).
+4. Se o Atlas estiver indisponível, tentar a página do PNUD/UNDP.
+5. Salvar em `data/raw/pnud_idhm/`.
+
+**Observações**:
+- O IDHM 2022 é a versão mais recente baseada no Censo 2022.
+- Se nenhum site funcionar, considerar a Base dos Dados como último recurso (pode exigir cadastro).
+
+---
+
+## 4. Checklist de validação por fonte
+
+Antes de considerar uma fonte como "coletada", verificar:
+
+- [ ] **IBGE Localidades**: 5.570 municípios, código IBGE de 7 dígitos presente.
+- [ ] **SIDRA Censo 2022**: resposta HTTP 200, colchetes codificados, valores preenchidos.
+- [ ] **BCB Pix**: `$filter` funcionando, retorno com código IBGE e campos de valor/quantidade.
+- [ ] **PIB dos Municípios**: arquivo XLSX baixado e legível.
+- [ ] **Anatel**: CSV baixado, com colunas de município/UF e densidade de acessos.
+- [ ] **Estban**: CSV mensal baixado, com colunas de agências, depósitos e crédito.
+- [ ] **IDHM**: planilha XLSX baixada, com IDHM 2022 por município.
+
+---
+
+## 5. Problemas conhecidos e workarounds
+
+| Problema | Fonte | Workaround |
+|---|---|---|
+| Colchetes na URL causam erro | SIDRA | Usar `N6%5Ball%5D` ao invés de `N6[all]`. |
+| `@DataBase` não filtra o mês | BCB Pix | Sempre adicionar `$filter=AnoMes eq YYYYMM`. |
+| Site bloqueia `curl`/bots | IBGE, UNDP | Fazer download manual pelo navegador. |
+| Site fora do ar | Atlas Brasil | Tentar novamente mais tarde ou usar página do UNDP. |
+| Município sem código IBGE | Anatel | Fuzzy matching controlado com a tabela-mestra do IBGE. |
+
+---
+
+## 6. Resultado da validação dos arquivos baixados
+
+Validação realizada em `2026-08-23` sobre os arquivos presentes em `data/raw/`.
+
+### 6.1 IBGE — PIB dos Municípios
+
+- **Arquivo**: `data/raw/ibge_pib_municipios/PIB dos Municípios - base de dados 2010-2023.xlsx`
+- **Status**: ✅ OK
+- **Detalhes**:
+  - 2 abas: `PIB dos Municípios` (dados) e `Notas`.
+  - 43 colunas, incluindo `Produto Interno Bruto per capita` e `Valor adicionado bruto dos Serviços`.
+  - Anos 2010 a 2023.
+  - 5.570 municípios únicos.
+  - Coluna `Código do Município` com 7 dígitos.
+
+### 6.2 Anatel — Densidade de Banda Larga Fixa
+
+- **Arquivo**: `data/raw/anatel_banda_larga/Densidade_Banda_Larga_Fixa.csv`
+- **Status**: ✅ OK
+- **Detalhes**:
+  - Encoding UTF-8 BOM, delimitador `;`, separador decimal `,`.
+  - Colunas: `Ano`, `Mês`, `UF`, `Município`, `Código IBGE`, `Densidade`, `Nível Geográfico Densidade`.
+  - 5.571 registros no mês mais recente (2026-06).
+  - Código IBGE preenchido para registros de nível `Municipio`.
+  - **Pendência**: banda larga móvel ainda não foi baixada.
+
+### 6.3 BCB — Estban
+
+- **Arquivo**: `data/raw/bcb_estaban/202603_ESTBAN.CSV`
+- **Status**: ✅ OK
+- **Detalhes**:
+  - Encoding `latin1`, delimitador `;`.
+  - 7.972 linhas de dados (uma por instituição/município).
+  - Coluna `CODMUN_IBGE` com código IBGE completo.
+  - 2.915 municípios únicos — apenas municípios com presença bancária.
+  - Muitos verbetes financeiros disponíveis (depósitos, crédito, agências processadas/esperadas).
+
+### 6.4 PNUD — IDHM
+
+- **Arquivo**: não disponível
+- **Status**: ❌ Indisponível
+- **Detalhes**:
+  - Atlas Brasil retornou `HTTP 500` no momento do teste.
+  - UNDP bloqueia requisições automatizadas (`HTTP 403`).
+  - **Ação necessária**: tentar o download manual novamente mais tarde ou buscar fonte alternativa.
+
+---
+
+## 7. Próximos passos de coleta
+
+1. Baixar o IDHM 2022 por município (Atlas Brasil ou UNDP).
+2. Opcional: baixar banda larga móvel (Anatel) como enriquecimento.
+3. Iniciar a implementação dos ingestores, começando pelas APIs (IBGE e Pix).
+
+---
+
+*Documento atualizado após testes de conectividade (2026-08-22) e validação dos arquivos baixados (2026-08-23).*
+

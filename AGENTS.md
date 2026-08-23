@@ -179,7 +179,25 @@ Antes de marcar uma fonte como "coletada", verificar:
 
 ---
 
-## 9. Evolução futura (não implementar agora)
+## 9. Validação das bases baixadas manualmente
+
+Resultado da validação realizada em `2026-08-23`:
+
+| Fonte | Arquivo | Status | Observações |
+|---|---|---|---|
+| IBGE — PIB dos Municípios | `data/raw/ibge_pib_municipios/PIB dos Municípios - base de dados 2010-2023.xlsx` | ✅ OK | 43 colunas, anos 2010–2023, 5.570 municípios únicos, colunas de PIB e PIB per capita presentes. |
+| Anatel — Densidade Banda Larga Fixa | `data/raw/anatel_banda_larga/Densidade_Banda_Larga_Fixa.csv` | ✅ OK | UTF-8 BOM, delimitador `;`, 5.571 registros no mês mais recente (2026-06), coluna `Código IBGE` preenchida. Banda larga móvel ainda não baixada. |
+| BCB — Estban | `data/raw/bcb_estaban/202603_ESTBAN.CSV` | ✅ OK | Encoding `latin1`, delimitador `;`, 7.972 linhas, coluna `CODMUN_IBGE` com código IBGE completo, 2.915 municípios únicos (apenas municípios com presença bancária). |
+| PNUD — IDHM | — | ❌ Indisponível | Atlas Brasil retornou HTTP 500 no momento do teste; download não realizado. |
+
+**Implicações para o pipeline**:
+- O IDHM é o único indicador do NÚCLEO ainda pendente. Alternativas: tentar novamente mais tarde, usar a página do UNDP ou buscar o dado em outra fonte (ex: Base dos Dados).
+- O Estban cobre apenas ~2.900 municípios. Os demais serão tratados como missing na `trusted_municipios` e imputados/analisados na Etapa 2.
+- A Anatel possui apenas banda larga fixa. Banda larga móvel pode entrar como stretch.
+
+---
+
+## 10. Evolução futura (não implementar agora)
 
 - Orquestração via GitHub Actions usando `.github/workflows/ingestao.yml`.
 - Workload Identity ou service account key no GitHub Secret para autenticação no BigQuery.
