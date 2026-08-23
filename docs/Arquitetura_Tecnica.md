@@ -8,6 +8,11 @@ Este documento descreve o desenho técnico de ponta a ponta para a **Etapa 1 —
 
 A arquitetura é modular: cada fonte de dados tem seu próprio script de ingestão, e o BigQuery funciona como data lake/staging. Futuramente, a orquestração pode migrar para GitHub Actions sem reescrever os scripts.
 
+**Fontes de dados**:
+- **APIs**: IBGE Localidades, IBGE SIDRA, BCB Pix — coleta automatizada por script.
+- **Downloads manuais**: IBGE PIB, BCB Estban, Anatel Banda Larga Fixa, PNUD IDHM — baixados pelo time e lidos pelos scripts.
+- **Fora do escopo**: Banda larga móvel (muitos dados, baixo impacto esperado; não entra).
+
 ---
 
 ## 2. Requisitos funcionais
@@ -20,7 +25,7 @@ A arquitetura é modular: cada fonte de dados tem seu próprio script de ingest�
 | RF04 | Normalizar, tipar e enriquecer os dados brutos para a camada `trusted_`. | Alta |
 | RF05 | Gerar a base consolidada `trusted_municipios` (1 linha = 1 município). | Alta |
 | RF06 | Registrar origem e timestamp de extração em todas as tabelas. | Média |
-| RF07 | Permitir re-execução idempotente dos scripts (sobrescrever tabela ou particionar por data). | Média |
+| RF07 | Permitir re-execução idempotente dos scripts (sobrescrever tabela). | Média |
 | RF08 | Suportar execução local simples, sem infraestrutura extra. | Alta |
 
 ---
@@ -44,26 +49,30 @@ A arquitetura é modular: cada fonte de dados tem seu próprio script de ingest�
 
 ```mermaid
 flowchart LR
+    classDef api fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef manual fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef script fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef bq fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+
     subgraph Fontes["Fontes de dados públicas"]
-        F1["IBGE API Localidades"]
-        F2["SIDRA / Censo 2022"]
-        F3["IBGE PIB dos Municípios (XLSX)"]
-        F4["BCB API Pix"]
-        F5["Anatel CSV"]
-        F6["BCB Estban"]
-        F7["PNUD Atlas IDHM"]
+        F1["🌐 IBGE API Localidades"]:::api
+        F2["🌐 SIDRA / Censo 2022"]:::api
+        F3["🌐 BCB API Pix"]:::api
+        F4["📁 IBGE PIB dos Municípios (XLSX)"]:::manual
+        F5["📁 BCB Estban (CSV)"]:::manual
+        F6["📁 Anatel Banda Larga Fixa (CSV)"]:::manual
+        F7["📁 PNUD IDHM (XLSX)"]:::manual
     end
 
     subgraph Ingestao["Ingestão local (Python)"]
-        I1["src/ingestors/*"]
-        I2["Cache local Parquet"]
-        I3["src/utils/bigquery.py"]
+        I1["src/ingestors/*"]:::script
+        I2["src/utils/bigquery.py"]:::script
     end
 
     subgraph BigQuery["BigQuery — data lake / staging"]
-        R["Camada raw\n(raw_*)"]
-        T["Camada trusted\n(trusted_*)"]
-        A["Camada analytics\n(analytics_*) — futuro"]
+        R["Camada raw\n(raw_*)"]:::bq
+        T["Camada trusted\n(trusted_*)"]:::bq
+        A["Camada analytics\n(analytics_*) — futuro"]:::bq
     end
 
     F1 --> I1
@@ -75,28 +84,77 @@ flowchart LR
     F7 --> I1
 
     I1 --> I2
-    I2 --> I3
-    I3 --> R
+    I2 --> R
     R --> T
     T --> A
 ```
 
-### 4.2 Fluxo de execução local
+> **Legenda dos ícones**: 🌐 = coleta via API (automatizada); 📁 = arquivo baixado manualmente e lido pelo script.
+
+### 4.2 Código-fonte `.mermaid` do diagrama acima
+
+```text
+flowchart LR
+    classDef api fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef manual fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef script fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef bq fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+
+    subgraph Fontes["Fontes de dados públicas"]
+        F1["🌐 IBGE API Localidades"]:::api
+        F2["🌐 SIDRA / Censo 2022"]:::api
+        F3["🌐 BCB API Pix"]:::api
+        F4["📁 IBGE PIB dos Municípios (XLSX)"]:::manual
+        F5["📁 BCB Estban (CSV)"]:::manual
+        F6["📁 Anatel Banda Larga Fixa (CSV)"]:::manual
+        F7["📁 PNUD IDHM (XLSX)"]:::manual
+    end
+
+    subgraph Ingestao["Ingestão local (Python)"]
+        I1["src/ingestors/*"]:::script
+        I2["src/utils/bigquery.py"]:::script
+    end
+
+    subgraph BigQuery["BigQuery — data lake / staging"]
+        R["Camada raw\n(raw_*)"]:::bq
+        T["Camada trusted\n(trusted_*)"]:::bq
+        A["Camada analytics\n(analytics_*) — futuro"]:::bq
+    end
+
+    F1 --> I1
+    F2 --> I1
+    F3 --> I1
+    F4 --> I1
+    F5 --> I1
+    F6 --> I1
+    F7 --> I1
+
+    I1 --> I2
+    I2 --> R
+    R --> T
+    T --> A
+```
+
+### 4.3 Fluxo de execução local
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant Dev as Desenvolvedor
     participant Script as src/ingestors/*.py
-    participant API as API / Download
-    participant Cache as data/raw/*.parquet
+    participant API as APIs públicas
+    participant Files as Arquivos locais<br/>(XLSX/CSV)
     participant BQ as BigQuery
 
-    Dev->>Script: executa script de uma fonte
-    Script->>API: requisição HTTP / download
-    API-->>Script: dados brutos
+    Dev->>Script: executa ingestor
+    alt Fonte via API
+        Script->>API: requisição HTTP
+        API-->>Script: JSON de resposta
+    else Fonte manual
+        Script->>Files: leitura de arquivo baixado
+        Files-->>Script: DataFrame bruto
+    end
     Script->>Script: validação básica
-    Script->>Cache: salva backup local
     Script->>BQ: carga em raw_<fonte>
     BQ-->>Script: confirmação
     Script-->>Dev: log de conclusão
@@ -110,13 +168,22 @@ sequenceDiagram
     Script-->>Dev: log de conclusão
 ```
 
-### 4.3 Modelo de camadas no BigQuery
+### 4.4 Modelo de camadas no BigQuery
 
 ```mermaid
 erDiagram
-    RAW_SIDRA_CENSO_2022 {
-        string id_municipio
+    RAW_IBGE_LOCALIDADES {
+        string id_municipio PK
         string nome_municipio
+        string sigla_uf
+        string nome_uf
+        string nome_regiao
+        string _source_url
+        timestamp _extracted_at
+    }
+
+    RAW_SIDRA_CENSO_2022 {
+        string id_municipio PK
         float populacao_total
         float populacao_18_35
         float rendimento_domiciliar_per_capita
@@ -127,7 +194,7 @@ erDiagram
     }
 
     RAW_PIB_MUNICIPIOS {
-        string id_municipio
+        string id_municipio PK
         int ano
         float pib
         float pib_per_capita
@@ -136,13 +203,44 @@ erDiagram
         timestamp _extracted_at
     }
 
-    RAW_PIX {
-        string id_municipio
+    RAW_BCB_PIX_TRANSACOES {
+        string id_municipio PK
         date data_base
         int transacoes_pf
         int transacoes_pj
         float valor_pf
         float valor_pj
+        string _source_url
+        timestamp _extracted_at
+    }
+
+    RAW_ANATEL_BANDA_LARGA_FIXA {
+        string id_municipio
+        string nome_municipio
+        string sigla_uf
+        date data_base
+        float densidade_banda_larga_fixa
+        string _source_url
+        timestamp _extracted_at
+    }
+
+    RAW_BCB_ESTBAN {
+        string id_municipio
+        date data_base
+        int quantidade_agencias
+        float depositos
+        float credito
+        string _source_url
+        timestamp _extracted_at
+    }
+
+    RAW_PNUD_IDHM {
+        string id_municipio PK
+        int ano
+        float idhm
+        float idhm_renda
+        float idhm_longevidade
+        float idhm_educacao
         string _source_url
         timestamp _extracted_at
     }
@@ -161,7 +259,7 @@ erDiagram
         float populacao_urbana_pct
         float pix_per_capita_12m
         float crescimento_pix_12m_pct
-        float banda_larga_por_100_hab
+        float banda_larga_fixa_por_100_hab
         float agencias_por_100k_hab
         float depositos_per_capita
         float credito_per_capita
@@ -169,31 +267,37 @@ erDiagram
         timestamp _extracted_at
     }
 
+    RAW_IBGE_LOCALIDADES ||--o{ TRUSTED_MUNICIPIOS : enriquece
     RAW_SIDRA_CENSO_2022 ||--o{ TRUSTED_MUNICIPIOS : enriquece
     RAW_PIB_MUNICIPIOS ||--o{ TRUSTED_MUNICIPIOS : enriquece
-    RAW_PIX ||--o{ TRUSTED_MUNICIPIOS : enriquece
+    RAW_BCB_PIX_TRANSACOES ||--o{ TRUSTED_MUNICIPIOS : enriquece
+    RAW_ANATEL_BANDA_LARGA_FIXA ||--o{ TRUSTED_MUNICIPIOS : enriquece
+    RAW_BCB_ESTBAN ||--o{ TRUSTED_MUNICIPIOS : enriquece
+    RAW_PNUD_IDHM ||--o{ TRUSTED_MUNICIPIOS : enriquece
 ```
 
 ---
 
 ## 5. Matriz de fontes × método × destino
 
-| Pilar | Indicador | Fonte | Método de coleta | Tabela `raw_` | Observações |
-|-------|-----------|-------|------------------|---------------|-------------|
-| A | População residente | IBGE SIDRA | API | `raw_sidra_censo_2022` | Chave: `id_municipio` |
-| A | Rendimento domiciliar per capita | IBGE SIDRA | API | `raw_sidra_censo_2022` | Mesma tabela do item acima |
-| A | PIB municipal / per capita | IBGE | Download XLSX | `raw_pib_municipios` | Planilha única 2010–2023 |
-| B | Crescimento populacional 2010→2022 | IBGE SIDRA | API | `raw_sidra_censo_2010` + `raw_sidra_censo_2022` | Calcular variação percentual |
-| B | Crescimento do Pix | BCB Olinda | API | `raw_bcb_pix_transacoes` | Loop mensal, últimos 12–24 meses |
-| C | Transações Pix PF/PJ | BCB Olinda | API | `raw_bcb_pix_transacoes` | Mesma base do pilar B |
-| C | Banda larga fixa/móvel por 100 hab. | Anatel | Download CSV | `raw_anatel_banda_larga` | Pode vir por nome de município — exigir fuzzy join |
-| C | % domicílios com internet | IBGE SIDRA | API | `raw_sidra_censo_2022` | Mesma tabela do pilar A |
-| D | Agências por 100 mil hab. | BCB Estban | Download CSV/Portal | `raw_bcb_estban` | Validar formato atual com urgência |
-| D | Depósitos e crédito per capita | BCB Estban | Download CSV/Portal | `raw_bcb_estban` | Mesma base do item acima |
-| E | % população 18–35 anos | IBGE SIDRA | API | `raw_sidra_censo_2022` | Mesma tabela do pilar A |
-| E | % população urbana | IBGE SIDRA | API | `raw_sidra_censo_2022` | Mesma tabela do pilar A |
-| E | IDHM | PNUD Atlas | Download XLSX | `raw_pnud_idhm` | Planilha por município |
-| — | Tabela-mestra | IBGE API Localidades | API | `raw_ibge_localidades` | Base para joins e nomes padronizados |
+| Pilar | Indicador | Fonte | Método de coleta | Tabela `raw_` | Tipo | Observações |
+|-------|-----------|-------|------------------|---------------|------|-------------|
+| A | População residente | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Chave: `id_municipio` |
+| A | Rendimento domiciliar per capita | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Mesma tabela do item acima |
+| A | PIB municipal / per capita | IBGE | Download XLSX | `raw_pib_municipios` | 📁 Manual | Planilha única 2010–2023 |
+| B | Crescimento populacional 2010→2022 | IBGE SIDRA | API | `raw_sidra_censo_2010` + `raw_sidra_censo_2022` | 🌐 API | Calcular variação percentual |
+| B | Crescimento do Pix | BCB Olinda | API | `raw_bcb_pix_transacoes` | 🌐 API | Loop mensal, últimos 12–24 meses |
+| C | Transações Pix PF/PJ | BCB Olinda | API | `raw_bcb_pix_transacoes` | 🌐 API | Mesma base do pilar B |
+| C | % domicílios com internet | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Mesma tabela do pilar A |
+| C | Banda larga fixa por 100 hab. | Anatel | Download CSV | `raw_anatel_banda_larga_fixa` | 📁 Manual | Arquivo já baixado; 5.571 registros no mês mais recente |
+| D | Agências por 100 mil hab. | BCB Estban | Download CSV/Portal | `raw_bcb_estban` | 📁 Manual | Validar formato atual com urgência |
+| D | Depósitos e crédito per capita | BCB Estban | Download CSV/Portal | `raw_bcb_estban` | 📁 Manual | Mesma base do item acima |
+| E | % população 18–35 anos | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Mesma tabela do pilar A |
+| E | % população urbana | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Mesma tabela do pilar A |
+| E | IDHM | PNUD Atlas | Download XLSX | `raw_pnud_idhm` | 📁 Manual | Pendente; ver alternativas na seção 9 |
+| — | Tabela-mestra | IBGE API Localidades | API | `raw_ibge_localidades` | 🌐 API | Base para joins e nomes padronizados |
+
+> **Fora do escopo**: banda larga móvel (dados volumosos, baixo impacto esperado; não entra nem como stretch).
 
 ---
 
@@ -213,20 +317,22 @@ def carregar_no_bigquery(df: pd.DataFrame, tabela: str):
     ...
 ```
 
-Ingestores previstos:
-- `ibge_localidades.py`
-- `sidra_censo_2022.py`
-- `ibge_pib_municipios.py`
-- `bcb_pix.py`
-- `anatel_banda_larga.py`
-- `bcb_estban.py`
-- `pnud_idhm.py`
+Ingestores do núcleo:
+- `ibge_localidades.py` — API
+- `sidra_censo_2022.py` — API
+- `ibge_pib_municipios.py` — leitura de XLSX baixado manualmente
+- `bcb_pix.py` — API
+- `anatel_banda_larga_fixa.py` — leitura de CSV baixado manualmente
+- `bcb_estban.py` — leitura de CSV baixado manualmente
+- `pnud_idhm.py` — leitura de XLSX baixado manualmente (se disponível)
 
 ### 6.2 Utilitários (`src/utils/`)
 
-- `ibge.py`: busca tabela-mestra, valida código IBGE, fuzzy matching de nomes.
+- `ibge.py`: busca tabela-mestra, valida código IBGE.
 - `bigquery.py`: cliente reutilizável, funções `upload_df_to_bq` e `read_bq_to_df`.
-- `storage.py`: leitura/escrita de Parquet local.
+- `storage.py`: funções auxiliares para leitura de arquivos locais (CSV, XLSX).
+
+> **Nota**: não há cache local Parquet no desenho aprovado. Os scripts leem diretamente das APIs ou dos arquivos baixados manualmente e sobem para o BigQuery.
 
 ### 6.3 BigQuery
 
@@ -247,7 +353,7 @@ Ingestores previstos:
 - **Storage**: 10 GB gratuitos por mês.
 - **Query processing**: 1 TB gratuito por mês.
 - **Streaming inserts**: 2 milhões de linhas/dia gratuitos (não devemos usar; usamos `load_table_from_dataframe`).
-- Nosso volume (~5.570 municípios × ~15 indicadores) cabe facilmente nos 10 GB.
+- Nosso volume (~5.570 municípios × ~12 indicadores) cabe facilmente nos 10 GB.
 
 ### GitHub Actions (opção futura)
 
@@ -259,8 +365,9 @@ Ingestores previstos:
 
 - IBGE SIDRA: gratuita, com limites de requisição; usar throttling.
 - BCB Olinda: gratuita, sem autenticação para dados abertos.
-- Anatel CSV: download direto, sem autenticação.
-- PNUD Atlas: download de XLSX, sem autenticação.
+- IBGE PIB: download manual, sem autenticação.
+- BCB Estban: download manual, sem autenticação.
+- PNUD IDHM: download manual, sem autenticação (quando o site está disponível).
 
 ---
 
@@ -269,43 +376,57 @@ Ingestores previstos:
 | Risco | Impacto | Mitigação |
 |-------|---------|-----------|
 | BCB Estban mudou formato de download | Alto | Validar no 1º dia; ter plano B (cadastro de agências no Portal de Dados Abertos do BCB). |
-| API do IBGE indisponível | Médio | Cache local em Parquet; retentar com backoff. |
+| API do IBGE indisponível | Médio | Retentar com backoff; reexecutar script mais tarde. |
 | Custo inesperado no BigQuery | Baixo | Usar dataset no sandbox; monitorar billing; evitar queries full-scan. |
 | Código IBGE divergente entre fontes | Médio | Usar tabela-mestra do IBGE como referência; validar joins. |
-| Anatel vem por nome de município | Médio | Fuzzy matching controlado; log de baixa confiança. |
+| IDHM indisponível | Alto | Ver alternativas na seção 9. |
 
 ---
 
-## 9. Fluxo de execução one-shot sugerido
+## 9. Alternativas para o IDHM
+
+A fonte original (`Atlas Brasil`) apresentou instabilidade (`HTTP 500`) no momento da validação. Opções:
+
+1. **Tentar novamente pelo Atlas Brasil**: `https://www.atlasbrasil.org.br`.
+2. **Página do PNUD/UNDP**: `https://www.undp.org/pt/brazil/atlas-dos-municipios` (bloqueia bots, mas funciona no navegador).
+3. **Base dos Dados**: `https://basedosdados.org/dataset/cbfc7253-089b-44e2-8825-755e1419efc8` — pode exigir cadastro/autenticação, mas é uma fonte estável.
+4. **Substituir o IDHM por outro indicador do pilar E**: exemplo, `% de pessoas com ensino médio completo` ou anos de estudo, ambos disponíveis no SIDRA/Censo 2022. Isso mantém o pilar E funcional sem depender do Atlas Brasil.
+
+**Recomendação**: se o IDHM não for obtido em 24–48h, usar a alternativa 4 para não bloquear a Etapa 1.
+
+---
+
+## 10. Fluxo de execução one-shot sugerido
 
 1. Configurar `.env` e autenticar no GCP (`gcloud auth application-default login`).
 2. Criar dataset `ipb_staging` no BigQuery.
 3. Executar `src/ingestors/ibge_localidades.py` → gera `raw_ibge_localidades`.
 4. Executar ingestores independentes em qualquer ordem:
-   - `sidra_censo_2022.py`
-   - `ibge_pib_municipios.py`
-   - `bcb_pix.py`
-   - `anatel_banda_larga.py`
-   - `bcb_estban.py`
-   - `pnud_idhm.py`
+   - `sidra_censo_2022.py` (API)
+   - `ibge_pib_municipios.py` (XLSX manual)
+   - `bcb_pix.py` (API)
+   - `anatel_banda_larga_fixa.py` (CSV manual)
+   - `bcb_estban.py` (CSV manual)
+   - `pnud_idhm.py` (XLSX manual, se disponível)
 5. Executar `src/preparacao/trusted_municipios.py` → lê tabelas `raw_*`, faz joins e grava `trusted_municipios`.
 6. Validar qualidade conforme checklist do `AGENTS.md`.
 
 ---
 
-## 10. Próximos passos pós-desenho
+## 11. Próximos passos pós-desenho
 
 1. Criar projeto no Google Cloud Console.
 2. Ativar APIs: BigQuery API.
 3. Criar dataset `ipb_staging` na região `southamerica-east1`.
 4. Configurar autenticação local (`gcloud auth application-default login` ou service account).
 5. Criar `requirements.txt` e `.env.example`.
-6. Implementar ingestores na ordem de risco (começar por Estban e Anatel, que têm mais incerteza).
-7. Adicionar testes unitários para utilitários.
+6. Implementar ingestores do núcleo.
+7. Resolver o IDHM ou decidir indicador alternativo para o pilar E.
+8. Adicionar testes unitários para utilitários.
 
 ---
 
-## 11. Evolução para GitHub Actions (futuro)
+## 12. Evolução para GitHub Actions (futuro)
 
 A arquitetura local foi desenhada para migrar facilmente:
 
@@ -330,6 +451,8 @@ Bastará:
 - Armazenar JSON da service account no GitHub Secret.
 - Criar workflow com `schedule` (cron) ou `workflow_dispatch`.
 
+> **Atenção**: com a arquitetura aprovada, fontes manuais (PIB, Estban, IDHM) precisarão ser baixadas previamente ou substituídas por fontes API para rodar 100% no GitHub Actions.
+
 ---
 
-*Documento v1 — arquitetura de ingestão e coleta do IPB.*
+*Documento v2 — arquitetura revisada: sem cache local Parquet, com distinção API vs manual e banda larga móvel fora do escopo.*

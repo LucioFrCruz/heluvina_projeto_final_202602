@@ -13,9 +13,10 @@ Inclui resultados de testes de conectividade feitos em `2026-08-22` e indica qua
 | IBGE — SIDRA Censo 2022 | API | ✅ Funciona | `GET` com `localidades=N6[all]`; colchetes devem ser URL-encoded. |
 | BCB — Pix por município | API | ✅ Funciona | `GET` no endpoint Olinda; exige `$filter=AnoMes eq YYYYMM`. |
 | IBGE — PIB dos Municípios | XLSX | ⚠️ Download manual | Site do IBGE bloqueia requisições automatizadas; baixar pelo navegador. |
-| Anatel — Banda Larga | CSV | ⚠️ Download manual | Disponível no dados.gov.br / painel Anatel; URL direta varia. |
+| Anatel — Banda Larga Fixa | CSV | ⚠️ Download manual | Arquivo já baixado; 5.571 registros no mês mais recente. |
 | BCB — Estban | CSV | ⚠️ Download manual | Disponível no portal de dados abertos do BCB. |
-| PNUD — IDHM | XLSX | ⚠️ Download manual | Atlas Brasil apresentou instabilidade (HTTP 500); usar navegador ou UNDP. |
+| PNUD — IDHM | XLSX | ❌ Pendente | Atlas Brasil apresentou instabilidade (HTTP 500). Ver alternativas na seção 7. |
+| Anatel — Banda Larga Móvel | CSV | ❌ Fora do escopo | Dados volumosos; baixo impacto esperado; não entra. |
 
 ---
 
@@ -177,7 +178,7 @@ curl -s --max-time 60 \
 
 ---
 
-### 3.2 Anatel — Banda Larga
+### 3.2 Anatel — Banda Larga Fixa
 
 **URL de acesso**: [https://www.gov.br/anatel/pt-br/dados/dados-abertos](https://www.gov.br/anatel/pt-br/dados/dados-abertos)
 
@@ -185,8 +186,8 @@ curl -s --max-time 60 \
 
 **Passo a passo**:
 1. Acessar a URL acima.
-2. Navegar até o conjunto "Acessos - Banda Larga Fixa" e/ou "Acessos - Telefonia Móvel".
-3. Baixar o CSV mais recente (mensal).
+2. Navegar até o conjunto "Acessos - Banda Larga Fixa".
+3. Baixar o CSV mais recente (mensal) de densidade de acessos por 100 habitantes.
 4. Recomenda-se também consultar o painel: [https://informacoes.anatel.gov.br/paineis/acessos/banda-larga-fixa](https://informacoes.anatel.gov.br/paineis/acessos/banda-larga-fixa)
 5. Salvar em `data/raw/anatel_banda_larga/`.
 
@@ -200,8 +201,8 @@ curl -s --max-time 15 \
 Esse CSV lista todos os conjuntos de dados e links para o dados.gov.br.
 
 **Observações**:
-- A Anatel pode publicar os dados por nome de município, sem código IBGE. Será necessário fazer fuzzy matching com a tabela-mestra do IBGE.
-- Banda larga fixa e móvel podem estar em arquivos separados.
+- O arquivo já validado possui a coluna `Código IBGE` preenchida para registros de nível `Municipio`.
+- **Banda larga móvel está fora do escopo** (dados volumosos, baixo impacto esperado).
 
 ---
 
@@ -257,9 +258,9 @@ Antes de considerar uma fonte como "coletada", verificar:
 - [ ] **SIDRA Censo 2022**: resposta HTTP 200, colchetes codificados, valores preenchidos.
 - [ ] **BCB Pix**: `$filter` funcionando, retorno com código IBGE e campos de valor/quantidade.
 - [ ] **PIB dos Municípios**: arquivo XLSX baixado e legível.
-- [ ] **Anatel**: CSV baixado, com colunas de município/UF e densidade de acessos.
+- [ ] **Anatel Banda Larga Fixa**: CSV baixado, com colunas de município/UF e densidade de acessos.
 - [ ] **Estban**: CSV mensal baixado, com colunas de agências, depósitos e crédito.
-- [ ] **IDHM**: planilha XLSX baixada, com IDHM 2022 por município.
+- [ ] **IDHM**: planilha XLSX baixada, com IDHM 2022 por município (ou indicador alternativo do pilar E).
 
 ---
 
@@ -299,7 +300,7 @@ Validação realizada em `2026-08-23` sobre os arquivos presentes em `data/raw/`
   - Colunas: `Ano`, `Mês`, `UF`, `Município`, `Código IBGE`, `Densidade`, `Nível Geográfico Densidade`.
   - 5.571 registros no mês mais recente (2026-06).
   - Código IBGE preenchido para registros de nível `Municipio`.
-  - **Pendência**: banda larga móvel ainda não foi baixada.
+  - **Banda larga móvel está fora do escopo**.
 
 ### 6.3 BCB — Estban
 
@@ -319,15 +320,18 @@ Validação realizada em `2026-08-23` sobre os arquivos presentes em `data/raw/`
 - **Detalhes**:
   - Atlas Brasil retornou `HTTP 500` no momento do teste.
   - UNDP bloqueia requisições automatizadas (`HTTP 403`).
-  - **Ação necessária**: tentar o download manual novamente mais tarde ou buscar fonte alternativa.
+  - **Ação necessária**:
+    1. Tentar novamente o Atlas Brasil pelo navegador.
+    2. Se persistir, usar a página do UNDP.
+    3. Se ainda não for possível, usar **escolaridade (% ensino médio+)** do Censo 2022 (SIDRA) como indicador alternativo do pilar E.
 
 ---
 
 ## 7. Próximos passos de coleta
 
-1. Baixar o IDHM 2022 por município (Atlas Brasil ou UNDP).
-2. Opcional: baixar banda larga móvel (Anatel) como enriquecimento.
-3. Iniciar a implementação dos ingestores, começando pelas APIs (IBGE e Pix).
+1. Definir se o IDHM será obtido ou substituído por escolaridade.
+2. Iniciar a implementação dos ingestores, começando pelas APIs (IBGE Localidades, SIDRA e Pix).
+3. Implementar ingestores de arquivos manuais (PIB, Anatel banda larga fixa e Estban).
 
 ---
 

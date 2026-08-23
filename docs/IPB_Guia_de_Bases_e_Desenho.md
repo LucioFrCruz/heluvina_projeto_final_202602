@@ -51,9 +51,9 @@ Resposta à dúvida "reduzimos os dados?": **sim, com regra clara**.
 |---|---|---|
 | **A. Capacidade de Consumo** | Renda, população, PIB per capita | Direto |
 | **B. Dinamismo Econômico** | Crescimento populacional, crescimento do Pix | Direto |
-| **C. Adoção Digital** | Pix per capita, banda larga, internet domiciliar | Direto |
+| **C. Adoção Digital** | Pix per capita, banda larga fixa, internet domiciliar | Direto |
 | **D. Gap Bancário** | Agências, depósitos e crédito per capita | **Invertido** (menos atendimento = mais oportunidade) |
-| **E. Perfil Demográfico** | Jovens 18–35, urbanização, IDHM | Direto |
+| **E. Perfil Demográfico** | Jovens 18–35, urbanização, IDHM (ou escolaridade se IDHM indisponível) | Direto |
 
 ```
 IPB_m = (A_m × B_m × C_m × D_m × E_m)^(1/5) × 100
@@ -99,8 +99,9 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 | Indicador | Fonte e acesso | Esforço | Status |
 |---|---|---|---|
 | **Transações Pix PF/PJ por município** | API Olinda BCB: `.../servico/Pix_DadosAbertos/versao/v1/odata/TransacoesPixPorMunicipio(DataBase=@DataBase)?$format=json&@DataBase='202606'` (loop por mês, 12–24 meses) | ⚡/🔧 | NÚCLEO |
-| **Banda larga fixa e móvel por 100 hab.** | Anatel — dados.gov.br: CSVs de "Densidade de acessos… por 100 habitantes" | 🔧 | NÚCLEO |
+| **Banda larga fixa por 100 hab.** | Anatel — dados.gov.br: CSV "Densidade de acessos… por 100 habitantes" | 🔧 | NÚCLEO |
 | **% domicílios com internet** | Censo 2022 — SIDRA: "Acesso à internet, existência" | ⚡ | NÚCLEO |
+| Banda larga móvel por 100 hab. | Anatel — dados.gov.br | 🔧 | fora do escopo |
 | Chaves Pix cadastradas | API BCB: `ChavesPix(Data='...')` | ⚡ | stretch |
 
 ### Pilar D — Gap Bancário (invertido no índice)
@@ -117,8 +118,10 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 |---|---|---|---|
 | **% população 18–35 anos** | Censo 2022 — SIDRA (grupos de idade) | ⚡ | NÚCLEO |
 | **% população urbana** | Censo 2022 — SIDRA | ⚡ | NÚCLEO |
-| **IDHM** | Atlas Brasil (PNUD) — xlsx por município (IDHM 2022) | ⚡ | NÚCLEO |
-| Escolaridade (% ensino médio+) | Censo 2022 — SIDRA | ⚡ | stretch |
+| **IDHM** | Atlas Brasil (PNUD) — xlsx por município (IDHM 2022) | ⚡ | NÚCLEO* |
+| Escolaridade (% ensino médio+) | Censo 2022 — SIDRA | ⚡ | alternativa |
+
+> *O IDHM é a primeira opção para o pilar E, mas o site do Atlas Brasil apresentou instabilidade (`HTTP 500`). Se não for possível baixar o IDHM em 24–48h, a **escolaridade (% ensino médio+)** vira indicador principal do pilar E, mantendo o núcleo funcional.
 
 **Chave de junção (passo zero)**: código IBGE de 7 dígitos — tabela-mestra via `https://servicodados.ibge.gov.br/api/v1/localidades/municipios`. Guardar nome + UF para *fuzzy matching* (Anatel pode vir por nome).
 
@@ -130,7 +133,7 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 
 | Período | Etapa | O que entregar |
 |---|---|---|
-| **até 25/08** | Etapa 1 — Ingestão | Chave IBGE; scripts/planilhas de coleta do NÚCLEO (SIDRA, PIB xlsx, IDHM, API Pix, Anatel, Estban); base consolidada 1 linha = 1 município; documentação das fontes |
+| **até 25/08** | Etapa 1 — Ingestão | Chave IBGE; scripts/planilhas de coleta do NÚCLEO (SIDRA, PIB xlsx, IDHM/escolaridade, API Pix, Anatel banda larga fixa, Estban); base consolidada 1 linha = 1 município; documentação das fontes |
 | **até 03/09** | Etapa 2 — EDA e Limpeza | Faltantes e outliers tratados (winsorização); distribuições e correlações; primeiros mapas; decisão final das variáveis do índice |
 | **até 15/09** | Etapa 3 — ML | IPB calculado (3 cenários de peso); PCA; K-Means com arquétipos; quadrante de priorização; ranking final |
 | **17/09** | Apresentação | Mapa + ranking + "como usar" + 3 municípios-caso (história do pitch) |
@@ -185,7 +188,7 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 ### 10.3 Tratamentos obrigatórios
 
 1. **Código IBGE**: manter 7 dígitos; preencher com zero à esquerda quando necessário.
-2. **Nomes de municípios**: padronizar pela tabela-mestra do IBGE; usar fuzzy matching apenas para fontes que não disponibilizam código (ex: Anatel).
+2. **Nomes de municípios**: padronizar pela tabela-mestra do IBGE. A Anatel já possui `Código IBGE` no arquivo validado, então fuzzy matching só será necessário como contingência.
 3. **Valores monetários**: manter em reais, sem deflacionar nesta etapa (o vintage misto será declarado).
 4. **Pix**: agregar os últimos 12 meses por município; calcular `pix_per_capita` dividindo pelo total da população.
 5. **Estban**: validar colunas de agências, depósitos e crédito; se faltar alguma, documentar e usar plano B.
@@ -253,18 +256,19 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 | `_source_url` | STRING | URL da consulta Olinda |
 | `_extracted_at` | TIMESTAMP | Data/hora da extração |
 
-### 11.5 `raw_anatel_banda_larga`
+### 11.5 `raw_anatel_banda_larga_fixa`
 
 | Coluna | Tipo | Descrição |
 |---|---|---|
+| `id_municipio` | STRING | Código IBGE de 7 dígitos (já presente no arquivo) |
 | `nome_municipio` | STRING | Nome do município (origem Anatel) |
 | `sigla_uf` | STRING | UF |
+| `data_base` | DATE | Mês de referência |
 | `densidade_banda_larga_fixa` | FLOAT | Acessos de banda larga fixa por 100 hab. |
-| `densidade_banda_larga_movel` | FLOAT | Acessos de banda larga móvel por 100 hab. |
 | `_source_url` | STRING | URL do download |
 | `_extracted_at` | TIMESTAMP | Data/hora da extração |
 
-> Nota: esta tabela será enriquecida com `id_municipio` via fuzzy matching na camada trusted.
+> Nota: banda larga móvel está fora do escopo.
 
 ### 11.6 `raw_bcb_estban`
 
@@ -310,11 +314,12 @@ Tabela consolidada, 1 linha por município.
 | `populacao_urbana_pct` | FLOAT | % população urbana |
 | `pix_per_capita_12m` | FLOAT | Transações Pix PF+PJ / população (últimos 12 meses) |
 | `crescimento_pix_12m_pct` | FLOAT | Crescimento do valor Pix vs. 12 meses anteriores |
-| `banda_larga_por_100_hab` | FLOAT | Média fixa+móvel por 100 hab. |
+| `banda_larga_fixa_por_100_hab` | FLOAT | Acessos de banda larga fixa por 100 hab. |
 | `agencias_por_100k_hab` | FLOAT | Agências bancárias por 100 mil hab. |
 | `depositos_per_capita` | FLOAT | Depósitos / população |
 | `credito_per_capita` | FLOAT | Crédito / população |
 | `idhm` | FLOAT | IDHM 2022 |
+| `escolaridade_pct` | FLOAT | % população com ensino médio completo (alternativa ao IDHM) |
 | `_extracted_at` | TIMESTAMP | Data/hora da geração |
 
 ---

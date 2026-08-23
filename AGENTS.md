@@ -24,7 +24,8 @@ heluvina_projeto_final_202602/
 ├── .gitignore                   # deve ignorar .env, credenciais, caches e outputs locais
 ├── docs/
 │   ├── IPB_Guia_de_Bases_e_Desenho.md
-│   └── Arquitetura_Tecnica.md
+│   ├── Arquitetura_Tecnica.md
+│   └── Guia_de_Coleta.md
 ├── src/
 │   ├── __init__.py
 │   ├── config.py                # centraliza paths, URLs, nomes de tabelas, constantes
@@ -32,16 +33,16 @@ heluvina_projeto_final_202602/
 │   │   ├── __init__.py
 │   │   ├── ibge.py              # funções para códigos IBGE, localidades, joins
 │   │   ├── bigquery.py          # cliente BigQuery, upload/download
-│   │   └── storage.py           # salvamento local temporário (parquet/csv)
+│   │   └── storage.py           # leitura de arquivos locais (csv/xlsx)
 │   ├── ingestors/               # um módulo por fonte de dados
 │   │   ├── __init__.py
-│   │   ├── ibge_localidades.py
-│   │   ├── sidra_censo_2022.py
-│   │   ├── ibge_pib_municipios.py
-│   │   ├── bcb_pix.py
-│   │   ├── anatel_banda_larga.py
-│   │   ├── bcb_estban.py
-│   │   └── pnud_idhm.py
+│   │   ├── ibge_localidades.py  # API
+│   │   ├── sidra_censo_2022.py  # API
+│   │   ├── ibge_pib_municipios.py  # XLSX manual
+│   │   ├── bcb_pix.py           # API
+│   │   ├── anatel_banda_larga_fixa.py  # CSV manual
+│   │   ├── bcb_estban.py        # CSV manual
+│   │   └── pnud_idhm.py         # XLSX manual (se disponível)
 │   └── preparacao/              # scripts de limpeza e consolidação trusted
 │       ├── __init__.py
 │       └── trusted_municipios.py
@@ -59,6 +60,8 @@ heluvina_projeto_final_202602/
 
 **Regra de ouro**: nenhum dado bruto ou credencial entra no Git. Apenas código, SQL, documentação e configuração segura.
 
+> **Nota sobre o desenho aprovado**: não há cache local Parquet. Os scripts leem diretamente das APIs ou dos arquivos baixados manualmente e sobem os dados para o BigQuery.
+
 ---
 
 ## 3. Tecnologias e dependências
@@ -66,10 +69,10 @@ heluvina_projeto_final_202602/
 - **Python 3.11+**
 - **Google Cloud SDK** (`gcloud`) — autenticação local opcional, mas recomendada.
 - **BigQuery** via `google-cloud-bigquery` — camada de persistência.
-- **Pandas / Polars** — manipulação de dados (escolher um e manter; Polars é mais rápido para grandes volumes).
+- **Pandas / Polars** — manipulação de dados (escolher um e manter).
 - **Requests** — consumo de APIs HTTP.
 - **python-dotenv** — carregamento de variáveis de ambiente locais.
-- **PyArrow / fastparquet** — cache local em Parquet.
+- **openpyxl** — leitura de arquivos Excel (.xlsx).
 
 Todas as dependências devem ser listadas em `requirements.txt` (a ser criado na fase de implementação).
 
@@ -84,7 +87,6 @@ Todas as dependências devem ser listadas em `requirements.txt` (a ser criado na
 - Funções pequenas e testáveis; cada `ingestor` deve ter uma função principal `coletar()` ou `run()`.
 - Logs via `logging` (não `print`). Nível padrão: `INFO`.
 - Tratamento explícito de erros: APIs podem falhar; capturar, logar e, quando possível, retentar.
-- Cache local em Parquet para evitar re-downloads durante desenvolvimento.
 
 ### SQL
 
@@ -97,7 +99,7 @@ Todas as dependências devem ser listadas em `requirements.txt` (a ser criado na
 
 ### Commits e branches
 
-- Branch atual: `ingestao-coleta` (ou nome acordado pelo time).
+- Branch atual: `feature/etapa1-processamento-ingestao` (ou nome acordado pelo time).
 - Commits em português, no imperativo:
   - `feat: adiciona ingestor do PIB municipal`
   - `docs: atualiza schema do BigQuery`
@@ -186,18 +188,29 @@ Resultado da validação realizada em `2026-08-23`:
 | Fonte | Arquivo | Status | Observações |
 |---|---|---|---|
 | IBGE — PIB dos Municípios | `data/raw/ibge_pib_municipios/PIB dos Municípios - base de dados 2010-2023.xlsx` | ✅ OK | 43 colunas, anos 2010–2023, 5.570 municípios únicos, colunas de PIB e PIB per capita presentes. |
-| Anatel — Densidade Banda Larga Fixa | `data/raw/anatel_banda_larga/Densidade_Banda_Larga_Fixa.csv` | ✅ OK | UTF-8 BOM, delimitador `;`, 5.571 registros no mês mais recente (2026-06), coluna `Código IBGE` preenchida. Banda larga móvel ainda não baixada. |
 | BCB — Estban | `data/raw/bcb_estaban/202603_ESTBAN.CSV` | ✅ OK | Encoding `latin1`, delimitador `;`, 7.972 linhas, coluna `CODMUN_IBGE` com código IBGE completo, 2.915 municípios únicos (apenas municípios com presença bancária). |
-| PNUD — IDHM | — | ❌ Indisponível | Atlas Brasil retornou HTTP 500 no momento do teste; download não realizado. |
+| Anatel — Densidade Banda Larga Fixa | `data/raw/anatel_banda_larga/Densidade_Banda_Larga_Fixa.csv` | ✅ OK | UTF-8 BOM, delimitador `;`, 5.571 registros no mês mais recente (2026-06), coluna `Código IBGE` preenchida. Banda larga móvel fora do escopo. |
+| PNUD — IDHM | — | ❌ Indisponível | Atlas Brasil retornou HTTP 500 no momento do teste; download não realizado. Ver alternativas na seção 10. |
 
 **Implicações para o pipeline**:
-- O IDHM é o único indicador do NÚCLEO ainda pendente. Alternativas: tentar novamente mais tarde, usar a página do UNDP ou buscar o dado em outra fonte (ex: Base dos Dados).
-- O Estban cobre apenas ~2.900 municípios. Os demais serão tratados como missing na `trusted_municipios` e imputados/analisados na Etapa 2.
-- A Anatel possui apenas banda larga fixa. Banda larga móvel pode entrar como stretch.
+- O **IDHM** é o único indicador do NÚCLEO ainda pendente. Se não for possível baixar em 24–48h, usar **escolaridade (% ensino médio+)** do Censo 2022 (SIDRA) como substituto no pilar E.
+- O **Estban** cobre apenas ~2.900 municípios. Os demais serão tratados como missing na `trusted_municipios` e imputados/analisados na Etapa 2.
+- A **Anatel** fornece apenas banda larga fixa no arquivo baixado; banda larga móvel está fora do escopo.
 
 ---
 
-## 10. Evolução futura (não implementar agora)
+## 10. Alternativas para o IDHM
+
+A fonte original (`Atlas Brasil`) apresentou instabilidade (`HTTP 500`) no momento da validação. Opções:
+
+1. Tentar novamente pelo Atlas Brasil: `https://www.atlasbrasil.org.br`.
+2. Página do PNUD/UNDP: `https://www.undp.org/pt/brazil/atlas-dos-municipios`.
+3. Base dos Dados: `https://basedosdados.org/dataset/cbfc7253-089b-44e2-8825-755e1419efc8`.
+4. **Substituir o IDHM por escolaridade** (`% ensino médio+` ou `anos de estudo`) do Censo 2022 — mantém o pilar E funcional sem depender do Atlas.
+
+---
+
+## 11. Evolução futura (não implementar agora)
 
 - Orquestração via GitHub Actions usando `.github/workflows/ingestao.yml`.
 - Workload Identity ou service account key no GitHub Secret para autenticação no BigQuery.
@@ -206,4 +219,4 @@ Resultado da validação realizada em `2026-08-23`:
 
 ---
 
-*Última atualização: branch de ingestão e coleta — v1.*
+*Última atualização: branch de ingestão e coleta — v2.*
