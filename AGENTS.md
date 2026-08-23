@@ -1,6 +1,45 @@
-# AGENTS.md — Ingestão e Coleta de Dados (IPB)
+# AGENTS.md — Diretrizes e Convenções do Projeto (IPB)
 
-## 1. Objetivo desta branch
+> **AVISO PARA TODOS OS AGENTES DE IA**: Este documento é a fonte primária de regras e memória deste repositório. Qualquer agente (Claude, GPT, Kimi, Gemini, Antigravity, etc.) deve ler, memorizar e seguir rigorosamente estas diretrizes ao iniciar uma sessão.
+
+---
+
+## 0. Diretrizes Mandatórias de Comportamento para Agentes
+
+1. **Postura Crítica e Analítica (Não seja apenas concordante)**:
+   - Não seja um "yes-man". Analise criticamente todas as propostas do usuário.
+   - Aponte riscos técnicos, armadilhas de engenharia de dados, impactos em custo e sugira alternativas mais eficientes sempre que pertinente.
+
+2. **Política Estrita de Commits Pequenos e Atômicos**:
+   - Faça commits estritamente modulares e pequenos (uma única alteração lógica por commit).
+   - Nunca acumule arquivos de múltiplos módulos ou ingestores em um único commit gigante.
+   - Mensagens de commit em português, no padrão convencional e no imperativo (`feat: ...`, `fix: ...`, `test: ...`, `docs: ...`, `chore: ...`).
+
+3. **Gerenciador de Dependências: Poetry**:
+   - O projeto utiliza **Poetry** exclusivamente para gerenciamento de dependências e ambiente virtual (`poetry.lock`).
+   - Todos os comandos devem rodar via `poetry run ...` ou dentro do `poetry shell`.
+   - O ambiente virtual deve residir localmente em `.venv/` (`poetry config virtualenvs.in-project true`).
+
+4. **Premissa de Custo Zero Absoluto (Free Tier)**:
+   - BigQuery configurado estritamente na localização **`US`** (multi-região padrão do Always Free / Sandbox, que não exige cartão nem conta de faturamento ativa).
+
+5. **Segurança de Credenciais (Zero Secrets no Git)**:
+   - Desenvolvimento local utiliza **Application Default Credentials (ADC)** via `gcloud auth application-default login`.
+   - Nunca baixar ou armazenar chaves JSON de service account dentro da pasta do repositório.
+   - Segredos e configurações de ambiente ficam exclusivamente no `.env` (ignorado no Git).
+
+6. **Cache / Estágio Local em Parquet**:
+   - Todo ingestor deve salvar dados brutos em `data/raw/<fonte>/*.parquet` antes de subir para o BigQuery (`raw_*`).
+   - Isso garante idempotência, desacoplamento e evita re-execuções desnecessárias contra APIs públicas.
+
+7. **Cultura de Testes Rigorosa**:
+   - Todo módulo ou parser em `src/utils/` e `src/ingestors/` deve ter testes unitários correspondentes em `tests/unit/`.
+   - Teste de conexão GCP em `tests/integration/test_bq_connection.py`.
+   - Testes de integridade na camada `trusted` (`tests/data_quality/`) validando os 5.570 municípios.
+
+---
+
+## 1. Objetivo do Projeto
 
 Esta branch entrega o **desenho e a estrutura de ingestão/coleta** do Índice de Potencial Bancário (IPB).
 
