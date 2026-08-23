@@ -1,2 +1,6 @@
 referencias/
 .venv*
+data/
+*.csv
+*.xlsx
+*.parquet
