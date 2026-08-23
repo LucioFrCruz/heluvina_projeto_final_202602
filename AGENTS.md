@@ -60,7 +60,7 @@ heluvina_projeto_final_202602/
 
 **Regra de ouro**: nenhum dado bruto ou credencial entra no Git. Apenas código, SQL, documentação e configuração segura.
 
-> **Nota sobre o desenho aprovado**: não há cache local Parquet. Os scripts leem diretamente das APIs ou dos arquivos baixados manualmente e sobem os dados para o BigQuery.
+> **Nota sobre o desenho aprovado**: adotado cache local em Parquet (`data/raw/<fonte>/*.parquet`) como estágio intermediário seguro antes da carga no BigQuery. Isso permite persistência local temporária, idempotência e reprocessamento sem sobrecarregar as APIs.
 
 ---
 
@@ -119,7 +119,7 @@ Todas as dependências devem ser listadas em `requirements.txt` (a ser criado na
   ```bash
   GCP_PROJECT_ID=meu-projeto-ipb
   BIGQUERY_DATASET=ipb_staging
-  BIGQUERY_LOCATION=southamerica-east1
+  BIGQUERY_LOCATION=US
   ```
 
 ---

@@ -170,7 +170,7 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 
 - **BigQuery**: projeto GCP a ser criado; autenticação local via `gcloud auth application-default login` ou variável `GOOGLE_APPLICATION_CREDENTIALS`.
 - **Dataset padrão**: `ipb_staging` (ajustável em `.env`).
-- **Localização**: `southamerica-east1` (São Paulo).
+- **Localização**: `US` (multi-região padrão do BigQuery Sandbox / Free Tier, sem custos).
 - **Credenciais**: nunca commitar `.env` nem JSON de service account.
 
 ### 10.2 Endpoints e métodos de coleta

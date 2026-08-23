@@ -334,7 +334,7 @@ Ingestores do núcleo:
 
 - **Projeto GCP**: a ser criado pelo time.
 - **Dataset**: `ipb_staging` (ajustável via `.env`).
-- **Localização**: `southamerica-east1` (São Paulo) — reduz latência para APIs brasileiras.
+- **Localização**: `US` (multi-região padrão do BigQuery Always Free / Sandbox, garantindo 100% de gratuidade sem necessidade de cartão/faturamento ativo).
 - **Camadas**:
   - `raw_*`: dados quase intactos, com colunas de auditoria.
   - `trusted_*`: dados limpos e unificados.
@@ -413,7 +413,7 @@ A fonte original (`Atlas Brasil`) apresentou instabilidade (`HTTP 500`) no momen
 
 1. Criar projeto no Google Cloud Console.
 2. Ativar APIs: BigQuery API.
-3. Criar dataset `ipb_staging` na região `southamerica-east1`.
+3. Criar dataset `ipb_staging` na região `US` (Free Tier).
 4. Configurar autenticação local (`gcloud auth application-default login` ou service account).
 5. Criar `requirements.txt` e `.env.example`.
 6. Implementar ingestores do núcleo.
