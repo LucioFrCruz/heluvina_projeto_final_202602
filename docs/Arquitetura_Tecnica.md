@@ -49,10 +49,10 @@ A arquitetura é modular: cada fonte de dados tem seu próprio script de ingest�
 
 ```mermaid
 flowchart LR
-    classDef api fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef manual fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef script fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    classDef bq fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef api fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#0d3c61
+    classDef manual fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#0d3c61
+    classDef script fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#0d3c61
+    classDef bq fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#0d3c61
 
     subgraph Fontes["Fontes de dados públicas"]
         F1["🌐 IBGE API Localidades"]:::api
@@ -60,8 +60,7 @@ flowchart LR
         F3["🌐 BCB API Pix"]:::api
         F4["📁 IBGE PIB dos Municípios (XLSX)"]:::manual
         F5["📁 BCB Estban (CSV)"]:::manual
-        F6["📁 Anatel Banda Larga Fixa (CSV)"]:::manual
-        F7["📁 PNUD IDHM (XLSX)"]:::manual
+        F6["📁 PNUD IDHM (XLSX)"]:::manual
     end
 
     subgraph Ingestao["Ingestão local (Python)"]
@@ -81,7 +80,6 @@ flowchart LR
     F4 --> I1
     F5 --> I1
     F6 --> I1
-    F7 --> I1
 
     I1 --> I2
     I2 --> R
@@ -89,16 +87,16 @@ flowchart LR
     T --> A
 ```
 
-> **Legenda dos ícones**: 🌐 = coleta via API (automatizada); 📁 = arquivo baixado manualmente e lido pelo script.
+> **Legenda**: azul = API automatizada; laranja = arquivo baixado manualmente; verde = scripts Python; cinza = cache local; roxo = BigQuery.
 
-### 4.2 Código-fonte `.mermaid` do diagrama acima
+### 4.2 Código `.mermaid`
 
 ```text
 flowchart LR
-    classDef api fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef manual fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef script fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    classDef bq fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef api fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#0d3c61
+    classDef manual fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#0d3c61
+    classDef script fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#0d3c61
+    classDef bq fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#0d3c61
 
     subgraph Fontes["Fontes de dados públicas"]
         F1["🌐 IBGE API Localidades"]:::api
@@ -106,8 +104,7 @@ flowchart LR
         F3["🌐 BCB API Pix"]:::api
         F4["📁 IBGE PIB dos Municípios (XLSX)"]:::manual
         F5["📁 BCB Estban (CSV)"]:::manual
-        F6["📁 Anatel Banda Larga Fixa (CSV)"]:::manual
-        F7["📁 PNUD IDHM (XLSX)"]:::manual
+        F6["📁 PNUD IDHM (XLSX)"]:::manual
     end
 
     subgraph Ingestao["Ingestão local (Python)"]
@@ -127,7 +124,6 @@ flowchart LR
     F4 --> I1
     F5 --> I1
     F6 --> I1
-    F7 --> I1
 
     I1 --> I2
     I2 --> R
