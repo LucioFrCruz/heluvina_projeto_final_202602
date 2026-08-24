@@ -31,7 +31,7 @@ O projeto é suportado por um pipeline robusto de Engenharia de Dados (Python, P
 
 Dê preferência para leitura de nossos guias detalhados na pasta `docs/`:
 
-- [Guia de Execução Técnica (Pipeline & SQL)](docs/Guia_de_Execucao.md) ⚠️ *Obrigatório ler para replicar a infra e dados manuais*
+- [Guia de Execução Técnica (Pipeline & SQL)](docs/Guia_de_Execucao.md) 💻 *Instruções de setup e queries SQL (100% automatizado)*
 - [Plano de Implementação (Fases 0 a 4)](docs/Plano_de_Implementacao.md)
 - [Guia de Bases e Desenho (Indicadores)](docs/IPB_Guia_de_Bases_e_Desenho.md)
 
@@ -56,8 +56,8 @@ Estamos desenvolvendo o projeto em etapas ágeis. Acompanhe nosso progresso:
   - Definição da arquitetura, tese e pilares do índice.
 
 - [x] **Etapa 1: Processamento e Ingestão** (Prazo: 25/08) 📍 **<-- ESTAMOS AQUI**
-  - Implementação do Data Lake no BigQuery.
-  - Coleta automatizada de APIs (Pix, IBGE) e arquivos manuais (Estban, Anatel).
+  - Implementação do Data Lake (BigQuery + GCS).
+  - Coleta automatizada de APIs (Pix, IBGE) e Data Lake centralizado para arquivos manuais (Estban, Anatel).
   - Tabela consolidadora `trusted_municipios`.
 
 - [ ] **Etapa 2: Análise Exploratória (EDA) e Limpeza** (Prazo: 03/09)

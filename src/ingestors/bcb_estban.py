@@ -2,18 +2,13 @@ import pandas as pd
 from src.utils.ibge import normalize_ibge_code
 from src.utils.storage import save_raw_parquet
 from src.utils.bigquery import upload_dataframe_to_raw
+from src.utils.gcs import download_file_from_gcs
 from src.config import TABLE_RAW_BCB_ESTBAN, RAW_DATA_DIR
 
 def extract() -> pd.DataFrame:
-    """Lê arquivo CSV do BCB Estban."""
-    source_dir = RAW_DATA_DIR / "bcb_estaban"
-    files = list(source_dir.glob("*.CSV"))
-    if not files:
-        files = list(source_dir.glob("*.csv"))
-    if not files:
-        raise FileNotFoundError(f"Arquivo CSV do Estban não encontrado em {source_dir}")
-    
-    file_path = files[0]
+    """Lê arquivo CSV do BCB Estban do GCS."""
+    local_path = str(RAW_DATA_DIR / "tmp_estban.csv")
+    file_path = download_file_from_gcs("estban/202603_ESTBAN.CSV", local_path)
     return pd.read_csv(file_path, sep=";", encoding="latin1", skiprows=2)
 
 def transform_raw(raw_data: pd.DataFrame) -> pd.DataFrame:

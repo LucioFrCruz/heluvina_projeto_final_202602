@@ -2,19 +2,15 @@ import pandas as pd
 from src.utils.ibge import normalize_ibge_code
 from src.utils.storage import save_raw_parquet
 from src.utils.bigquery import upload_dataframe_to_raw
+from src.utils.gcs import download_file_from_gcs
 from src.config import TABLE_RAW_PIB_MUNICIPIOS, RAW_DATA_DIR
 import warnings
 
 def extract() -> pd.DataFrame:
-    """Lê arquivo XLSX do PIB dos Municípios."""
+    """Lê arquivo XLSX do PIB dos Municípios do GCS."""
     warnings.simplefilter(action='ignore', category=UserWarning)
-    # Procurar o arquivo .xlsx
-    source_dir = RAW_DATA_DIR / "ibge_pib_municipios"
-    files = list(source_dir.glob("*.xlsx"))
-    if not files:
-        raise FileNotFoundError(f"Arquivo XLSX do PIB não encontrado em {source_dir}")
-    
-    file_path = files[0]
+    local_path = str(RAW_DATA_DIR / "tmp_pib.xlsx")
+    file_path = download_file_from_gcs("pib/pib_municipios_2010_2023.xlsx", local_path)
     return pd.read_excel(file_path)
 
 def transform_raw(raw_data: pd.DataFrame) -> pd.DataFrame:

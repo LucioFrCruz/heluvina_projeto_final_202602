@@ -7,6 +7,8 @@ load_dotenv()
 GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID")
 BIGQUERY_DATASET = os.getenv("BIGQUERY_DATASET", "ipb_staging")
 BIGQUERY_LOCATION = os.getenv("BIGQUERY_LOCATION", "US")
+GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "ipb-raw-data-mba-projetc-final")
+
 
 # Diretórios
 BASE_DIR = Path(__file__).resolve().parent.parent

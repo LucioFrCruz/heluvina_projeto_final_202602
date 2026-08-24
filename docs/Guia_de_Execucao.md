@@ -21,27 +21,21 @@ O projeto utiliza **Poetry** para gerenciamento de dependências e requer Python
 
 ---
 
-## 2. Bases Manuais (Atenção redobrada!) ⚠️
+## 2. Bases Manuais agora no Data Lake (GCS) ☁️
 
-Nem todas as fontes de dados possuem APIs abertas e estáveis. Para que o pipeline funcione corretamente, é **obrigatório** que os arquivos das bases manuais sejam baixados e descompactados nas respectivas pastas dentro de `data/raw/` antes da execução:
+Anteriormente, era necessário baixar manualmente arquivos pesados (CSV e XLSX) para a pasta `data/raw/`. Para melhorar a reprodutibilidade, todas as bases manuais foram migradas para um **Bucket no Google Cloud Storage (GCS)** (`ipb-raw-data-mba-projetc-final`).
 
-- **IBGE PIB dos Municípios:**
-  - Baixar a base de dados (XLSX) do site do IBGE.
-  - Salvar em: `data/raw/ibge_pib_municipios/`
-- **BCB Estban (Estatística Bancária):**
-  - Baixar o CSV mensal do Banco Central (Documento 4500).
-  - Salvar em: `data/raw/bcb_estaban/`
-- **Anatel Banda Larga Fixa:**
-  - Baixar os dados de acessos e densidade (CSV) do portal da Anatel.
-  - Salvar em: `data/raw/anatel_banda_larga/`
+- **IBGE PIB dos Municípios**
+- **BCB Estban (Estatística Bancária)**
+- **Anatel Banda Larga Fixa**
 
-> **Nota:** Todos os arquivos da pasta `data/` estão no `.gitignore` para garantir que nenhum dado sensível ou pesado suba para o repositório.
+> **Nota:** Todos os dados, sejam APIs ou arquivos estáticos, são consumidos automaticamente do Data Lake no GCS ou de endpoints públicos. Nenhuma ação manual de download é necessária por parte dos engenheiros.
 
 ---
 
 ## 3. Ordem de Execução do Pipeline
 
-Com os dados manuais na pasta e o ambiente configurado, execute os ingestores na seguinte ordem (do nível fundacional até a consolidação). Todos os scripts fazem *replace* na tabela de destino, sendo 100% idempotentes.
+Com o ambiente configurado, execute os ingestores na seguinte ordem (do nível fundacional até a consolidação). Todos os scripts fazem *replace* na tabela de destino e baixam seus dados automaticamente.
 
 ```bash
 # 1. Base Mestra de Localidades (API)

@@ -2,16 +2,13 @@ import pandas as pd
 from src.utils.ibge import normalize_ibge_code
 from src.utils.storage import save_raw_parquet
 from src.utils.bigquery import upload_dataframe_to_raw
+from src.utils.gcs import download_file_from_gcs
 from src.config import TABLE_RAW_ANATEL_BANDA_LARGA_FIXA, RAW_DATA_DIR
 
 def extract() -> pd.DataFrame:
-    """Lê arquivo CSV da Anatel Banda Larga Fixa."""
-    source_dir = RAW_DATA_DIR / "anatel_banda_larga"
-    # Pegar o Densidade_Banda_Larga_Fixa.csv
-    file_path = source_dir / "Densidade_Banda_Larga_Fixa.csv"
-    if not file_path.exists():
-        raise FileNotFoundError(f"Arquivo CSV Anatel não encontrado em {file_path}")
-    
+    """Lê arquivo CSV da Anatel Banda Larga Fixa do GCS."""
+    local_path = str(RAW_DATA_DIR / "tmp_anatel.csv")
+    file_path = download_file_from_gcs("anatel/Densidade_Banda_Larga_Fixa.csv", local_path)
     return pd.read_csv(file_path, sep=";", encoding="utf-8-sig")
 
 def transform_raw(raw_data: pd.DataFrame) -> pd.DataFrame:
