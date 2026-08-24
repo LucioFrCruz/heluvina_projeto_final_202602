@@ -41,13 +41,13 @@ Com o ambiente configurado, execute os ingestores na seguinte ordem (do nível f
 # 1. Base Mestra de Localidades (API)
 poetry run python -m src.ingestors.ibge_localidades
 
-# 2. Demografia e Escolaridade (API/Mock)
+# 2. Demografia e Escolaridade (SIDRA Censo 2022)
 poetry run python -m src.ingestors.sidra_censo_2022
 
 # 3. Transações Pix (API)
 poetry run python -m src.ingestors.bcb_pix
 
-# 4. Dados Manuais (Requerem os arquivos no diretório data/raw/)
+# 4. Dados Baixados via GCS Data Lake
 poetry run python -m src.ingestors.ibge_pib_municipios
 poetry run python -m src.ingestors.bcb_estban
 poetry run python -m src.ingestors.anatel_banda_larga_fixa
