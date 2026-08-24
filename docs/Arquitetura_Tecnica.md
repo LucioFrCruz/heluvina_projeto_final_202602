@@ -394,7 +394,7 @@ A fonte original (`Atlas Brasil`) apresentou instabilidade (`HTTP 500`) no momen
 
 ## 10. Fluxo de execução one-shot sugerido
 
-1. Configurar `.env` e autenticar no GCP (`gcloud auth application-default login`).
+1. Configurar `.env` e apontar `GOOGLE_APPLICATION_CREDENTIALS` para a Service Account JSON em `credentials/`.
 2. Criar dataset `ipb_staging` no BigQuery.
 3. Executar `src/ingestors/ibge_localidades.py` → gera `raw_ibge_localidades`.
 4. Executar ingestores independentes em qualquer ordem:
@@ -414,7 +414,7 @@ A fonte original (`Atlas Brasil`) apresentou instabilidade (`HTTP 500`) no momen
 1. Criar projeto no Google Cloud Console.
 2. Ativar APIs: BigQuery API.
 3. Criar dataset `ipb_staging` na região `US` (Free Tier).
-4. Configurar autenticação local (`gcloud auth application-default login` ou service account).
+4. Configurar autenticação local (salvar JSON na pasta `credentials/` e apontar no `.env`).
 5. Criar `requirements.txt` e `.env.example`.
 6. Implementar ingestores do núcleo.
 7. Resolver o IDHM ou decidir indicador alternativo para o pilar E.
