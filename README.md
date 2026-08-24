@@ -57,9 +57,14 @@ Numero de dispositivos móveis x população - base de estudo FGV
 - SQL
 - Git/GitHub
 
-## Estrutura do projeto
+## Estrutura do Projeto e Documentação Técnica
 
-Em construção.
+O projeto é dividido em camadas bem definidas de Engenharia de Dados (`raw` e `trusted`), carregando e padronizando os dados de diferentes fontes no BigQuery.
+
+Para guias passo a passo de como rodar e testar, consulte nossas documentações na pasta `docs/`:
+- [Guia de Execução Técnica (Pipeline & SQL)](docs/Guia_de_Execucao.md) ⚠️ *Obrigatório ler para baixar os dados manuais*
+- [Plano de Implementação (Fases 0 a 4)](docs/Plano_de_Implementacao.md)
+- [Guia de Bases e Desenho (Indicadores)](docs/IPB_Guia_de_Bases_e_Desenho.md)
 
 ## Status
 
