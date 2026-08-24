@@ -25,22 +25,28 @@ def transform_raw(raw_data: pd.DataFrame) -> pd.DataFrame:
         df = df.dropna(subset=["CODMUN_IBGE"])
         df["CODMUN_IBGE"] = df["CODMUN_IBGE"].apply(normalize_ibge_code)
     
-    # Extrair Agências (CNPJ) e rubricas
-    # A base original ESTBAN geralmente tem VERBETE e VALOR ou contas em colunas
-    # Para simplicidade de teste se não sabemos a estrutura real, vou fazer um agrupadão básico
-    # Assumindo que VERBETE 160 = Operações de Crédito, 161 = Depósitos
-    # E que tem uma coluna CNPJ para agências
-    # Se essas colunas não existirem, retorno estrutura dummy para não quebrar
-    
-    if "CODMUN_IBGE" not in df.columns:
-        return pd.DataFrame(columns=["id_municipio", "quantidade_agencias", "volume_depositos", "volume_credito"])
+    # Extrair Agências e rubricas reais
+    # Se a coluna existir, agrupa, senao dummy
+    agg_dict = {}
+    if "AGEN_PROCESSADAS" in df.columns:
+        df["AGEN_PROCESSADAS"] = pd.to_numeric(df["AGEN_PROCESSADAS"], errors="coerce").fillna(0)
+        agg_dict["quantidade_agencias"] = pd.NamedAgg(column="AGEN_PROCESSADAS", aggfunc="sum")
+    else:
+        agg_dict["quantidade_agencias"] = pd.NamedAgg(column="CODMUN_IBGE", aggfunc="count")
         
-    # Dummy group since actual columns might differ
-    result = df.groupby("CODMUN_IBGE").agg(
-        quantidade_agencias=("CODMUN_IBGE", "count"), # dummy: count de linhas
-        volume_depositos=("CODMUN_IBGE", "count"),    # dummy
-        volume_credito=("CODMUN_IBGE", "count")       # dummy
-    ).reset_index()
+    if "VERBETE_420_DEPOSITOS_DE_POUPANCA" in df.columns:
+        df["VERBETE_420_DEPOSITOS_DE_POUPANCA"] = pd.to_numeric(df["VERBETE_420_DEPOSITOS_DE_POUPANCA"], errors="coerce").fillna(0)
+        agg_dict["volume_depositos"] = pd.NamedAgg(column="VERBETE_420_DEPOSITOS_DE_POUPANCA", aggfunc="sum")
+    else:
+        agg_dict["volume_depositos"] = pd.NamedAgg(column="CODMUN_IBGE", aggfunc="count")
+        
+    if "VERBETE_160_OPERACOES_DE_CREDITO" in df.columns:
+        df["VERBETE_160_OPERACOES_DE_CREDITO"] = pd.to_numeric(df["VERBETE_160_OPERACOES_DE_CREDITO"], errors="coerce").fillna(0)
+        agg_dict["volume_credito"] = pd.NamedAgg(column="VERBETE_160_OPERACOES_DE_CREDITO", aggfunc="sum")
+    else:
+        agg_dict["volume_credito"] = pd.NamedAgg(column="CODMUN_IBGE", aggfunc="count")
+        
+    result = df.groupby("CODMUN_IBGE").agg(**agg_dict).reset_index()
     
     result = result.rename(columns={"CODMUN_IBGE": "id_municipio"})
     

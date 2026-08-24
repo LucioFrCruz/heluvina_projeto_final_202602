@@ -28,27 +28,14 @@ def transform_raw(raw_data: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(columns=["id_municipio", "ano_mes", "quantidade_pf", "quantidade_pj", "valor_pf", "valor_pj"])
         
     df = raw_data.copy()
-    # Mapeamento de colunas dependendo do retorno da API (assumindo nomes padrão)
-    df = df.rename(columns={
-        "Municipio": "id_municipio",
-        "AnoMes": "ano_mes",
-        "QuantidadePF": "quantidade_pf",
-        "QuantidadePJ": "quantidade_pj",
-        "ValorPF": "valor_pf",
-        "ValorPJ": "valor_pj"
-    })
     
-    # Nem toda API retorna com a mesma key, vou fazer lower e remover sufixos se precisar
-    # Mas como não temos o schema exato garantido, vou iterar pelas colunas se as esperadas não existirem
-    # Assumindo que o mock está no padrão snake case
-    if "id_municipio" not in df.columns and len(df.columns) > 0:
-        # Tenta achar a coluna que parece município
-        for col in df.columns:
-            if "Municipio" in col or "ibge" in col.lower():
-                df = df.rename(columns={col: "id_municipio"})
-                break
-                
+    # Renomear apenas a coluna de código do IBGE para o padrão
+    if "Municipio_Ibge" in df.columns:
+        df = df.rename(columns={"Municipio_Ibge": "id_municipio"})
+    
     if "id_municipio" in df.columns:
+        # Tira nulos para evitar erro
+        df = df.dropna(subset=["id_municipio"])
         df["id_municipio"] = df["id_municipio"].apply(normalize_ibge_code)
     
     return df
