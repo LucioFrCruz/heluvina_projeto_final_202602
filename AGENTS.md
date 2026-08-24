@@ -256,6 +256,14 @@ A fonte original (`Atlas Brasil`) apresentou instabilidade (`HTTP 500`) no momen
 - Agendamento mensal para fontes como Pix e Estban.
 - Testes automatizados com `pytest`.
 
+## 12. Modo Autônomo (Sessões com Agente)
+
+- Ao receber um plano de implementação, execute-o do início ao fim **sem pausar para confirmações**.
+- Decida sozinho detalhes de implementação não especificados (nomes internos, estrutura de funções, libs auxiliares).
+- Se algo falhar, diagnostique, corrija e tente novamente até 3x antes de desistir.
+- Ao final de cada fase, rode os testes correspondentes antes de avançar e dê um resumo do que foi feito.
+- **Só pare para perguntar se**: faltar credencial, uma API pública estiver fora do ar, ou o plano se contradizer.
+- Proibido em qualquer hipótese: `rm -rf` fora de `data/`, `git push`, `git reset --hard`, `git clean`, expor conteúdo de `.env` ou credenciais, instalar dependências fora do Poetry.
 ---
 
 *Última atualização: branch de ingestão e coleta — v2.*

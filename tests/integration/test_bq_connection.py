@@ -4,24 +4,18 @@ from google.api_core.exceptions import Conflict
 import json
 
 def run_smoke_test():
-    # Caminho do JSON de credenciais
-    credential_path = "credntials/mba-projetc-final-523d2e8c8bf2.json"
+    from dotenv import load_dotenv
+    load_dotenv()
     
-    # Valida se o arquivo existe
-    if not os.path.exists(credential_path):
-        print(f"❌ Arquivo de credenciais não encontrado em {credential_path}")
+    credential_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    project_id = os.environ.get("GCP_PROJECT_ID")
+    
+    if not credential_path or not os.path.exists(credential_path):
+        print(f"❌ GOOGLE_APPLICATION_CREDENTIALS não configurada ou arquivo não encontrado: {credential_path}")
         return
         
-    # Seta a variável de ambiente para usar a Service Account
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credential_path
-    
-    # Extrai o project_id do JSON
-    with open(credential_path, "r") as f:
-        credentials_info = json.load(f)
-        project_id = credentials_info.get("project_id")
-        
     if not project_id:
-        print("❌ Não foi possível extrair o project_id do JSON.")
+        print("❌ GCP_PROJECT_ID não configurado no .env")
         return
 
     print(f"✅ Autenticando com a conta de serviço no projeto: {project_id}")
