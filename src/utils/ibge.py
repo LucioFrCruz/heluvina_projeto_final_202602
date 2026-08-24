@@ -13,8 +13,8 @@ def normalize_ibge_code(code: Any) -> str:
     code_str = re.sub(r"\D", "", code_str)
     
     if len(code_str) == 6:
-        # Faltando dígito verificador ou estado, se for município deve ser 7
-        raise ValueError(f"Código IBGE 6 dígitos não suportado para normalização de municípios: {code}")
+        # Padroniza código de 6 dígitos inserindo um zero à esquerda
+        code_str = code_str.zfill(7)
     elif len(code_str) < 7:
         code_str = code_str.zfill(7)
     elif len(code_str) > 7:
