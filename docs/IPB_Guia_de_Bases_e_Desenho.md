@@ -35,7 +35,15 @@ Resposta à dúvida "reduzimos os dados?": **sim, com regra clara**.
 - **NÚCLEO (MVP — obrigatório para as entregas)**: ~12 indicadores de coleta barata (API ou download direto). Garante o índice funcionando mesmo se nada mais der certo.
 - **STRETCH (enriquecimento opcional)**: só entra depois que o núcleo estiver ingerido e consolidado.
 
-**Corte já decidido**: microdados do **Caged** (FTP pesado, ~100 MB/mês) saem do núcleo. O pilar Dinamismo fica coberto por crescimento populacional (Censo) + **crescimento do Pix** — que é mais alinhado a banco digital e sai por API. Se sobrar tempo, o Caged volta como stretch.
+### 3.1 Critérios de Seleção dos Dados
+Para garantir a aderência ao problema de expansão do banco digital, os dados do NÚCLEO foram escolhidos sob três critérios principais de negócio e engenharia:
+1. **Relevância para a Tese:** 
+   - *Por que Anatel?* Mede a infraestrutura (fibra óptica) que viabiliza fisicamente o uso do app do banco. 
+   - *Por que BCB Pix?* Representa a maturidade digital financeira; alto volume indica população pronta para serviços além do dinheiro em espécie. 
+   - *Por que BCB Estban?* Conta as agências físicas, que mapeiam a concorrência tradicional (se há dinheiro e pouca agência, o *gap* é uma oportunidade digital).
+2. **Qualidade e Confiabilidade:** Fontes oficiais do governo (IBGE, Anatel, Banco Central) com documentação aberta e metodologias públicas.
+3. **Volume vs. Necessidade:** 
+   - Microdados pesados como o **Caged** (FTP de ~100 MB/mês por ano) foram excluídos do MVP. O pilar de Dinamismo foi coberto adequadamente pelo crescimento do Pix (API) sem sacrificar capacidade de armazenamento ou complexidade do pipeline para um insight semelhante.
 
 **Decisões de escopo (mantidas)**:
 - Coleta nacional (5.570 municípios) — custo de coleta igual ao de uma região;
@@ -224,6 +232,8 @@ Durante a fase de ingestão (Etapa 1), as seguintes abordagens de pré-processam
 ---
 
 ## 12. Dicionário de Dados e Schemas
+
+> **Nota Importante:** Esta documentação arquitetural fornece uma visão condensada. Para consultar o Dicionário de Dados de Negócio completo, abrangendo tipos, fontes, unidades de medida e justificativas métricas para TODAS as tabelas `raw_` e `trusted_`, acesse o arquivo oficial **[Dicionario_de_Dados.md](Dicionario_de_Dados.md)**.
 
 ### 12.1 `raw_ibge_localidades`
 
