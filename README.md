@@ -52,20 +52,21 @@ Dê preferência para leitura de nossos guias detalhados na pasta `docs/`:
 
 Estamos desenvolvendo o projeto em etapas ágeis. Acompanhe nosso progresso:
 
-- [x] **Fase 1: Desenho da Arquitetura e Definição de Indicadores** (Agosto/2026)
-  - Identificação das fontes abertas (IBGE, BCB, Anatel).
-  - Desenho técnico do Data Lake no BigQuery (Free Tier).
+- [x] **Proposta Validada** (Concluído - 13/08)
+  - Definição da arquitetura, tese e pilares do índice.
 
-- [x] **Fase 2: Engenharia de Dados (Pipelines Raw e Trusted)** (Agosto/2026)  📍 **<-- ESTAMOS AQUI**
-  - Implementação do ambiente isolado (Poetry).
-  - Coleta automatizada de APIs e processamento de planilhas.
-  - Subida dos dados para a camada `trusted_municipios` com códigos unificados.
+- [x] **Etapa 1: Processamento e Ingestão** (Prazo: 25/08) 📍 **<-- ESTAMOS AQUI**
+  - Implementação do Data Lake no BigQuery.
+  - Coleta automatizada de APIs (Pix, IBGE) e arquivos manuais (Estban, Anatel).
+  - Tabela consolidadora `trusted_municipios`.
 
-- [ ] **Fase 3: Analytics e Modelagem do IPB** (Previsto: Setembro/2026)
-  - Limpeza estatística (tratamento de *outliers*).
-  - Normalização dos indicadores (Min-Max Scaler).
-  - Criação da fórmula ponderada do Índice e geração do Ranking.
+- [ ] **Etapa 2: Análise Exploratória (EDA) e Limpeza** (Prazo: 03/09)
+  - Tratamento de outliers e dados faltantes.
+  - Exploração de correlações entre os pilares e agrupamentos.
 
-- [ ] **Fase 4: Visualização e Dashboard** (Previsto: Outubro/2026)
-  - Conexão do BigQuery a uma ferramenta de BI (Looker Studio ou PowerBI).
-  - Construção do painel executivo com mapas interativos e filtros regionais.
+- [ ] **Etapa 3: Aplicação de ML e Modelos** (Prazo: 15/09)
+  - Normalização e modelagem matemática do Índice (IPB).
+  - Aplicação de técnicas de Machine Learning para rankeamento e *clustering* das cidades.
+
+- [ ] **Apresentação Final** (Pitch: 17/09)
+  - Dashboard executivo e entrega final do projeto.
