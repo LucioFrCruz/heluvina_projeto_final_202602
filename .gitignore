@@ -4,3 +4,5 @@ data/
 *.csv
 *.xlsx
 *.parquet
+credentials/
+*.json
