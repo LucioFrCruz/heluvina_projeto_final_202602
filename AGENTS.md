@@ -222,10 +222,11 @@ Antes de marcar uma fonte como "coletada", verificar:
 
 ## 9. Status da Consolidação (Trusted)
 
-A tabela `trusted_municipios` gerada na Etapa 1 possui os 5.570 municípios. Principais *gaps* esperados que devem ser tratados pela I.A. na Etapa 2:
+A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* a serem tratados na Etapa 2:
+- **Internet (Censo 2022)**: A tabela 7307 do SIDRA retorna HTTP 500 para `N6[all]` desde agosto/2026. A coluna `domicilios_com_internet_pct` permanece nula; usar `banda_larga_densidade` (Anatel) como proxy na EDA.
 - **Estban**: Apenas ~2.900 municípios possuem agências. Os outros devem receber imputação zero para `quantidade_agencias`, `volume_depositos`, etc.
-- **Pix / Anatel / PIB**: Algumas falhas pontuais de cruzamento podem deixar nulos. Usar estatística básica (mediana da UF, etc.) para imputar.
-- **IDHM**: Substituído definitivamente pelo indicador de **escolaridade (% ensino médio completo)** oriundo do Censo (SIDRA).
+- **PIB**: A coluna `va_servicos` está nula por incompatibilidade de nomenclatura no XLSX de origem; avaliar correção do ingestor `ibge_pib_municipios.py` ou remoção da coluna.
+- **IDHM**: Mantido como variável histórica (2010) via Ipeadata. O indicador principal de capital humano passa a ser a **escolaridade (% ensino médio completo)** do Censo 2022 (SIDRA Tabela 10061).
 
 ---
 
@@ -244,4 +245,4 @@ A tabela `trusted_municipios` gerada na Etapa 1 possui os 5.570 municípios. Pri
 - Proibido em qualquer hipótese: `rm -rf` fora de `data/`, `git push`, `git reset --hard`, `git clean`, expor conteúdo de `.env` ou credenciais.
 ---
 
-*Última atualização: Início da Etapa 2 (EDA e Limpeza) — v3.*
+*Última atualização: SIDRA Censo 2022 implementado (renda, escolaridade, população 18-35 e urbana) — v4.*

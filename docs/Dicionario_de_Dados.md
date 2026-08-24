@@ -14,13 +14,13 @@ A tabela `trusted_municipios` é o produto final da Etapa 1. Ela contém a chave
 | `nome_municipio` | STRING | Texto | IBGE | Nome oficial do município. |
 | `sigla_uf` | STRING | Texto | IBGE | Sigla da Unidade Federativa (UF) contendo 2 letras. |
 | `nome_regiao` | STRING | Texto | IBGE | Região demográfica do Brasil (Norte, Nordeste, Centro-Oeste, Sudeste, Sul). |
-| `populacao_total` | FLOAT | Pessoas | Censo 2022 | Total de pessoas residentes no município (Tabela 4709). |
-| `populacao_18_35_pct` | FLOAT | % | Censo 2022 | Percentual da população adulta jovem. **Nota:** Nulo na Etapa 1 aguardando imputação na EDA. |
-| `rendimento_domiciliar_per_capita` | FLOAT | R$ | Censo 2022 | Renda média por habitante do domicílio. **Nota:** Nulo na Etapa 1 aguardando imputação na EDA. |
+| `populacao_total` | FLOAT | Pessoas | Censo 2022 | Total de pessoas residentes no município (SIDRA Tabela 4709). |
+| `populacao_18_35_pct` | FLOAT | % | Censo 2022 | Percentual da população entre 18 e 35 anos (SIDRA Tabela 9514, soma de idades granulares). |
+| `rendimento_domiciliar_per_capita` | FLOAT | R$ | Censo 2022 | Valor do rendimento nominal médio mensal domiciliar per capita (SIDRA Tabela 10295, Var. 13431). |
 | `pib_per_capita` | FLOAT | R$ | IBGE PIB | Divisão do Produto Interno Bruto pelo total de habitantes daquele município. |
-| `domicilios_com_internet_pct` | FLOAT | % | Censo 2022 | Proporção de residências com acesso à rede. **Nota:** Nulo na Etapa 1 aguardando imputação na EDA. |
-| `populacao_urbana_pct` | FLOAT | % | Censo 2022 | Proporção de residentes em área urbana (proxy de densidade física). |
-| `escolaridade_pct` | FLOAT | % | Censo 2022 | Percentual da população com ensino médio completo. **Nota:** Nulo na Etapa 1 aguardando imputação na EDA. |
+| `domicilios_com_internet_pct` | FLOAT | % | Censo 2022 | Proporção de residências com utilização de internet (SIDRA Tabela 7307). **Nota:** API do SIDRA retorna HTTP 500 para N6[all] em agosto/2026; coluna permanece nula até normalização. Usar `banda_larga_densidade` (Anatel) como proxy na EDA. |
+| `populacao_urbana_pct` | FLOAT | % | Censo 2022 | Proporção de residentes em área urbana (SIDRA Tabela 10089, Var. 93, Situação do Domicílio). |
+| `escolaridade_ensino_medio_pct` | FLOAT | % | Censo 2022 | Percentual de pessoas de 18 anos ou mais com ensino médio completo ou superior (SIDRA Tabela 10061, Var. 2667). |
 | `pix_per_capita_12m` | FLOAT | Transações | BCB Pix | Razão entre a soma de transferências Pix PF+PJ (últimos 12 meses) e a população. |
 | `crescimento_pix_12m_pct` | FLOAT | % | BCB Pix | Variação percentual do volume financeiro (R$) transacionado em Pix ano-contra-ano. |
 | `banda_larga_fixa_por_100_hab` | FLOAT | Acessos | Anatel | Quantidade de acessos de banda larga fixa (fibra/cabo) para cada 100 moradores. |
@@ -48,11 +48,12 @@ Abaixo estão os dicionários das fontes individuais (ingestores) antes do proce
 | Coluna | Tipo | Unidade | Descrição |
 | :--- | :--- | :--- | :--- |
 | `id_municipio` | STRING | ID | Código IBGE. |
-| `populacao_total` | FLOAT | Pessoas | População residente (Censo 2022 - Tabela 4709). |
-| `populacao_18_35` | FLOAT | Pessoas | Recorte etário. (Faltante no nível municipal). |
-| `rendimento_domiciliar_per_capita` | FLOAT | R$ | Renda média amostral. (Faltante no nível municipal). |
-| `domicilios_com_internet_pct` | FLOAT | % | Índice de inclusão digital. (Faltante no nível municipal). |
-| `populacao_urbana_pct` | FLOAT | % | Índice de adensamento urbano. |
+| `populacao_total` | FLOAT | Pessoas | População residente (Censo 2022 - Tabela 4709, Var. 93). |
+| `populacao_18_35_pct` | FLOAT | % | Percentual da população entre 18 e 35 anos (Tabela 9514, Var. 93). |
+| `populacao_urbana_pct` | FLOAT | % | Percentual da população residente em área urbana (Tabela 10089, Var. 93). |
+| `rendimento_domiciliar_per_capita` | FLOAT | R$ | Rendimento nominal médio mensal domiciliar per capita (Tabela 10295, Var. 13431). |
+| `escolaridade_ensino_medio_pct` | FLOAT | % | Percentual de pessoas 18+ com ensino médio completo ou superior (Tabela 10061, Var. 2667). |
+| `domicilios_com_internet_pct` | FLOAT | % | Percentual de domicílios com utilização de internet (Tabela 7307, Var. 9784). Nulo quando a API do SIDRA está indisponível para N6. |
 
 ### 2.3 `raw_pib_municipios`
 | Coluna | Tipo | Unidade | Descrição |
