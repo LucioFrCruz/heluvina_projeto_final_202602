@@ -39,17 +39,20 @@
 
 ---
 
-## 1. Objetivo do Projeto
+## 1. Objetivo e Estado do Projeto (Contexto da IA)
 
-Esta branch entrega o **desenho e a estrutura de ingestão/coleta** do Índice de Potencial Bancário (IPB).
+Esta base de código entrega o **Índice de Potencial Bancário (IPB)**.
 
-Escopo atual:
-- Coletar os indicadores do **NÚCLEO** definidos em `docs/IPB_Guia_de_Bases_e_Desenho.md`.
-- Persistir os dados brutos e processados no **BigQuery** (camada `raw` e `trusted`).
-- Executar os scripts localmente (máquina dos integrantes) nesta primeira versão.
-- Manter o projeto pronto para evoluir para orquestração via GitHub Actions no futuro.
+**STATUS ATUAL: A Etapa 1 (Engenharia de Dados e Ingestão) foi CONCLUÍDA com sucesso.**
+- Todos os ingestores das fontes abertas e manuais estão implementados (Poetry, BigQuery).
+- A base mestra `trusted_municipios` contendo os 5.570 municípios está ativa no GCP e cruzando perfeitamente dados de PIB, Anatel, Pix e Estban.
 
-Não sair do escopo sem aprovação: nenhum modelo de ML, EDA profunda ou dashboard entra aqui.
+**ESCOPO DA SESSÃO (ETAPA 2 - Análise Exploratória e Limpeza):**
+- O foco a partir de agora é qualidade de dados (Data Quality).
+- Identificar nulos (missing values) e decidir técnicas de imputação.
+- Tratamento de outliers e análise de distribuição.
+- Não retroceder para a arquitetura da Etapa 1, a menos que seja para corrigir bugs críticos que bloqueiem a EDA.
+- Começar a preparar o ambiente em `notebooks/00_exploracao/` ou scripts equivalentes.
 
 ---
 
@@ -138,11 +141,8 @@ Todas as dependências devem ser listadas em `requirements.txt` (a ser criado na
 
 ### Commits e branches
 
-- Branch atual: `feature/etapa1-processamento-ingestao` (ou nome acordado pelo time).
-- Commits em português, no imperativo:
-  - `feat: adiciona ingestor do PIB municipal`
-  - `docs: atualiza schema do BigQuery`
-  - `fix: corrige parsing de código IBGE no SIDRA`
+- Branch sugerida para novos trabalhos: `feature/etapa2-eda-e-limpeza`.
+- Commits em português, no imperativo (`feat: adiciona script de imputacao de nulos`).
 - Um commit por mudança lógica. Evite commits gigantes.
 
 ---
@@ -220,50 +220,28 @@ Antes de marcar uma fonte como "coletada", verificar:
 
 ---
 
-## 9. Validação das bases baixadas manualmente
+## 9. Status da Consolidação (Trusted)
 
-Resultado da validação realizada em `2026-08-23`:
-
-| Fonte | Arquivo | Status | Observações |
-|---|---|---|---|
-| IBGE — PIB dos Municípios | `data/raw/ibge_pib_municipios/PIB dos Municípios - base de dados 2010-2023.xlsx` | ✅ OK | 43 colunas, anos 2010–2023, 5.570 municípios únicos, colunas de PIB e PIB per capita presentes. |
-| BCB — Estban | `data/raw/bcb_estaban/202603_ESTBAN.CSV` | ✅ OK | Encoding `latin1`, delimitador `;`, 7.972 linhas, coluna `CODMUN_IBGE` com código IBGE completo, 2.915 municípios únicos (apenas municípios com presença bancária). |
-| Anatel — Densidade Banda Larga Fixa | `data/raw/anatel_banda_larga/Densidade_Banda_Larga_Fixa.csv` | ✅ OK | UTF-8 BOM, delimitador `;`, 5.571 registros no mês mais recente (2026-06), coluna `Código IBGE` preenchida. Banda larga móvel fora do escopo. |
-| PNUD — IDHM | — | ❌ Indisponível | Atlas Brasil retornou HTTP 500 no momento do teste; download não realizado. Ver alternativas na seção 10. |
-
-**Implicações para o pipeline**:
-- O **IDHM** é o único indicador do NÚCLEO ainda pendente. Se não for possível baixar em 24–48h, usar **escolaridade (% ensino médio+)** do Censo 2022 (SIDRA) como substituto no pilar E.
-- O **Estban** cobre apenas ~2.900 municípios. Os demais serão tratados como missing na `trusted_municipios` e imputados/analisados na Etapa 2.
-- A **Anatel** fornece apenas banda larga fixa no arquivo baixado; banda larga móvel está fora do escopo.
+A tabela `trusted_municipios` gerada na Etapa 1 possui os 5.570 municípios. Principais *gaps* esperados que devem ser tratados pela I.A. na Etapa 2:
+- **Estban**: Apenas ~2.900 municípios possuem agências. Os outros devem receber imputação zero para `quantidade_agencias`, `volume_depositos`, etc.
+- **Pix / Anatel / PIB**: Algumas falhas pontuais de cruzamento podem deixar nulos. Usar estatística básica (mediana da UF, etc.) para imputar.
+- **IDHM**: Substituído definitivamente pelo indicador de **escolaridade (% ensino médio completo)** oriundo do Censo (SIDRA).
 
 ---
 
-## 10. Alternativas para o IDHM
+## 10. Evolução Futura (Etapa 3 - Não focar agora)
 
-A fonte original (`Atlas Brasil`) apresentou instabilidade (`HTTP 500`) no momento da validação. Opções:
-
-1. Tentar novamente pelo Atlas Brasil: `https://www.atlasbrasil.org.br`.
-2. Página do PNUD/UNDP: `https://www.undp.org/pt/brazil/atlas-dos-municipios`.
-3. Base dos Dados: `https://basedosdados.org/dataset/cbfc7253-089b-44e2-8825-755e1419efc8`.
-4. **Substituir o IDHM por escolaridade** (`% ensino médio+` ou `anos de estudo`) do Censo 2022 — mantém o pilar E funcional sem depender do Atlas.
+- Cálculo final do Índice (fórmula e pesos).
+- ML para clusterização.
 
 ---
 
-## 11. Evolução futura (não implementar agora)
+## 11. Modo Autônomo (Sessões com Agente)
 
-- Orquestração via GitHub Actions usando `.github/workflows/ingestao.yml`.
-- Workload Identity ou service account key no GitHub Secret para autenticação no BigQuery.
-- Agendamento mensal para fontes como Pix e Estban.
-- Testes automatizados com `pytest`.
-
-## 12. Modo Autônomo (Sessões com Agente)
-
-- Ao receber um plano de implementação, execute-o do início ao fim **sem pausar para confirmações**.
-- Decida sozinho detalhes de implementação não especificados (nomes internos, estrutura de funções, libs auxiliares).
-- Se algo falhar, diagnostique, corrija e tente novamente até 3x antes de desistir.
-- Ao final de cada fase, rode os testes correspondentes antes de avançar e dê um resumo do que foi feito.
-- **Só pare para perguntar se**: faltar credencial, uma API pública estiver fora do ar, ou o plano se contradizer.
-- Proibido em qualquer hipótese: `rm -rf` fora de `data/`, `git push`, `git reset --hard`, `git clean`, expor conteúdo de `.env` ou credenciais, instalar dependências fora do Poetry.
+- Ao receber um plano de implementação para EDA (Análise Exploratória), crie os scripts/notebooks sem pausar para confirmações.
+- Decida sozinho técnicas de preenchimento de nulos (ex: `fillna(0)` para agências bancárias, mediana para dados demográficos).
+- Não saia apagando/modificando as tabelas *Raw*; limite-se a criar visualizações, limpar a *Trusted* e gerar uma *Analytical* se julgar necessário.
+- Proibido em qualquer hipótese: `rm -rf` fora de `data/`, `git push`, `git reset --hard`, `git clean`, expor conteúdo de `.env` ou credenciais.
 ---
 
-*Última atualização: branch de ingestão e coleta — v2.*
+*Última atualização: Início da Etapa 2 (EDA e Limpeza) — v3.*
