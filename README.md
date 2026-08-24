@@ -1,73 +1,71 @@
-# Mapa do Potencial Bancário Brasileiro
-Onde expandir um banco digital?
-Análise dos municípios brasileiros por meio da construção do Índice de Potencial Bancário (IPB).
+# Mapa do Potencial Bancário Brasileiro (IPB)
 
-## Sobre o projeto
-O projeto quer responder a seguinte pergunta: Quais municípios brasileiros apresentam maior potencial para expansão de um banco digital?
+**Onde expandir um banco digital no Brasil?** 
+Este projeto realiza uma análise avançada dos 5.570 municípios brasileiros por meio da criação do **Índice de Potencial Bancário (IPB)**.
 
-## Objetivo
+---
 
-Criar um Índice de Potencial Bancário (IPB) e as cidades serão rankeadas por esse índice.
+## 🎯 Sobre o Projeto e Objetivo
 
-Levando em consideração
-- População - https://dados.gov.br/dados/conjuntos-dados/cd-censo-demografico & https://www.ibge.gov.br/estatisticas/sociais/rendimento-despesa-e-consumo/22827-censo-demografico-2022.html?edicao=35938
+O mercado financeiro digital está em constante expansão. No entanto, a estratégia de alocação de esforços (como campanhas de marketing, concessão de crédito e expansão de serviços) exige precisão geográfica. 
 
-- crescimento populacional
+O objetivo deste projeto é responder: **Quais municípios brasileiros apresentam a melhor relação entre potencial econômico, adoção digital e oportunidade de mercado (baixa concorrência física)?**
 
-- renda média - https://basedosdados.org/dataset/218ae306-29ac-4a83-836d-95bfdb9683fe?table=708098f3-aa55-41d3-9390-f35fb87faa66
+Para responder a essa pergunta, estamos construindo o IPB. As cidades são rankeadas a partir de uma combinação matemática de 5 pilares fundamentais de dados públicos:
 
-- população economicamente ativa
+1. **Pilar Demográfico e Educacional (IBGE / Censo 2022):** População total e nível de escolaridade.
+2. **Pilar Econômico (IBGE):** PIB per capita e força do setor de serviços.
+3. **Pilar de Dinamismo Financeiro (BCB - Pix):** Adoção e volume transacionado no Pix.
+4. **Pilar de Infraestrutura Digital (Anatel):** Densidade de banda larga fixa instalada.
+5. **Pilar de Desbancarização Física (BCB - Estban):** Quantidade de agências físicas (concorrência tradicional) versus depósitos em poupança.
 
-- emprego
+**IPB = Oportunidade Financeira + Infraestrutura Digital - Concorrência Física**
 
-- escolaridade
-- https://basedosdados.org/dataset/218ae306-29ac-4a83-836d-95bfdb9683fe?table=708098f3-aa55-41d3-9390-f35fb87faa66
-- 
-- urbanização
+<img width="359" height="68" alt="Exemplo de Ranking" src="https://github.com/user-attachments/assets/36f880c8-dbae-439a-9e2e-19e97d8fbaa9" />
 
-IPB = renda + crescimento + população + emprego + urbanização
+---
 
-O resultado final poderia ser um ranking:
+## 🏗️ Estrutura do Projeto e Documentação Técnica
 
-<img width="359" height="68" alt="image" src="https://github.com/user-attachments/assets/36f880c8-dbae-439a-9e2e-19e97d8fbaa9" />
+O projeto é suportado por um pipeline robusto de Engenharia de Dados (Python, Pandas, Google BigQuery), dividido em camadas `raw` (bruta) e `trusted` (padronizada). 
 
+Dê preferência para leitura de nossos guias detalhados na pasta `docs/`:
 
-Possível continuação
-Com esse rank de cidades, verificar quais tem menor presença/uso de serviços financeiros
+- [Guia de Execução Técnica (Pipeline & SQL)](docs/Guia_de_Execucao.md) ⚠️ *Obrigatório ler para replicar a infra e dados manuais*
+- [Plano de Implementação (Fases 0 a 4)](docs/Plano_de_Implementacao.md)
+- [Guia de Bases e Desenho (Indicadores)](docs/IPB_Guia_de_Bases_e_Desenho.md)
 
-"Onde há população e potencial econômico, mas menor presença/uso de serviços financeiros?"
-adicionando informações do sistema financeiro, usando dados públicos do Banco Central do Brasil
+---
 
-Possível continuação
-Nível de Conectividade das cidades
-Numero de dispositivos móveis x população - base de estudo FGV
-
-## Integrantes
+## 👥 Integrantes
 
 - Hermes Augusto
 - Lúcio Franchi Cruz
 - Vitor Paes
 - Nathalia Miranda
 
-## Tecnologias
+*(Compartilhar resultados com o professor fabioversolatto)*
 
--- Dê preferência para tecnologias gratuitas
+---
 
-- Python
-- SQL
-- Git/GitHub
+## 🚀 Status e Roadmap do Projeto
 
-## Estrutura do Projeto e Documentação Técnica
+Estamos desenvolvendo o projeto em etapas ágeis. Acompanhe nosso progresso:
 
-O projeto é dividido em camadas bem definidas de Engenharia de Dados (`raw` e `trusted`), carregando e padronizando os dados de diferentes fontes no BigQuery.
+- [x] **Fase 1: Desenho da Arquitetura e Definição de Indicadores** (Agosto/2026)
+  - Identificação das fontes abertas (IBGE, BCB, Anatel).
+  - Desenho técnico do Data Lake no BigQuery (Free Tier).
 
-Para guias passo a passo de como rodar e testar, consulte nossas documentações na pasta `docs/`:
-- [Guia de Execução Técnica (Pipeline & SQL)](docs/Guia_de_Execucao.md) ⚠️ *Obrigatório ler para baixar os dados manuais*
-- [Plano de Implementação (Fases 0 a 4)](docs/Plano_de_Implementacao.md)
-- [Guia de Bases e Desenho (Indicadores)](docs/IPB_Guia_de_Bases_e_Desenho.md)
+- [x] **Fase 2: Engenharia de Dados (Pipelines Raw e Trusted)** (Agosto/2026)  📍 **<-- ESTAMOS AQUI**
+  - Implementação do ambiente isolado (Poetry).
+  - Coleta automatizada de APIs e processamento de planilhas.
+  - Subida dos dados para a camada `trusted_municipios` com códigos unificados.
 
-## Status
+- [ ] **Fase 3: Analytics e Modelagem do IPB** (Previsto: Setembro/2026)
+  - Limpeza estatística (tratamento de *outliers*).
+  - Normalização dos indicadores (Min-Max Scaler).
+  - Criação da fórmula ponderada do Índice e geração do Ranking.
 
-🚧 Projeto em desenvolvimento.
-
-Compartilhar com o usuário fabioversolatto
+- [ ] **Fase 4: Visualização e Dashboard** (Previsto: Outubro/2026)
+  - Conexão do BigQuery a uma ferramenta de BI (Looker Studio ou PowerBI).
+  - Construção do painel executivo com mapas interativos e filtros regionais.
