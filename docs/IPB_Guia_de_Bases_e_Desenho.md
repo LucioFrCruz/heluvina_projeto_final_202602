@@ -149,7 +149,15 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 
 ---
 
-## 9. Links rápidos
+## 9. Aspectos Legais e Éticos (LGPD e Viés)
+
+Em conformidade com os requisitos do projeto, ressaltamos que **não há dados pessoais sensíveis (PII)** neste pipeline. 
+- Todas as bases utilizadas (IBGE, Banco Central, Anatel) são agregadas em nível municipal (macro) e de domínio público (Open Data). A LGPD não se aplica a agregados demográficos e econômicos que não permitem identificação individual.
+- **Viés (Bias) e Ética**: O índice foca em infraestrutura e volume financeiro. Não há penalização demográfica (ex: não usamos cor/raça para rankear cidades). O único risco ético é o "Efeito Polo", onde cidades-dormitório pareçam desatendidas financeiramente por transferirem seu capital para a metrópole vizinha. Isso será endereçado nas regras de negócio (Ondas de Expansão).
+
+---
+
+## 10. Links rápidos
 
 | Base | Link |
 |---|---|
@@ -164,16 +172,16 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 
 ---
 
-## 10. Detalhes técnicos de implementação
+## 11. Detalhes técnicos de implementação
 
-### 10.1 Autenticação e armazenamento
+### 12.1 Autenticação e armazenamento
 
 - **BigQuery**: projeto GCP a ser criado; autenticação local via `gcloud auth application-default login` ou variável `GOOGLE_APPLICATION_CREDENTIALS`.
 - **Dataset padrão**: `ipb_staging` (ajustável em `.env`).
 - **Localização**: `US` (multi-região padrão do BigQuery Sandbox / Free Tier, sem custos).
 - **Credenciais**: nunca commitar `.env` nem JSON de service account.
 
-### 10.2 Endpoints e métodos de coleta
+### 12.2 Endpoints e métodos de coleta
 
 | Fonte | Endpoint / URL | Método | Autenticação |
 |---|---|---|---|
@@ -185,16 +193,27 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 | BCB Estban | Portal de Dados Abertos do BCB / `https://dadosabertos.bcb.gov.br` | Download CSV | Nenhuma |
 | PNUD IDHM | `https://www.atlasbrasil.org.br` | Download XLSX | Nenhuma |
 
-### 10.3 Tratamentos obrigatórios
+### 11.3 Pré-Processamento e Transformações (Justificativas)
 
-1. **Código IBGE**: manter 7 dígitos; preencher com zero à esquerda quando necessário.
-2. **Nomes de municípios**: padronizar pela tabela-mestra do IBGE. A Anatel já possui `Código IBGE` no arquivo validado, então fuzzy matching só será necessário como contingência.
-3. **Valores monetários**: manter em reais, sem deflacionar nesta etapa (o vintage misto será declarado).
-4. **Pix**: agregar os últimos 12 meses por município; calcular `pix_per_capita` dividindo pelo total da população.
-5. **Estban**: validar colunas de agências, depósitos e crédito; se faltar alguma, documentar e usar plano B.
-6. **Missing data**: não imputar na Etapa 1; apenas flagar municípios com dados ausentes para decisão na Etapa 2.
+Durante a fase de ingestão (Etapa 1), as seguintes abordagens de pré-processamento estrutural foram aplicadas aos *Raw Datasets* antes da consolidação na camada *Trusted*:
 
-### 10.4 Camadas no BigQuery
+1. **Padronização da Chave Primária (`id_municipio`)**:
+   - **Técnica**: Cast para STRING, remoção de `.0` (float issues do pandas), preenchimento com zeros à esquerda (`zfill(7)`) e substring para garantir exatamente 7 dígitos (excluindo o dígito verificador quando as fontes enviavam 6 dígitos).
+   - **Justificativa**: Fontes heterogêneas lidam com o código IBGE de formas diferentes (int, float, string, 6 ou 7 dígitos). Sem uma chave unificada e perfeitamente padronizada, o *JOIN* falharia, comprometendo a integridade referencial.
+2. **Seleção de Recorte Temporal (Ano mais recente)**:
+   - **Técnica**: Filtro `max(ano)` / `max(mes)` para planilhas históricas (PIB e Anatel).
+   - **Justificativa**: Como o IPB é uma fotografia do cenário atual para decisão de expansão, séries temporais passadas apenas geram ruído na consolidação.
+3. **Agregação em Série Temporal (Pix)**:
+   - **Técnica**: Soma (`groupby.sum()`) das transações e valores (PF e PJ) dos últimos 12 meses disponíveis.
+   - **Justificativa**: O Pix possui forte sazonalidade mensal (ex: picos em dezembro e dias úteis). Utilizar a janela de 12 meses dilui sazonalidades e reflete o dinamismo real.
+4. **Tratamento Inicial de Metadados (Estban)**:
+   - **Técnica**: Descarte de linhas de cabeçalho administrativo (`skiprows=2`) e drop de registros sem código IBGE.
+   - **Justificativa**: Garantir que o *parser* carregue os tipos corretamente sem poluir a tabela com strings de metadados do BCB.
+5. **Decisão sobre *Missing Values* (Nulos)**:
+   - **Técnica**: Preservar campos faltantes como `NULL` na camada *Trusted* (ex: dados da amostra do Censo 2022).
+   - **Justificativa**: A imputação prematura no ETL esconde a distribuição real dos dados. O tratamento estatístico (média, mediana, exclusão) é uma tarefa analítica e ocorrerá na Etapa 2 (EDA).
+
+### 12.4 Camadas no BigQuery
 
 | Camada | Prefixo | Exemplo | Responsabilidade |
 |---|---|---|---|
@@ -204,9 +223,9 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 
 ---
 
-## 11. Schema das tabelas principais
+## 12. Dicionário de Dados e Schemas
 
-### 11.1 `raw_ibge_localidades`
+### 12.1 `raw_ibge_localidades`
 
 | Coluna | Tipo | Descrição |
 |---|---|---|
@@ -218,7 +237,7 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 | `_source_url` | STRING | URL da API |
 | `_extracted_at` | TIMESTAMP | Data/hora da extração |
 
-### 11.2 `raw_sidra_censo_2022`
+### 12.2 `raw_sidra_censo_2022`
 
 | Coluna | Tipo | Descrição |
 |---|---|---|
@@ -233,7 +252,7 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 
 > 🐘 **"O Elefante na Sala" (Censo 2022)**: O IBGE divulgou a População Total em granularidade municipal, mas os dados da amostra do Censo 2022 (Rendimento, Escolaridade e Acesso à Internet por município) **ainda não foram liberados** publicamente até o fechamento da Etapa 1. Para manter a autenticidade dos dados, essas colunas estão vindo nulas (`None`) direto da API do SIDRA. A imputação de dados faltantes ou fallback para o Censo 2010 deverá ser endereçada na **Etapa 2 (Exploração e Limpeza)**.
 
-### 11.3 `raw_pib_municipios`
+### 12.3 `raw_pib_municipios`
 
 | Coluna | Tipo | Descrição |
 |---|---|---|
@@ -245,7 +264,7 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 | `_source_url` | STRING | URL do download |
 | `_extracted_at` | TIMESTAMP | Data/hora da extração |
 
-### 11.4 `raw_bcb_pix_transacoes`
+### 12.4 `raw_bcb_pix_transacoes`
 
 | Coluna | Tipo | Descrição |
 |---|---|---|
@@ -258,7 +277,7 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 | `_source_url` | STRING | URL da consulta Olinda |
 | `_extracted_at` | TIMESTAMP | Data/hora da extração |
 
-### 11.5 `raw_anatel_banda_larga_fixa`
+### 12.5 `raw_anatel_banda_larga_fixa`
 
 | Coluna | Tipo | Descrição |
 |---|---|---|
@@ -272,7 +291,7 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 
 > Nota: banda larga móvel está fora do escopo.
 
-### 11.6 `raw_bcb_estban`
+### 12.6 `raw_bcb_estban`
 
 | Coluna | Tipo | Descrição |
 |---|---|---|
@@ -284,7 +303,7 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 | `_source_url` | STRING | URL do download |
 | `_extracted_at` | TIMESTAMP | Data/hora da extração |
 
-### 11.7 `raw_pnud_idhm`
+### 12.7 `raw_pnud_idhm`
 
 | Coluna | Tipo | Descrição |
 |---|---|---|
@@ -297,7 +316,7 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 | `_source_url` | STRING | URL do download |
 | `_extracted_at` | TIMESTAMP | Data/hora da extração |
 
-### 11.8 `trusted_municipios`
+### 12.8 `trusted_municipios`
 
 Tabela consolidada, 1 linha por município.
 
@@ -326,7 +345,7 @@ Tabela consolidada, 1 linha por município.
 
 ---
 
-## 12. Checklist de validação da Etapa 1
+## 13. Checklist de validação da Etapa 1
 
 Antes de considerar a ingestão concluída, verificar:
 
