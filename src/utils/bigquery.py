@@ -12,9 +12,12 @@ def upload_dataframe_to_raw(df: pd.DataFrame, table_name: str, if_exists: str = 
     Adiciona colunas de auditoria obrigatórias e realiza carga no BigQuery via Parquet.
     """
     client = get_bigquery_client()
+    import re
     
-    # Audit columns
+    # Audit columns and sanitize names
     df_upload = df.copy()
+    df_upload.columns = [re.sub(r'[^a-zA-Z0-9_]', '_', col) for col in df_upload.columns]
+    
     df_upload["_extracted_at"] = datetime.now(timezone.utc)
     df_upload["_source_url"] = source_url
     

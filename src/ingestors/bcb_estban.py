@@ -14,7 +14,7 @@ def extract() -> pd.DataFrame:
         raise FileNotFoundError(f"Arquivo CSV do Estban não encontrado em {source_dir}")
     
     file_path = files[0]
-    return pd.read_csv(file_path, sep=";", encoding="latin1")
+    return pd.read_csv(file_path, sep=";", encoding="latin1", skiprows=2)
 
 def transform_raw(raw_data: pd.DataFrame) -> pd.DataFrame:
     """Agrupa Estban por município."""
@@ -22,6 +22,7 @@ def transform_raw(raw_data: pd.DataFrame) -> pd.DataFrame:
     
     # Coluna CODMUN_IBGE
     if "CODMUN_IBGE" in df.columns:
+        df = df.dropna(subset=["CODMUN_IBGE"])
         df["CODMUN_IBGE"] = df["CODMUN_IBGE"].apply(normalize_ibge_code)
     
     # Extrair Agências (CNPJ) e rubricas

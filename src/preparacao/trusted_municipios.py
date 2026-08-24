@@ -23,8 +23,8 @@ def run() -> None:
     # 3. Join PIX
     # Pix tem múltiplos meses, agrupar por município
     df_pix_agg = df_pix.groupby("id_municipio").agg(
-        pix_total_volume_12m=("valor_pf", "sum"), # simplificacao
-        pix_total_transacoes_12m=("quantidade_pf", "sum")
+        pix_total_volume_12m=("VL_PagadorPF", "sum"),
+        pix_total_transacoes_12m=("QT_PagadorPF", "sum")
     ).reset_index()
     trusted = trusted.merge(df_pix_agg, on="id_municipio", how="left")
     trusted["pix_total_volume_12m"] = trusted["pix_total_volume_12m"].fillna(0)

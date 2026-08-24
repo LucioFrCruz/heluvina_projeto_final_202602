@@ -24,7 +24,7 @@ def transform_raw(raw_data: pd.DataFrame) -> pd.DataFrame:
         c_lower = str(col).lower()
         if "código" in c_lower and "ibge" in c_lower:
             col_mapping[col] = "id_municipio"
-        elif "densidade" in c_lower:
+        elif c_lower == "densidade":
             col_mapping[col] = "densidade"
         elif "ano" in c_lower:
             col_mapping[col] = "ano"
