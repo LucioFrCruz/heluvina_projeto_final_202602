@@ -46,6 +46,11 @@ def run() -> None:
     trusted = trusted.merge(df_anatel_sub, on="id_municipio", how="left")
     trusted = trusted.rename(columns={"densidade": "banda_larga_densidade"})
     
+    # 7. Join PNUD IDHM (via Ipeadata, série ADH_IDHM, ano 2010)
+    df_idhm = load_raw_parquet("pnud_idhm", "pnud_idhm")
+    df_idhm_sub = df_idhm[["id_municipio", "idhm"]]
+    trusted = trusted.merge(df_idhm_sub, on="id_municipio", how="left")
+    
     # Salva processado
     trusted_file = PROCESSED_DATA_DIR / "trusted_municipios.parquet"
     trusted.to_parquet(trusted_file, engine="pyarrow", compression="snappy")
