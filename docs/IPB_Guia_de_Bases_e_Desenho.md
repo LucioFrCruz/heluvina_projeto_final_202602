@@ -231,6 +231,8 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 | `_source_url` | STRING | URL da consulta SIDRA |
 | `_extracted_at` | TIMESTAMP | Data/hora da extração |
 
+> 🐘 **"O Elefante na Sala" (Censo 2022)**: O IBGE divulgou a População Total em granularidade municipal, mas os dados da amostra do Censo 2022 (Rendimento, Escolaridade e Acesso à Internet por município) **ainda não foram liberados** publicamente até o fechamento da Etapa 1. Para manter a autenticidade dos dados, essas colunas estão vindo nulas (`None`) direto da API do SIDRA. A imputação de dados faltantes ou fallback para o Censo 2010 deverá ser endereçada na **Etapa 2 (Exploração e Limpeza)**.
+
 ### 11.3 `raw_pib_municipios`
 
 | Coluna | Tipo | Descrição |
