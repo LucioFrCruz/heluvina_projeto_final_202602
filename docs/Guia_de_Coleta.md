@@ -15,7 +15,8 @@ Inclui resultados de testes de conectividade feitos em `2026-08-22` e indica qua
 | IBGE — PIB dos Municípios | XLSX | ⚠️ Download manual | Site do IBGE bloqueia requisições automatizadas; baixar pelo navegador. |
 | Anatel — Banda Larga Fixa | CSV | ⚠️ Download manual | Arquivo já baixado; 5.571 registros no mês mais recente. |
 | BCB — Estban | CSV | ⚠️ Download manual | Disponível no portal de dados abertos do BCB. |
-| PNUD — IDHM | XLSX | ❌ Pendente | Atlas Brasil apresentou instabilidade (HTTP 500). Ver alternativas na seção 7. |
+| PNUD — IDHM | API | ✅ Funciona (Ipeadata) | Coletado via API do Ipeadata (`ADH_IDHM`), ano 2010. Atlas Brasil 2022 indisponível. |
+| Base dos Dados | API/BigQuery | ✅ Disponível | Reservada para validação cruzada futura; não é fonte primária do pipeline. |
 | Anatel — Banda Larga Móvel | CSV | ❌ Fora do escopo | Dados volumosos; baixo impacto esperado; não entra. |
 
 ---
@@ -227,26 +228,27 @@ Esse CSV lista todos os conjuntos de dados e links para o dados.gov.br.
 
 ---
 
-### 3.4 PNUD — IDHM
+### 3.4 PNUD — IDHM (via Ipeadata)
 
-**URL de acesso**: [https://www.atlasbrasil.org.br](https://www.atlasbrasil.org.br)
+**Fonte oficial**: Atlas Brasil / PNUD — indisponível no momento (`HTTP 500`).
 
-**URL alternativa**: [https://www.undp.org/pt/brazil/atlas-dos-municipios](https://www.undp.org/pt/brazil/atlas-dos-municipios)
+**Fonte adotada**: Ipeadata (`http://www.ipeadata.gov.br/api/odata4/ValoresSerie(SERCODIGO='ADH_IDHM')`)
 
 **Status do teste**:
-- Atlas Brasil: `HTTP 500` (instável no momento do teste).
+- Atlas Brasil: `HTTP 500` (instável).
 - UNDP: `HTTP 403` ao tentar via `curl` (bloqueio de bot).
+- Ipeadata: `HTTP 200`, série `ADH_IDHM` disponível para 1991, 2000 e 2010.
 
 **Passo a passo**:
-1. Tentar primeiro o Atlas Brasil (`https://www.atlasbrasil.org.br`) no navegador.
-2. Navegar até a seção de downloads ou "Perfil dos municípios".
-3. Baixar a planilha com IDHM 2022 por município (formato XLSX).
-4. Se o Atlas estiver indisponível, tentar a página do PNUD/UNDP.
-5. Salvar em `data/raw/pnud_idhm/`.
+1. O ingestor `src/ingestors/pnud_idhm.py` consome a API do Ipeadata.
+2. Filtra automaticamente o ano 2010 (último Censo disponível na série).
+3. Padroniza o código IBGE para 7 dígitos.
+4. Salva em `data/raw/pnud_idhm/` e sobe para `raw_pnud_idhm`.
 
 **Observações**:
-- O IDHM 2022 é a versão mais recente baseada no Censo 2022.
-- Se nenhum site funcionar, considerar a Base dos Dados como último recurso (pode exigir cadastro).
+- O IDHM utilizado é do **Censo 2010**. Ele é mantido como variável histórica de referência.
+- O indicador principal do pilar E passa a ser a **escolaridade (% ensino médio+) do Censo 2022**, coletada via SIDRA Tabela 10061.
+- A **Base dos Dados** está reservada para validação cruzada futura, não como fonte primária.
 
 ---
 
@@ -260,7 +262,7 @@ Antes de considerar uma fonte como "coletada", verificar:
 - [ ] **PIB dos Municípios**: arquivo XLSX baixado e legível.
 - [ ] **Anatel Banda Larga Fixa**: CSV baixado, com colunas de município/UF e densidade de acessos.
 - [ ] **Estban**: CSV mensal baixado, com colunas de agências, depósitos e crédito.
-- [ ] **IDHM**: planilha XLSX baixada, com IDHM 2022 por município (ou indicador alternativo do pilar E).
+- [x] **IDHM**: coletado via API Ipeadata (`ADH_IDHM`, ano 2010). Escolaridade 2022 (SIDRA) é o indicador principal do pilar E.
 
 ---
 
@@ -315,23 +317,23 @@ Validação realizada em `2026-08-23` sobre os arquivos presentes em `data/raw/`
 
 ### 6.4 PNUD — IDHM
 
-- **Arquivo**: não disponível
-- **Status**: ❌ Indisponível
+- **Arquivo/Fonte**: API Ipeadata (`ADH_IDHM`)
+- **Status**: ✅ OK (IDHM 2010)
 - **Detalhes**:
-  - Atlas Brasil retornou `HTTP 500` no momento do teste.
-  - UNDP bloqueia requisições automatizadas (`HTTP 403`).
-  - **Ação necessária**:
-    1. Tentar novamente o Atlas Brasil pelo navegador.
-    2. Se persistir, usar a página do UNDP.
-    3. Se ainda não for possível, usar **escolaridade (% ensino médio+)** do Censo 2022 (SIDRA) como indicador alternativo do pilar E.
+  - 5.564 dos 5.571 municípios preenchidos.
+  - Atlas Brasil 2022 indisponível (`HTTP 500`); UNDP bloqueia bots (`HTTP 403`).
+  - IDHM 2010 mantido como variável histórica; escolaridade 2022 (SIDRA) é o indicador principal do pilar E.
+
+> **Disclaimer de vintage**: o pipeline combina diferentes anos de referência por indisponibilidade de dados municipais atualizados. Ver `Dicionario_de_Dados.md` para detalhes completos.
 
 ---
 
 ## 7. Próximos passos de coleta
 
-1. Definir se o IDHM será obtido ou substituído por escolaridade.
-2. Iniciar a implementação dos ingestores, começando pelas APIs (IBGE Localidades, SIDRA e Pix).
-3. Implementar ingestores de arquivos manuais (PIB, Anatel banda larga fixa e Estban).
+1. ✅ IDHM obtido via Ipeadata (2010) + escolaridade 2022 via SIDRA.
+2. ✅ Ingestores de APIs implementados (IBGE Localidades, SIDRA, Pix, Ipeadata).
+3. ✅ Ingestores de arquivos manuais via GCS implementados (PIB, Anatel, Estban).
+4. Próximo: validação cruzada com Base dos Dados e início da EDA (Etapa 2).
 
 ---
 

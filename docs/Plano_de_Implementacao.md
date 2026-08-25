@@ -14,8 +14,8 @@ Adotamos o **Poetry** para garantir:
 
 ### 1.2 Segurança e Credenciais GCP (Zero Secrets no Git)
 A persistência no BigQuery deve operar sem expor nenhuma chave:
-1. **Desenvolvimento Local (Recomendado)**: Uso do **Application Default Credentials (ADC)** via `gcloud auth application-default login`. Dessa forma, nenhuma chave JSON reside no disco do repositório.
-2. **Ambiente com Service Account (Opcional/CI)**: Se utilizada chave JSON, a variável de ambiente `GOOGLE_APPLICATION_CREDENTIALS` deve apontar para um arquivo fora do repositório ou com caminho explicitamente ignorado no `.gitignore` (`*.json`).
+1. **Desenvolvimento Local (Recomendado - Opção A)**: Uso da variável de ambiente `GOOGLE_APPLICATION_CREDENTIALS` apontando para o arquivo JSON da Service Account, salvo na pasta local `credentials/`. Esta pasta e todos os arquivos `*.json` DEVEM estar estritamente ignorados no `.gitignore` (o repositório já está configurado assim).
+2. **Ambiente CI/CD (GitHub Actions)**: A mesma abordagem será utilizada, mas o JSON será injetado de forma segura através dos GitHub Secrets.
 3. **Variáveis de Configuração**: Gerenciadas via `.env` (com template em `.env.example`).
 
 ---
@@ -88,12 +88,12 @@ flowchart TD
 3. Criar dataset de staging:
    - Nome: `ipb_staging`
    - Localização: `US` (multi-região padrão do BigQuery Always Free / Sandbox, sem necessidade de cartão/faturamento)
-4. Autenticar localmente via ADC:
-   ```bash
-   gcloud auth application-default login
-   ```
+4. Autenticar localmente via Service Account (JSON):
+   - Solicitar o arquivo `.json` ao time.
+   - Salvar o arquivo dentro da pasta `credentials/` (que está ignorada no `.gitignore`).
 5. Criar `.env.example` e `.env`:
    ```bash
+   GOOGLE_APPLICATION_CREDENTIALS=credentials/meu-arquivo-service-account.json
    GCP_PROJECT_ID=meu-projeto-ipb-mba
    BIGQUERY_DATASET=ipb_staging
    BIGQUERY_LOCATION=US

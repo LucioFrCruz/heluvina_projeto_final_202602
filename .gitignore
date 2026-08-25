@@ -1,6 +1,42 @@
-referencias/
-.venv*
+# Arquivos de ambiente e segredos (NUNCA COMMITAR)
+.env
+.env.*
+!.env.example
+credentials/
+credntials/
+*.json
+
+# Diretórios de dados do projeto
 data/
+referencias/
 *.csv
 *.xlsx
 *.parquet
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ambientes Virtuais (Poetry/Venv)
+.venv*/
+venv/
+ENV/
+env/
+
+# Testes e Cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Ferramentas de Linting / Typagem
+.mypy_cache/
+.ruff_cache/
+
+# IDEs e SO
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
