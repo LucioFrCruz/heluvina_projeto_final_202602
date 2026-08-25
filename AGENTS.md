@@ -108,7 +108,7 @@ heluvina_projeto_final_202602/
 
 ## 3. Tecnologias e dependências
 
-- **Python 3.11+**
+- **Python 3.10+**
 - **Google Cloud SDK** (`gcloud`) — autenticação local opcional, mas recomendada.
 - **BigQuery** via `google-cloud-bigquery` — camada de persistência.
 - **Pandas / Polars** — manipulação de dados (escolher um e manter).
@@ -223,10 +223,14 @@ Antes de marcar uma fonte como "coletada", verificar:
 ## 9. Status da Consolidação (Trusted)
 
 A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* a serem tratados na Etapa 2:
-- **Internet (Censo 2022)**: A tabela 7307 do SIDRA retorna HTTP 500 para `N6[all]` desde agosto/2026. A coluna `domicilios_com_internet_pct` permanece nula; usar `banda_larga_densidade` (Anatel) como proxy na EDA.
+- **Internet (Censo 2022)**: A tabela 7307 do SIDRA retorna HTTP 500 para `N6[all]` desde agosto/2026. A coluna `domicilios_com_internet_pct` permanece nula; usar `banda_larga_fixa_por_100_hab` (Anatel) como proxy na EDA.
 - **Estban**: Apenas ~2.900 municípios possuem agências. Os outros devem receber imputação zero para `quantidade_agencias`, `volume_depositos`, etc.
-- **PIB**: A coluna `va_servicos` está nula por incompatibilidade de nomenclatura no XLSX de origem; avaliar correção do ingestor `ibge_pib_municipios.py` ou remoção da coluna.
+- **PIB**: A coluna `va_servicos` teve o mapeamento corrigido no ingestor `ibge_pib_municipios.py`; validar se agora vem preenchida no trusted.
 - **IDHM**: Mantido como variável histórica (2010) via Ipeadata. O indicador principal de capital humano passa a ser a **escolaridade (% ensino médio completo)** do Censo 2022 (SIDRA Tabela 10061).
+
+> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix 2023/2024, Anatel/Estban 2026, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
+
+> **Base dos Dados**: reservada para validação cruzada futura, não como fonte primária do pipeline.
 
 ---
 
