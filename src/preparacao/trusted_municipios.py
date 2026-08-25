@@ -1,10 +1,14 @@
+import logging
 import pandas as pd
 from src.utils.storage import save_raw_parquet, load_raw_parquet
 from src.utils.bigquery import upload_dataframe_to_raw
 from src.config import TABLE_TRUSTED_MUNICIPIOS, PROCESSED_DATA_DIR
 
+logger = logging.getLogger(__name__)
+
+
 def run() -> None:
-    print("Iniciando consolidação Trusted...")
+    logger.info("Iniciando consolidação Trusted...")
     
     # Lendo caches locais
     df_ibge = load_raw_parquet("ibge_localidades", "ibge_localidades")
@@ -16,7 +20,16 @@ def run() -> None:
     
     # 1. Base IBGE (Tabela Mestra)
     trusted = df_ibge.copy()
-    
+
+    # Descarta registros mestres sem identificação geográfica (erro pontual na API IBGE)
+    registros_antes = len(trusted)
+    trusted = trusted.dropna(subset=["sigla_uf", "nome_uf"])
+    descartados = registros_antes - len(trusted)
+    if descartados:
+        logger.warning(
+            "%s município(s) descartado(s) por falta de UF na base IBGE", descartados
+        )
+
     # 2. Join SIDRA
     trusted = trusted.merge(df_sidra, on="id_municipio", how="left")
     
@@ -31,7 +44,8 @@ def run() -> None:
     trusted["pix_total_transacoes_12m"] = trusted["pix_total_transacoes_12m"].fillna(0)
     
     # 4. Join PIB
-    df_pib_sub = df_pib[["id_municipio", "pib", "pib_per_capita", "va_servicos"]]
+    # va_servicos está descartado da trusted: IBGE não divulgou a rubrica para 2023 no arquivo de origem.
+    df_pib_sub = df_pib[["id_municipio", "pib", "pib_per_capita"]]
     trusted = trusted.merge(df_pib_sub, on="id_municipio", how="left")
     
     # 5. Join Estban
@@ -44,12 +58,19 @@ def run() -> None:
     # 6. Join Anatel
     df_anatel_sub = df_anatel[["id_municipio", "densidade"]]
     trusted = trusted.merge(df_anatel_sub, on="id_municipio", how="left")
-    trusted = trusted.rename(columns={"densidade": "banda_larga_densidade"})
+    trusted = trusted.rename(columns={"densidade": "banda_larga_fixa_por_100_hab"})
     
     # 7. Join PNUD IDHM (via Ipeadata, série ADH_IDHM, ano 2010)
     df_idhm = load_raw_parquet("pnud_idhm", "pnud_idhm")
     df_idhm_sub = df_idhm[["id_municipio", "idhm"]]
     trusted = trusted.merge(df_idhm_sub, on="id_municipio", how="left")
+    
+    # 8. Normalizações per capita / por 100 mil hab. (evita divisão por zero)
+    pop_safe = trusted["populacao_total"].replace(0, None)
+    trusted["pix_per_capita_12m"] = trusted["pix_total_volume_12m"] / pop_safe
+    trusted["agencias_por_100k_hab"] = (trusted["quantidade_agencias"] / pop_safe) * 100_000
+    trusted["depositos_per_capita"] = trusted["volume_depositos"] / pop_safe
+    trusted["credito_per_capita"] = trusted["volume_credito"] / pop_safe
     
     # Salva processado
     trusted_file = PROCESSED_DATA_DIR / "trusted_municipios.parquet"
@@ -57,7 +78,7 @@ def run() -> None:
     
     # Upload para BQ
     upload_dataframe_to_raw(trusted, TABLE_TRUSTED_MUNICIPIOS, source_url="consolidation_script")
-    print(f"Consolidação concluída! {len(trusted)} registros processados.")
+    logger.info("Consolidação concluída! %s registros processados.", len(trusted))
 
 if __name__ == "__main__":
     run()
