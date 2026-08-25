@@ -56,9 +56,10 @@ Estamos desenvolvendo o projeto em etapas ágeis. Acompanhe nosso progresso:
   - Definição da arquitetura, tese e pilares do índice.
 
 - [x] **Etapa 1: Processamento e Ingestão** (Prazo: 25/08) 📍 **<-- ESTAMOS AQUI**
-  - Implementação do Data Lake (BigQuery + GCS).
+  - Implementação do Data Lake no ambiente GCP (BigQuery + GCS).
   - Coleta automatizada de APIs (Pix, IBGE) e Data Lake centralizado para arquivos manuais (Estban, Anatel).
   - Tabela consolidadora `trusted_municipios`.
+  - Git Tag gerado [v0.1.0-etapa1](https://github.com/LucioFrCruz/heluvina_projeto_final_202602/releases/tag/v0.1.0-etapa1)
 
 - [ ] **Etapa 2: Análise Exploratória (EDA) e Limpeza** (Prazo: 03/09)
   - Tratamento de outliers e dados faltantes.
