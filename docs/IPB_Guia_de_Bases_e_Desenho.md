@@ -98,17 +98,17 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 ### Pilar B — Dinamismo Econômico
 | Indicador | Fonte e acesso | Esforço | Status |
 |---|---|---|---|
-| **Crescimento populacional 2010→2022** | Censo 2010 e 2022 — SIDRA (duas consultas + variação %) | ⚡ | NÚCLEO |
-| **Crescimento do Pix (12 meses)** | API BCB (ver pilar C) — calculado sobre a série | ⚡ | NÚCLEO |
+| Crescimento populacional 2010→2022 | Censo 2010 e 2022 — SIDRA (duas consultas + variação %) | ⚡ | stretch |
+| Crescimento do Pix (12 meses) | API BCB — calculado sobre a série | ⚡ | stretch |
 | Saldo de empregos formais / salário de admissão | Novo Caged (MTE) — FTP `ftp://ftp.mtps.gov.br/pdet/microdados/NOVO CAGED/` | 🐢 | stretch |
 | Empresas ativas | Cempre — IBGE/SIDRA | 🔧 | stretch |
 
 ### Pilar C — Adoção Digital (diferencial do trabalho)
 | Indicador | Fonte e acesso | Esforço | Status |
 |---|---|---|---|
-| **Transações Pix PF/PJ por município** | API Olinda BCB: `.../servico/Pix_DadosAbertos/versao/v1/odata/TransacoesPixPorMunicipio(DataBase=@DataBase)?$format=json&@DataBase='202606'` (loop por mês, 12–24 meses) | ⚡/🔧 | NÚCLEO |
+| **Volume Pix PF/PJ per capita (12 meses)** | API Olinda BCB: `.../servico/Pix_DadosAbertos/versao/v1/odata/TransacoesPixPorMunicipio(DataBase=@DataBase)?$format=json&@DataBase='YYYYMM'` (loop por mês, 12 meses) | ⚡/🔧 | NÚCLEO |
 | **Banda larga fixa por 100 hab.** | Anatel — dados.gov.br: CSV "Densidade de acessos… por 100 habitantes" | 🔧 | NÚCLEO |
-| **% domicílios com internet** | Censo 2022 — SIDRA: "Acesso à internet, existência" | ⚡ | NÚCLEO |
+| % domicílios com internet | Censo 2022 — SIDRA: "Acesso à internet, existência" | ⚡ | alternativa / proxy |
 | Banda larga móvel por 100 hab. | Anatel — dados.gov.br | 🔧 | fora do escopo |
 | Chaves Pix cadastradas | API BCB: `ChavesPix(Data='...')` | ⚡ | stretch |
 
@@ -129,7 +129,7 @@ Esforço: ⚡ rápido (API/download direto) · 🔧 médio · 🐢 pesado (evita
 | **IDHM** | Atlas Brasil (PNUD) — xlsx por município (IDHM 2022) | ⚡ | NÚCLEO* |
 | Escolaridade (% ensino médio+) | Censo 2022 — SIDRA | ⚡ | alternativa |
 
-> *O IDHM é a primeira opção para o pilar E, mas o site do Atlas Brasil apresentou instabilidade (`HTTP 500`). Se não for possível baixar o IDHM em 24–48h, a **escolaridade (% ensino médio+)** vira indicador principal do pilar E, mantendo o núcleo funcional.
+> **Decisão real**: o Atlas Brasil 2022 não foi obtido (instabilidade do site). O IDHM utilizado é o **Censo 2010 via API do Ipeadata** (`ADH_IDHM`), mantido como variável histórica. O indicador **principal do pilar E é a escolaridade (% ensino médio+) do Censo 2022** (SIDRA Tabela 10061).
 
 **Chave de junção (passo zero)**: código IBGE de 7 dígitos — tabela-mestra via `https://servicodados.ibge.gov.br/api/v1/localidades/municipios`. Guardar nome + UF para *fuzzy matching* (Anatel pode vir por nome).
 
@@ -182,7 +182,7 @@ Em conformidade com os requisitos do projeto, ressaltamos que **não há dados p
 
 ## 11. Detalhes técnicos de implementação
 
-### 12.1 Autenticação e armazenamento
+### 11.1 Autenticação e armazenamento
 
 - **BigQuery**: projeto GCP a ser criado; autenticação local via `gcloud auth application-default login` ou variável `GOOGLE_APPLICATION_CREDENTIALS`.
 - **Dataset padrão**: `ipb_staging` (ajustável em `.env`).
@@ -205,6 +205,7 @@ Em conformidade com os requisitos do projeto, ressaltamos que **não há dados p
 
 Durante a fase de ingestão (Etapa 1), as seguintes abordagens de pré-processamento estrutural foram aplicadas aos *Raw Datasets* antes da consolidação na camada *Trusted*:
 
+0. **Cache local em Parquet (idempotência)**: Os ingestores salvam dados brutos em `data/raw/<fonte>/*.parquet` antes de subir para o BigQuery. Isso permite reprocessamento sem bater novamente nas APIs e isola falhas de rede da carga no data warehouse.
 1. **Padronização da Chave Primária (`id_municipio`)**:
    - **Técnica**: Cast para STRING, remoção de `.0` (float issues do pandas), preenchimento com zeros à esquerda (`zfill(7)`) e substring para garantir exatamente 7 dígitos (excluindo o dígito verificador quando as fontes enviavam 6 dígitos).
    - **Justificativa**: Fontes heterogêneas lidam com o código IBGE de formas diferentes (int, float, string, 6 ou 7 dígitos). Sem uma chave unificada e perfeitamente padronizada, o *JOIN* falharia, comprometendo a integridade referencial.
@@ -221,7 +222,7 @@ Durante a fase de ingestão (Etapa 1), as seguintes abordagens de pré-processam
    - **Técnica**: Preservar campos faltantes como `NULL` na camada *Trusted* (ex: dados da amostra do Censo 2022).
    - **Justificativa**: A imputação prematura no ETL esconde a distribuição real dos dados. O tratamento estatístico (média, mediana, exclusão) é uma tarefa analítica e ocorrerá na Etapa 2 (EDA).
 
-### 12.4 Camadas no BigQuery
+### 11.2 Camadas no BigQuery
 
 | Camada | Prefixo | Exemplo | Responsabilidade |
 |---|---|---|---|
@@ -253,14 +254,15 @@ Durante a fase de ingestão (Etapa 1), as seguintes abordagens de pré-processam
 |---|---|---|
 | `id_municipio` | STRING | Código IBGE de 7 dígitos |
 | `populacao_total` | FLOAT | População residente total |
-| `populacao_18_35` | FLOAT | População entre 18 e 35 anos |
-| `rendimento_domiciliar_per_capita` | FLOAT | Rendimento domiciliar per capita (R$) |
-| `domicilios_com_internet_pct` | FLOAT | % de domicílios com acesso à internet |
+| `populacao_18_35_pct` | FLOAT | % da população entre 18 e 35 anos |
 | `populacao_urbana_pct` | FLOAT | % da população residente em área urbana |
+| `rendimento_domiciliar_per_capita` | FLOAT | Rendimento domiciliar per capita (R$) |
+| `escolaridade_ensino_medio_pct` | FLOAT | % de pessoas 18+ com ensino médio completo ou superior |
+| `domicilios_com_internet_pct` | FLOAT | % de domicílios com acesso à internet (nulo por instabilidade da API SIDRA) |
 | `_source_url` | STRING | URL da consulta SIDRA |
 | `_extracted_at` | TIMESTAMP | Data/hora da extração |
 
-> 🐘 **"O Elefante na Sala" (Censo 2022)**: O IBGE divulgou a População Total em granularidade municipal, mas os dados da amostra do Censo 2022 (Rendimento, Escolaridade e Acesso à Internet por município) **ainda não foram liberados** publicamente até o fechamento da Etapa 1. Para manter a autenticidade dos dados, essas colunas estão vindo nulas (`None`) direto da API do SIDRA. A imputação de dados faltantes ou fallback para o Censo 2010 deverá ser endereçada na **Etapa 2 (Exploração e Limpeza)**.
+> ✅ **Censo 2022 disponível**: os agregados municipais de população, renda, escolaridade e urbanização foram liberados pelo IBGE/SIDRA e estão preenchidos para ~5.570 municípios. Apenas a tabela 7307 (% domicílios com internet) permanece instável para `N6[all]`; usamos `banda_larga_fixa_por_100_hab` (Anatel) como proxy.
 
 ### 12.3 `raw_pib_municipios`
 
@@ -318,13 +320,12 @@ Durante a fase de ingestão (Etapa 1), as seguintes abordagens de pré-processam
 | Coluna | Tipo | Descrição |
 |---|---|---|
 | `id_municipio` | STRING | Código IBGE de 7 dígitos |
-| `ano` | INTEGER | Ano de referência |
+| `ano` | INTEGER | Ano de referência (2010) |
 | `idhm` | FLOAT | Índice de Desenvolvimento Humano Municipal |
-| `idhm_renda` | FLOAT | Componente renda do IDHM |
-| `idhm_longevidade` | FLOAT | Componente longevidade do IDHM |
-| `idhm_educacao` | FLOAT | Componente educação do IDHM |
-| `_source_url` | STRING | URL do download |
+| `_source_url` | STRING | URL da API do Ipeadata |
 | `_extracted_at` | TIMESTAMP | Data/hora da extração |
+
+> **Nota**: a fonte oficial Atlas Brasil/PNUD 2022 não foi obtida por instabilidade do site. O IDHM utilizado é o **Censo 2010 via API do Ipeadata** (`ADH_IDHM`) e serve como variável histórica de referência.
 
 ### 12.8 `trusted_municipios`
 
@@ -338,20 +339,26 @@ Tabela consolidada, 1 linha por município.
 | `nome_regiao` | STRING | Região |
 | `populacao_total` | FLOAT | População total (Censo 2022) |
 | `populacao_18_35_pct` | FLOAT | % população 18–35 anos |
-| `crescimento_populacional_2010_2022_pct` | FLOAT | Variação populacional 2010→2022 |
-| `rendimento_domiciliar_per_capita` | FLOAT | R$ per capita |
-| `pib_per_capita` | FLOAT | R$ per capita |
-| `domicilios_com_internet_pct` | FLOAT | % domicílios com internet |
 | `populacao_urbana_pct` | FLOAT | % população urbana |
-| `pix_per_capita_12m` | FLOAT | Transações Pix PF+PJ / população (últimos 12 meses) |
-| `crescimento_pix_12m_pct` | FLOAT | Crescimento do valor Pix vs. 12 meses anteriores |
+| `rendimento_domiciliar_per_capita` | FLOAT | R$ per capita (Censo 2022) |
+| `escolaridade_ensino_medio_pct` | FLOAT | % pessoas 18+ com ensino médio completo ou superior (Censo 2022) |
+| `domicilios_com_internet_pct` | FLOAT | % domicílios com internet (nulo — usar Anatel como proxy) |
+| `pib` | FLOAT | PIB a preços correntes (R$ 1.000) |
+| `pib_per_capita` | FLOAT | R$ per capita |
+| `pix_total_volume_12m` | FLOAT | Volume Pix PF+PJ (R$) — últimos 12 meses |
+| `pix_total_transacoes_12m` | FLOAT | Quantidade Pix PF+PJ — últimos 12 meses |
+| `pix_per_capita_12m` | FLOAT | Volume Pix PF+PJ / população |
 | `banda_larga_fixa_por_100_hab` | FLOAT | Acessos de banda larga fixa por 100 hab. |
+| `quantidade_agencias` | INTEGER | Agências bancárias ativas |
 | `agencias_por_100k_hab` | FLOAT | Agências bancárias por 100 mil hab. |
+| `volume_depositos` | FLOAT | Depósitos (R$) |
 | `depositos_per_capita` | FLOAT | Depósitos / população |
+| `volume_credito` | FLOAT | Crédito (R$) |
 | `credito_per_capita` | FLOAT | Crédito / população |
-| `idhm` | FLOAT | IDHM 2022 |
-| `escolaridade_pct` | FLOAT | % população com ensino médio completo (alternativa ao IDHM) |
+| `idhm` | FLOAT | IDHM 2010 (Ipeadata/PNUD) — variável histórica |
 | `_extracted_at` | TIMESTAMP | Data/hora da geração |
+
+> **Disclaimer de vintage**: o `trusted_municipios` combina dados de diferentes anos de referência (Censo 2022, PIB 2023, Pix 2023/2024, Anatel/Estban 2026, IDHM 2010). Esse mix é uma limitação declarada e será tratado na EDA e apresentação final.
 
 ---
 

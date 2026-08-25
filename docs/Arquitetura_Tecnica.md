@@ -181,10 +181,11 @@ erDiagram
     RAW_SIDRA_CENSO_2022 {
         string id_municipio PK
         float populacao_total
-        float populacao_18_35
-        float rendimento_domiciliar_per_capita
-        float domicilios_com_internet_pct
+        float populacao_18_35_pct
         float populacao_urbana_pct
+        float rendimento_domiciliar_per_capita
+        float escolaridade_ensino_medio_pct
+        float domicilios_com_internet_pct
         string _source_url
         timestamp _extracted_at
     }
@@ -234,9 +235,6 @@ erDiagram
         string id_municipio PK
         int ano
         float idhm
-        float idhm_renda
-        float idhm_longevidade
-        float idhm_educacao
         string _source_url
         timestamp _extracted_at
     }
@@ -248,16 +246,21 @@ erDiagram
         string nome_regiao
         float populacao_total
         float populacao_18_35_pct
-        float crescimento_populacional_2010_2022_pct
-        float rendimento_domiciliar_per_capita
-        float pib_per_capita
-        float domicilios_com_internet_pct
         float populacao_urbana_pct
+        float rendimento_domiciliar_per_capita
+        float escolaridade_ensino_medio_pct
+        float domicilios_com_internet_pct
+        float pib
+        float pib_per_capita
+        float pix_total_volume_12m
+        float pix_total_transacoes_12m
         float pix_per_capita_12m
-        float crescimento_pix_12m_pct
         float banda_larga_fixa_por_100_hab
+        float quantidade_agencias
         float agencias_por_100k_hab
+        float volume_depositos
         float depositos_per_capita
+        float volume_credito
         float credito_per_capita
         float idhm
         timestamp _extracted_at
@@ -281,16 +284,17 @@ erDiagram
 | A | População residente | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Chave: `id_municipio` |
 | A | Rendimento domiciliar per capita | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Mesma tabela do item acima |
 | A | PIB municipal / per capita | IBGE | Download XLSX | `raw_pib_municipios` | 📁 Manual | Planilha única 2010–2023 |
-| B | Crescimento populacional 2010→2022 | IBGE SIDRA | API | `raw_sidra_censo_2010` + `raw_sidra_censo_2022` | 🌐 API | Calcular variação percentual |
-| B | Crescimento do Pix | BCB Olinda | API | `raw_bcb_pix_transacoes` | 🌐 API | Loop mensal, últimos 12–24 meses |
-| C | Transações Pix PF/PJ | BCB Olinda | API | `raw_bcb_pix_transacoes` | 🌐 API | Mesma base do pilar B |
-| C | % domicílios com internet | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Mesma tabela do pilar A |
+| B | Crescimento populacional 2010→2022 | IBGE SIDRA | API | `raw_sidra_censo_2010` + `raw_sidra_censo_2022` | 🌐 API | stretch — variação percentual |
+| B | Crescimento do Pix | BCB Olinda | API | `raw_bcb_pix_transacoes` | 🌐 API | stretch — calculado sobre a série |
+| C | Volume Pix PF/PJ per capita | BCB Olinda | API | `raw_bcb_pix_transacoes` | 🌐 API | `pix_total_volume_12m / populacao_total` |
+| C | % domicílios com internet | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Tabela 7307 — instável; usar Anatel como proxy |
 | C | Banda larga fixa por 100 hab. | Anatel | Download CSV | `raw_anatel_banda_larga_fixa` | 📁 Manual | Arquivo já baixado; 5.571 registros no mês mais recente |
-| D | Agências por 100 mil hab. | BCB Estban | Download CSV/Portal | `raw_bcb_estban` | 📁 Manual | Validar formato atual com urgência |
-| D | Depósitos e crédito per capita | BCB Estban | Download CSV/Portal | `raw_bcb_estban` | 📁 Manual | Mesma base do item acima |
-| E | % população 18–35 anos | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Mesma tabela do pilar A |
-| E | % população urbana | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Mesma tabela do pilar A |
-| E | IDHM | PNUD Atlas | Download XLSX | `raw_pnud_idhm` | 📁 Manual | Pendente; ver alternativas na seção 9 |
+| D | Agências por 100 mil hab. | BCB — Estban | Download CSV | `raw_bcb_estban` | 📁 Manual | `quantidade_agencias / populacao * 100.000` |
+| D | Depósitos e crédito per capita | BCB — Estban | Download CSV | `raw_bcb_estban` | 📁 Manual | `volume_depositos` / `volume_credito` por população |
+| E | % população 18–35 anos | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Tabela 9514 |
+| E | % população urbana | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Tabela 10089 |
+| E | Escolaridade (% ensino médio+) | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Tabela 10061 — indicador principal do pilar E |
+| E | IDHM | Ipeadata (PNUD/Atlas 2010) | API | `raw_pnud_idhm` | 🌐 API | Variável histórica; Atlas 2022 indisponível |
 | — | Tabela-mestra | IBGE API Localidades | API | `raw_ibge_localidades` | 🌐 API | Base para joins e nomes padronizados |
 
 > **Fora do escopo**: banda larga móvel (dados volumosos, baixo impacto esperado; não entra nem como stretch).
@@ -328,7 +332,7 @@ Ingestores do núcleo:
 - `bigquery.py`: cliente reutilizável, funções `upload_df_to_bq` e `read_bq_to_df`.
 - `storage.py`: funções auxiliares para leitura de arquivos locais (CSV, XLSX).
 
-> **Nota**: não há cache local Parquet no desenho aprovado. Os scripts leem diretamente das APIs ou dos arquivos baixados manualmente e sobem para o BigQuery.
+> **Nota**: o desenho aprovado inclui **cache local em Parquet** (`data/raw/<fonte>/*.parquet`) como estágio intermediário. Os scripts leem das APIs/arquivos, salvam localmente e depois sobem para o BigQuery. Isso garante idempotência, reprodutibilidade e desacoplamento das APIs.
 
 ### 6.3 BigQuery
 
@@ -379,31 +383,31 @@ Ingestores do núcleo:
 
 ---
 
-## 9. Alternativas para o IDHM
+## 9. Decisão sobre o IDHM
 
-A fonte original (`Atlas Brasil`) apresentou instabilidade (`HTTP 500`) no momento da validação. Opções:
+A fonte oficial (`Atlas Brasil` / PNUD) apresentou instabilidade (`HTTP 500`) e não foi possível obter o IDHM 2022. A decisão adotada foi:
 
-1. **Tentar novamente pelo Atlas Brasil**: `https://www.atlasbrasil.org.br`.
-2. **Página do PNUD/UNDP**: `https://www.undp.org/pt/brazil/atlas-dos-municipios` (bloqueia bots, mas funciona no navegador).
-3. **Base dos Dados**: `https://basedosdados.org/dataset/cbfc7253-089b-44e2-8825-755e1419efc8` — pode exigir cadastro/autenticação, mas é uma fonte estável.
-4. **Substituir o IDHM por outro indicador do pilar E**: exemplo, `% de pessoas com ensino médio completo` ou anos de estudo, ambos disponíveis no SIDRA/Censo 2022. Isso mantém o pilar E funcional sem depender do Atlas Brasil.
+1. **IDHM 2010 via Ipeadata**: coletado pela API do Ipeadata (`ADH_IDHM`), mantido como variável histórica de referência.
+2. **Escolaridade (% ensino médio+) do Censo 2022**: indicador principal do pilar E, obtido via SIDRA Tabela 10061.
 
-**Recomendação**: se o IDHM não for obtido em 24–48h, usar a alternativa 4 para não bloquear a Etapa 1.
+> **Base dos Dados**: reservada para **validação cruzada** futura, não como fonte primária do pipeline.
+
+Essa abordagem mantém o pilar E funcional com dados oficiais e reprodutíveis, sem depender da disponibilidade do site do Atlas Brasil.
 
 ---
 
 ## 10. Fluxo de execução one-shot sugerido
 
-1. Configurar `.env` e apontar `GOOGLE_APPLICATION_CREDENTIALS` para a Service Account JSON em `credentials/`.
-2. Criar dataset `ipb_staging` no BigQuery.
+1. Configurar `.env` com `GCP_PROJECT_ID`, `BIGQUERY_DATASET`, `BIGQUERY_LOCATION` e, opcionalmente, `GOOGLE_APPLICATION_CREDENTIALS`.
+2. Criar dataset `ipb_staging` no BigQuery (localização `US`).
 3. Executar `src/ingestors/ibge_localidades.py` → gera `raw_ibge_localidades`.
 4. Executar ingestores independentes em qualquer ordem:
    - `sidra_censo_2022.py` (API)
-   - `ibge_pib_municipios.py` (XLSX manual)
+   - `ibge_pib_municipios.py` (XLSX via GCS)
    - `bcb_pix.py` (API)
-   - `anatel_banda_larga_fixa.py` (CSV manual)
-   - `bcb_estban.py` (CSV manual)
-   - `pnud_idhm.py` (XLSX manual, se disponível)
+   - `anatel_banda_larga_fixa.py` (CSV via GCS)
+   - `bcb_estban.py` (CSV via GCS)
+   - `pnud_idhm.py` (API Ipeadata — IDHM 2010)
 5. Executar `src/preparacao/trusted_municipios.py` → lê tabelas `raw_*`, faz joins e grava `trusted_municipios`.
 6. Validar qualidade conforme checklist do `AGENTS.md`.
 
@@ -412,13 +416,12 @@ A fonte original (`Atlas Brasil`) apresentou instabilidade (`HTTP 500`) no momen
 ## 11. Próximos passos pós-desenho
 
 1. Criar projeto no Google Cloud Console.
-2. Ativar APIs: BigQuery API.
+2. Ativar APIs: BigQuery API e Cloud Storage API.
 3. Criar dataset `ipb_staging` na região `US` (Free Tier).
-4. Configurar autenticação local (salvar JSON na pasta `credentials/` e apontar no `.env`).
-5. Criar `requirements.txt` e `.env.example`.
+4. Configurar autenticação local (`gcloud auth application-default login` ou JSON de service account).
+5. Manter `.env.example` atualizado.
 6. Implementar ingestores do núcleo.
-7. Resolver o IDHM ou decidir indicador alternativo para o pilar E.
-8. Adicionar testes unitários para utilitários.
+7. Adicionar testes unitários para ingestores e utilitários.
 
 ---
 
@@ -451,4 +454,4 @@ Bastará:
 
 ---
 
-*Documento v2 — arquitetura revisada: sem cache local Parquet, com distinção API vs manual e banda larga móvel fora do escopo.*
+*Documento v3 — arquitetura revisada: com cache local Parquet, fontes via GCS Data Lake, IDHM 2010 via Ipeadata e banda larga móvel fora do escopo.*

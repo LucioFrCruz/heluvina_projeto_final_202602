@@ -6,7 +6,7 @@ Este documento detalha o passo a passo para configurar o ambiente, garantir a pr
 
 ## 1. Pré-requisitos e Configuração de Ambiente
 
-O projeto utiliza **Poetry** para gerenciamento de dependências e requer Python 3.9+. 
+O projeto utiliza **Poetry** para gerenciamento de dependências e requer Python 3.10+. 
 
 1. **Instale as dependências:**
    ```bash
@@ -52,7 +52,10 @@ poetry run python -m src.ingestors.ibge_pib_municipios
 poetry run python -m src.ingestors.bcb_estban
 poetry run python -m src.ingestors.anatel_banda_larga_fixa
 
-# 5. Consolidação (Camada Trusted)
+# 5. IDHM histórico (API Ipeadata — Censo 2010)
+poetry run python -m src.ingestors.pnud_idhm
+
+# 6. Consolidação (Camada Trusted)
 poetry run python -m src.preparacao.trusted_municipios
 ```
 
@@ -61,6 +64,8 @@ poetry run python -m src.preparacao.trusted_municipios
 ## 4. Validação e Consultas no BigQuery
 
 Após a execução, os dados estarão no dataset `ipb_staging`. Abaixo estão as consultas recomendadas para homologar os dados com a sua equipe.
+
+> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix 2023/2024, Anatel/Estban 2026, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
 
 ### 4.1. Visão Completa (Camada Trusted)
 *Os 10 municípios com maior volume transacionado no Pix (e seus PIBs).*
@@ -82,7 +87,8 @@ LIMIT 10;
 ```
 
 ### 4.2. Infraestrutura Digital (Anatel)
-*Top 5 municípios com maior densidade de Banda Larga por Região.*
+*Top 5 municípios com maior densidade de Banda Larga por Região.*  
+A tabela `raw_anatel_banda_larga_fixa` utiliza a coluna `densidade` (acessos por 100 hab.).
 ```sql
 WITH Ranked AS (
   SELECT 
@@ -121,7 +127,8 @@ LIMIT 15;
 ```
 
 ### 4.4. Setor de Serviços (PIB IBGE)
-*Municípios com economias mais dependentes de serviços.*
+*Municípios com economias historicamente dependentes de serviços.*  
+A coluna `va_servicos` existe apenas na `raw_pib_municipios` e mapeia o "Valor adicionado bruto dos Serviços" do XLSX do IBGE. **Nota:** a rubrica está nula para 2023 no arquivo de origem; por isso não foi propagada para a `trusted_municipios`.
 ```sql
 SELECT 
     id_municipio,
@@ -132,6 +139,7 @@ FROM
     `mba-projetc-final.ipb_staging.raw_pib_municipios`
 WHERE 
     pib > 0
+    AND va_servicos IS NOT NULL
 ORDER BY 
     pct_servicos_no_pib DESC
 LIMIT 10;
