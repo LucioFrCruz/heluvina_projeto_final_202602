@@ -32,7 +32,7 @@ def transform_raw(raw_data: pd.DataFrame) -> pd.DataFrame:
             col_mapping[col] = "pib_per_capita"
         elif "produto interno bruto, " in c_lower and "preços correntes" in c_lower:
             col_mapping[col] = "pib"
-        elif "valor adicionado bruto dos serviços" in c_lower:
+        elif "valor adicionado bruto dos servi" in c_lower:
             col_mapping[col] = "va_servicos"
     
     if col_mapping:
