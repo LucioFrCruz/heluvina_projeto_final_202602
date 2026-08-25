@@ -33,7 +33,7 @@ Dê preferência para leitura de nossos guias detalhados na pasta `docs/`:
 
 - [Guia de Execução Técnica (Pipeline & SQL)](docs/Guia_de_Execucao.md) 💻 *Instruções de setup e queries SQL (100% automatizado)*
 - [Plano de Implementação (Fases 0 a 4)](docs/Plano_de_Implementacao.md)
-- [Guia de Bases e Desenho (Indicadores)](docs/IPB_Guia_de_Bases_e_Desenho.md)
+- [Guia de Bases e Desenho (Tese, Pilares e Fórmula do IPB)](docs/IPB_Guia_de_Bases_e_Desenho.md)
 
 ---
 
