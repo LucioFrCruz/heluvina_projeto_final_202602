@@ -3,7 +3,7 @@
 .env.*
 !.env.example
 credentials/
-credntials/
+credentials/
 *.json
 
 # Diretórios de dados do projeto
