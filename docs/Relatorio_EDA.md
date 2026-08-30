@@ -32,7 +32,8 @@ A análise foi conduzida em 6 notebooks reprodutíveis localizados em `notebooks
 | `03_infra_digital_e_gap_bancario.ipynb` | Análise dos pilares C e D (banda larga, agências). |
 | `04_integracao_correlacoes.ipynb` | Correlações, PCA e cálculo alpha do IPB. |
 
-Os outputs (figuras, parquet, relatórios JSON) foram salvos em `data/processed/`.
+Os outputs de dados (parquet e relatórios JSON) foram salvos em `data/processed/`.  
+As figuras geradas pela EDA foram salvas em `docs/assets/figures/` para ficarem versionadas junto com este relatório.
 
 ### 2.1 Recálculo do Pix
 
@@ -61,9 +62,11 @@ Todas as regras de negócio validadas passaram:
 
 ### 3.2 Figuras relevantes
 
-- `data/processed/figures/00_missing_values_heatmap.png` — mapa de missing values.
-- `data/processed/figures/00_populacao_total_distribuicao.png` — distribuição da população total.
-- `data/processed/figures/00_municipios_por_uf.png` — quantidade de municípios por UF.
+![Mapa de missing values](assets/figures/00_missing_values_heatmap.png)
+
+![Distribuição da população total](assets/figures/00_populacao_total_distribuicao.png)
+
+![Quantidade de municípios por UF](assets/figures/00_municipios_por_uf.png)
 
 ---
 
@@ -78,9 +81,11 @@ Todas as regras de negócio validadas passaram:
 
 ### 4.2 Figuras relevantes
 
-- `data/processed/figures/01_dist_escolaridade_ensino_medio_pct.png`
-- `data/processed/figures/01_boxplot_escolaridade_ensino_medio_pct_regiao.png`
-- `data/processed/figures/01_correlacao_demografica.png`
+![Distribuição da escolaridade (% ensino médio completo)](assets/figures/01_dist_escolaridade_ensino_medio_pct.png)
+
+![Escolaridade por região](assets/figures/01_boxplot_escolaridade_ensino_medio_pct_regiao.png)
+
+![Correlação entre variáveis demográficas](assets/figures/01_correlacao_demografica.png)
 
 ---
 
@@ -95,10 +100,13 @@ Todas as regras de negócio validadas passaram:
 
 ### 5.2 Figuras relevantes
 
-- `data/processed/figures/02_dist_log_rendimento_domiciliar_per_capita.png`
-- `data/processed/figures/02_pix_vs_pib.png`
-- `data/processed/figures/02_serie_pix.png`
-- `data/processed/figures/02_boxplot_pix_per_capita_12m_estrato.png`
+![Distribuição do log do rendimento domiciliar per capita](assets/figures/02_dist_log_rendimento_domiciliar_per_capita.png)
+
+![Pix per capita vs PIB per capita](assets/figures/02_pix_vs_pib.png)
+
+![Série temporal do Pix](assets/figures/02_serie_pix.png)
+
+![Pix per capita (12 meses) por estrato populacional](assets/figures/02_boxplot_pix_per_capita_12m_estrato.png)
 
 ---
 
@@ -116,9 +124,11 @@ Todas as regras de negócio validadas passaram:
 
 ### 6.2 Figuras relevantes
 
-- `data/processed/figures/03_quadrantes_infra_gap.png`
-- `data/processed/figures/03_pct_sem_agencia_uf.png`
-- `data/processed/figures/03_boxplot_banda_larga_fixa_por_100_hab_regiao.png`
+![Quadrantes de infraestrutura digital e gap bancário](assets/figures/03_quadrantes_infra_gap.png)
+
+![Percentual de municípios sem agência por UF](assets/figures/03_pct_sem_agencia_uf.png)
+
+![Banda larga fixa por 100 hab. por região](assets/figures/03_boxplot_banda_larga_fixa_por_100_hab_regiao.png)
 
 ---
 
@@ -165,10 +175,13 @@ Municípios com IPB alpha igual a 0 estão majoritariamente em Alagoas e Acre. E
 
 ### 7.3 Figuras relevantes
 
-- `data/processed/figures/04_correlacao_pilares.png`
-- `data/processed/figures/04_dist_ipb_alpha.png`
-- `data/processed/figures/04_top30_ipb_alpha.png`
-- `data/processed/figures/04_pca_pilares.png`
+![Correlação entre pilares do IPB](assets/figures/04_correlacao_pilares.png)
+
+![Distribuição do IPB alpha](assets/figures/04_dist_ipb_alpha.png)
+
+![Top 30 municípios no ranking IPB alpha](assets/figures/04_top30_ipb_alpha.png)
+
+![PCA dos pilares do IPB](assets/figures/04_pca_pilares.png)
 
 ---
 
