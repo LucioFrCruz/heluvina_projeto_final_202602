@@ -12,18 +12,20 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from src.config import PROCESSED_DATA_DIR
+from src.config import BASE_DIR, PROCESSED_DATA_DIR
 
 logger = logging.getLogger(__name__)
 
-FIGURES_DIR = PROCESSED_DATA_DIR / "figures"
+# Figuras da EDA são artefatos de documentação; mantê-las em docs/assets/figures
+# garante que sejam versionadas junto com o relatório.
+FIGURES_DIR = BASE_DIR / "docs" / "assets" / "figures"
 REPORTS_DIR = PROCESSED_DATA_DIR / "reports"
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def save_figure(fig: plt.Figure, filename: str, dpi: int = 150) -> Path:
-    """Salva figura em data/processed/figures/ e retorna o caminho.
+    """Salva figura em docs/assets/figures/ e retorna o caminho.
 
     Args:
         fig: Objeto Figure do matplotlib.
