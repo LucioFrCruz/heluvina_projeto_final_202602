@@ -175,12 +175,15 @@ def plot_distribution(
 ) -> plt.Figure:
     """Gera histograma com KDE para uma variável numérica.
 
+    O eixo Y representa a quantidade de municípios em cada faixa, e não
+    a quantidade de indivíduos.
+
     Args:
         df: DataFrame de entrada.
         column: Coluna numérica a ser plotada.
         title: Título do gráfico.
         xlabel: Rótulo do eixo X.
-        log_scale: Se True, aplica log1p nos dados.
+        log_scale: Se True, aplica log1p nos dados e indica no título.
         filename: Nome do arquivo para salvar a figura.
 
     Returns:
@@ -189,9 +192,13 @@ def plot_distribution(
     fig, ax = plt.subplots(figsize=(10, 5))
     data = np.log1p(df[column].dropna()) if log_scale else df[column].dropna()
     sns.histplot(data, kde=True, ax=ax, color="steelblue")
-    ax.set_title(title or f"Distribuição de {column}")
+
+    default_title = f"Distribuição de {column}"
+    if log_scale:
+        default_title += " (escala log)"
+    ax.set_title(title or default_title)
     ax.set_xlabel(xlabel or (f"log({column} + 1)" if log_scale else column))
-    ax.set_ylabel("Frequência")
+    ax.set_ylabel("Quantidade de municípios")
     if filename:
         save_figure(fig, filename)
     return fig
