@@ -412,7 +412,7 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
             top5 = sub.nsmallest(5, col_rank)[[col_rank, col_rank_estrato, "nome_municipio", "sigla_uf", col_ipb]].rename(
                 columns={col_rank: "rank_geral", col_rank_estrato: "rank_estrato", col_ipb: "ipb"}
             )
-            md += f"#### {label}\n\n| Rank Geral | Rank no Estrato | Municipio | UF | IPB |\n|---|---|---|---|---|---|\n"
+            md += f"#### {label}\n\n| Rank Geral | Rank no Estrato | Municipio | UF | IPB |\n|---|---|---|---|---|\n"
             for _, r in top5.iterrows():
                 md += f"| {int(r['rank_geral'])} | {int(r['rank_estrato'])} | {r['nome_municipio']} | {r['sigla_uf']} | {r['ipb']:.2f} |\n"
             md += "\n"

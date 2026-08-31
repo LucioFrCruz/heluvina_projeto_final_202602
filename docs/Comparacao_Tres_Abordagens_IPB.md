@@ -304,7 +304,7 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 #### IPB Atual
 
 | Rank Geral | Rank no Estrato | Municipio | UF | IPB |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
 | 41 | 1 | Florianópolis | SC | 70.00 |
 | 46 | 2 | Cuiabá | MT | 68.95 |
 | 49 | 3 | Campinas | SP | 68.79 |
@@ -314,7 +314,7 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 #### IPB Recalibrado
 
 | Rank Geral | Rank no Estrato | Municipio | UF | IPB |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
 | 19 | 1 | Brasília | DF | 72.75 |
 | 27 | 2 | Florianópolis | SC | 71.89 |
 | 28 | 3 | Goiânia | GO | 71.76 |
@@ -324,7 +324,7 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 #### IPB Abordagem 2
 
 | Rank Geral | Rank no Estrato | Municipio | UF | IPB |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
 | 51 | 1 | Rio de Janeiro | RJ | 49.33 |
 | 53 | 2 | Brasília | DF | 49.18 |
 | 77 | 3 | São Paulo | SP | 47.70 |
@@ -336,7 +336,7 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 #### IPB Atual
 
 | Rank Geral | Rank no Estrato | Municipio | UF | IPB |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
 | 1 | 1 | Barueri | SP | 82.54 |
 | 2 | 2 | Itapema | SC | 82.24 |
 | 3 | 3 | Balneário Camboriú | SC | 81.81 |
@@ -346,7 +346,7 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 #### IPB Recalibrado
 
 | Rank Geral | Rank no Estrato | Municipio | UF | IPB |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
 | 6 | 1 | Nova Mutum | MT | 76.33 |
 | 7 | 2 | Balneário Camboriú | SC | 75.82 |
 | 8 | 3 | Itapema | SC | 75.21 |
@@ -356,7 +356,7 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 #### IPB Abordagem 2
 
 | Rank Geral | Rank no Estrato | Municipio | UF | IPB |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
 | 4 | 1 | Nova Lima | MG | 58.40 |
 | 6 | 2 | Santana de Parnaíba | SP | 57.70 |
 | 12 | 3 | Nilópolis | RJ | 54.66 |
@@ -368,7 +368,7 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 #### IPB Atual
 
 | Rank Geral | Rank no Estrato | Municipio | UF | IPB |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
 | 6 | 1 | Ilhabela | SP | 79.87 |
 | 9 | 2 | Santa Carmem | MT | 78.93 |
 | 11 | 3 | Santa Rita do Trivelato | MT | 78.31 |
@@ -378,7 +378,7 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 #### IPB Recalibrado
 
 | Rank Geral | Rank no Estrato | Municipio | UF | IPB |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
 | 1 | 1 | Bombinhas | SC | 83.85 |
 | 2 | 2 | Confins | MG | 82.39 |
 | 3 | 3 | Santa Rita do Trivelato | MT | 81.73 |
@@ -388,7 +388,7 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 #### IPB Abordagem 2
 
 | Rank Geral | Rank no Estrato | Municipio | UF | IPB |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
 | 1 | 1 | Engenheiro Coelho | SP | 61.38 |
 | 2 | 2 | Mário Campos | MG | 59.92 |
 | 3 | 3 | Alumínio | SP | 58.53 |
