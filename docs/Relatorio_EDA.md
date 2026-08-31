@@ -35,9 +35,25 @@ A análise foi conduzida em 6 notebooks reprodutíveis localizados em `notebooks
 Os outputs de dados (parquet e relatórios JSON) foram salvos em `data/processed/`.  
 As figuras geradas pela EDA foram salvas em `docs/assets/figures/` para ficarem versionadas junto com este relatório.
 
-### 2.1 Recálculo do Pix
+### 2.1 Correção e recálculo do Pix
 
-Durante a EDA, identificou-se que o ingestor `bcb_pix.py` havia coletado apenas **1 mês** de dados (`202312`) em sua execução inicial. Para refletir melhor a dinâmica financeira real, o ingestor foi re-executado para os **últimos 12 meses** (jul/2025 a jun/2026), totalizando **568.236 registros** brutos. A `trusted_municipios` foi recalculada com essa nova série.
+Durante a análise de ponta a ponta do projeto, identificou-se um **bug crítico de duplicação** na tabela `raw_bcb_pix_transacoes`: cada mês aparecia múltiplas vezes (ex.: o mês `202606` aparecia 12 vezes), inflando artificialmente o volume Pix anualizado em aproximadamente **87%**.
+
+A causa foi a ausência de `drop_duplicates` no ingestor `bcb_pix.py`, combinada a execuções sucessivas da rotina. O bug foi corrigido adicionando:
+
+```python
+df = df.drop_duplicates(subset=["id_municipio", "AnoMes"])
+```
+
+Após a correção, o ingestor foi re-executado para os **12 meses mais recentes** (ago/2025 a jul/2026), resultando em **72.421 registros** brutos únicos. A `trusted_municipios` e o IPB *alpha* foram recalculados com a série corrigida.
+
+**Impacto nos dados**:
+
+| Métrica | Antes da correção | Depois da correção | Redução |
+|---|---|---|---|
+| Pix total volume 12m (soma) | R$ 107,97 trilhões | R$ 13,84 trilhões | **87,2%** |
+| Pix per capita médio | R$ 389.821 | R$ 49.901 | **87,2%** |
+| Registros brutos na raw | 568.236 | 72.421 | **87,3%** |
 
 ---
 
@@ -154,28 +170,40 @@ IPB_alpha = (A × B × C × D × E)^(1/5) × 100
 
 ### 7.2 Resultados
 
-- **Média do IPB alpha**: 35,83
-- **Mediana do IPB alpha**: 35,83
-- **Variância explicada pelos 2 primeiros componentes PCA**: 70,49%
+- **Média do IPB alpha**: 35,85
+- **Mediana do IPB alpha**: 35,86
+- **Variância explicada pelos 2 primeiros componentes PCA**: 70,45%
 
 #### Top 10 municípios no ranking alpha
 
 | Rank | Município | UF | IPB Alpha |
 |------|-----------|----|-----------|
-| 1 | Barueri | SP | 82,50 |
-| 2 | Itapema | SC | 82,23 |
+| 1 | Barueri | SP | 82,54 |
+| 2 | Itapema | SC | 82,24 |
 | 3 | Balneário Camboriú | SC | 81,81 |
-| 4 | Paulínia | SP | 80,91 |
+| 4 | Paulínia | SP | 80,87 |
 | 5 | Itajaí | SC | 80,05 |
-| 6 | Nova Lima | MG | 79,85 |
-| 7 | Ilhabela | SP | 79,74 |
-| 8 | Itupeva | SP | 79,20 |
-| 9 | Nova Mutum | MT | 78,63 |
-| 10 | Santa Carmem | MT | 78,52 |
+| 6 | Ilhabela | SP | 79,87 |
+| 7 | Nova Lima | MG | 79,85 |
+| 8 | Itupeva | SP | 79,15 |
+| 9 | Santa Carmem | MT | 78,93 |
+| 10 | Nova Mutum | MT | 78,80 |
 
 #### Bottom 10
 
 Municípios com IPB alpha igual a 0 estão majoritariamente em Alagoas e Acre. Esses casos indicam municípios com dados zerados em pelo menos um pilar após winsorização (geralmente Pix ou Estban).
+
+#### Impacto da correção do Pix no ranking
+
+Apesar da redução de **87%** no volume Pix, a média e a mediana do IPB *alpha* praticamente não se alteraram (35,83 → 35,85). Isso ocorre porque a normalização min-max comprime a escala e os outros pilares compensam parcialmente a queda do Pilar B/C.
+
+No entanto, houve movimentação significativa em posições individuais:
+
+- **Maior subida**: Piau (MG) subiu **209 posições** (3.353 → 3.144);
+- **Maior queda**: Tigrinhos (SC) caiu **256 posições** (3.635 → 3.891);
+- **Top 100**: apenas 1 município saiu (Foz do Iguaçu/PR) e 1 entrou (Tapurah/MT).
+
+O Top 10 permaneceu bastante estável, com pequenas trocas de posição. A correção tornou o ranking mais confiável, embora a estrutura geral ainda reflita cidades ricas e conectadas.
 
 ### 7.3 Figuras relevantes
 
