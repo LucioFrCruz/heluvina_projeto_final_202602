@@ -171,6 +171,7 @@ def plot_distribution(
     title: str | None = None,
     xlabel: str | None = None,
     log_scale: bool = False,
+    log_ref_vals: list[float] | None = None,
     filename: str | None = None,
 ) -> plt.Figure:
     """Gera histograma com KDE para uma variável numérica.
@@ -184,21 +185,41 @@ def plot_distribution(
         title: Título do gráfico.
         xlabel: Rótulo do eixo X.
         log_scale: Se True, aplica log1p nos dados e indica no título.
+        log_ref_vals: Lista de valores log para exibir em uma tabela de
+            referência convertendo log(x+1) para o valor original. Apenas
+            utilizado quando log_scale=True.
         filename: Nome do arquivo para salvar a figura.
 
     Returns:
         Objeto Figure do matplotlib.
     """
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(12, 6))
     data = np.log1p(df[column].dropna()) if log_scale else df[column].dropna()
-    sns.histplot(data, kde=True, ax=ax, color="steelblue")
+    sns.histplot(data, kde=True, ax=ax, color="steelblue", bins=50, alpha=0.6)
 
     default_title = f"Distribuição de {column}"
     if log_scale:
         default_title += " (escala log)"
-    ax.set_title(title or default_title)
-    ax.set_xlabel(xlabel or (f"log({column} + 1)" if log_scale else column))
-    ax.set_ylabel("Quantidade de municípios")
+    ax.set_title(title or default_title, fontsize=14)
+    ax.set_xlabel(xlabel or (f"log({column} + 1)" if log_scale else column), fontsize=12)
+    ax.set_ylabel("Quantidade de municípios", fontsize=12)
+
+    # Tabela de referência log -> valor original
+    if log_scale and log_ref_vals:
+        rows = [f"{lv:>5.1f}  →  {np.expm1(lv):>14,.0f}" for lv in log_ref_vals]
+        tabela = "log(x+1) → valor real\n" + "\n".join(rows)
+        ax.text(
+            0.98,
+            0.98,
+            tabela,
+            transform=ax.transAxes,
+            fontsize=10,
+            verticalalignment="top",
+            horizontalalignment="right",
+            family="monospace",
+            bbox=dict(boxstyle="round", facecolor="white", alpha=0.8, edgecolor="gray"),
+        )
+
     if filename:
         save_figure(fig, filename)
     return fig
@@ -260,8 +281,30 @@ def plot_correlation_heatmap(
     """
     corr = df[columns].corr(method=method)
     fig, ax = plt.subplots(figsize=(12, 10))
-    sns.heatmap(corr, annot=True, fmt=".2f", cmap="RdBu_r", center=0, ax=ax, square=True)
-    ax.set_title(title or f"Matriz de Correlação ({method})")
+
+    # Usa imshow + anotação manual para garantir que todos os valores apareçam,
+    # independentemente da cor de fundo das células.
+    im = ax.imshow(corr.values, cmap="RdBu_r", vmin=-1, vmax=1)
+    for i in range(len(columns)):
+        for j in range(len(columns)):
+            ax.text(
+                j,
+                i,
+                f"{corr.values[i, j]:.2f}",
+                ha="center",
+                va="center",
+                color="black",
+                fontsize=12,
+                fontweight="bold",
+            )
+
+    ax.set_xticks(np.arange(len(columns)))
+    ax.set_yticks(np.arange(len(columns)))
+    ax.set_xticklabels(columns, rotation=45, ha="right")
+    ax.set_yticklabels(columns)
+    ax.set_title(title or f"Matriz de Correlação ({method})", fontsize=14)
+    fig.colorbar(im, ax=ax, shrink=0.8)
+
     if filename:
         save_figure(fig, filename)
     return fig
