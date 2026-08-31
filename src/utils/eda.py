@@ -209,6 +209,8 @@ def plot_boxplot_by_group(
     column: str,
     group: str,
     title: str | None = None,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
     filename: str | None = None,
 ) -> plt.Figure:
     """Gera boxplot de uma variável por grupo.
@@ -218,6 +220,8 @@ def plot_boxplot_by_group(
         column: Coluna numérica.
         group: Coluna categórica.
         title: Título do gráfico.
+        xlabel: Rótulo do eixo X.
+        ylabel: Rótulo do eixo Y (incluir unidade quando aplicável).
         filename: Nome do arquivo para salvar a figura.
 
     Returns:
@@ -227,6 +231,8 @@ def plot_boxplot_by_group(
     order = sorted(df[group].dropna().unique())
     sns.boxplot(data=df, x=group, y=column, ax=ax, order=order)
     ax.set_title(title or f"{column} por {group}")
+    ax.set_xlabel(xlabel or group)
+    ax.set_ylabel(ylabel or column)
     ax.tick_params(axis="x", rotation=45)
     if filename:
         save_figure(fig, filename)
