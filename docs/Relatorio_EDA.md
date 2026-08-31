@@ -78,7 +78,7 @@ Todas as regras de negócio validadas passaram:
 - **Urbanização**: Sudeste (78,94%) e Centro-Oeste (76,2%) são as regiões mais urbanizadas; Nordeste (60,98%) e Norte (62,83%) são as menos urbanizadas.
 - **População jovem (18–35)**: Norte tem a maior proporção (27,81%), seguido do Nordeste (26,85%).
 - **1.098 municípios** apresentam perfil simultaneamente jovem, urbano e escolarizado acima da mediana.
-- **Correlações**: as variáveis demográficas são relativamente independentes entre si. A maior correlação observada é entre `populacao_urbana_pct` e `escolaridade_ensino_medio_pct` (~0,60), indicando que municípios mais urbanos tendem a ser mais escolarizados. `populacao_18_35_pct` tem correlação fraca com as demais, o que é bom para o índice — significa que os pilares não estão todos medindo a mesma coisa.
+- **Correlações**: as variáveis demográficas são relativamente independentes entre si, exceto pelo par `idhm` × `escolaridade_ensino_medio_pct` (0,78) e `populacao_urbana_pct` × `escolaridade_ensino_medio_pct` (0,70), indicando que municípios mais urbanos e com maior IDHM tendem a ser mais escolarizados. `populacao_18_35_pct` tem correlação fraca com as demais, o que é bom para o índice — significa que os pilares não estão todos medindo a mesma coisa.
 
 ### 4.2 Figuras relevantes
 
