@@ -78,6 +78,7 @@ Todas as regras de negócio validadas passaram:
 - **Urbanização**: Sudeste (78,94%) e Centro-Oeste (76,2%) são as regiões mais urbanizadas; Nordeste (60,98%) e Norte (62,83%) são as menos urbanizadas.
 - **População jovem (18–35)**: Norte tem a maior proporção (27,81%), seguido do Nordeste (26,85%).
 - **1.098 municípios** apresentam perfil simultaneamente jovem, urbano e escolarizado acima da mediana.
+- **Correlações**: as variáveis demográficas são relativamente independentes entre si. A maior correlação observada é entre `populacao_urbana_pct` e `escolaridade_ensino_medio_pct` (~0,60), indicando que municípios mais urbanos tendem a ser mais escolarizados. `populacao_18_35_pct` tem correlação fraca com as demais, o que é bom para o índice — significa que os pilares não estão todos medindo a mesma coisa.
 
 ### 4.2 Figuras relevantes
 
@@ -93,10 +94,12 @@ Todas as regras de negócio validadas passaram:
 
 ### 5.1 Principais achados
 
-- **Renda e PIB**: cidades grandes apresentam renda domiciliar per capita mediana de R$ 2.079,68 e PIB per capita de R$ 56.227,29; cidades pequenas ficam com R$ 1.145,36 e R$ 28.216,86, respectivamente.
-- **Pix per capita (12 meses)**: cresce conforme o estrato populacional — pequenas R$ 348.814, médias R$ 478.673, grandes R$ 645.788.
+- **Renda e PIB**: cidades grandes apresentam renda domiciliar per capita mediana de R$ 2.079,68 e PIB per capita de R$ 56.227,29; cidades pequenas ficam com R$ 1.145,36 e R$ 28.216,86, respectivamente. As distribuições de renda e PIB usam escala log porque ambas são fortemente assimétricas: poucos municípios concentram valores muito altos.
+- **Pix per capita (12 meses)**: cresce conforme o estrato populacional — pequenas R$ 348.814, médias R$ 478.673, grandes R$ 645.788. A estratificação populacional segue o critério: pequena (< 50 mil hab.), média (50 mil–500 mil hab.) e grande (> 500 mil hab.).
+- **Outlier no estrato pequeno**: Pacaraima (RR), com população de ~19 mil habitantes, registra R$ 4,1 milhões de Pix per capita — provavelmente efeito do comércio de fronteira.
 - **859 municípios** apresentam alta adoção Pix (acima da mediana) e renda abaixo da mediana, indicando potencial de inclusão financeira digital.
-- A série temporal do Pix mostra concentração crescente de volume em meses recentes.
+- A série temporal do Pix mostra concentração crescente de volume em meses recentes. O volume é apresentado em trilhões de reais (R$) e separado entre Pessoa Física (PF) e Pessoa Jurídica (PJ). Os dados brutos do BCB já contêm PJ, mas a camada `trusted` do IPB utiliza apenas PF como proxy de adoção digital no pilar B.
+- **Pix vs PIB**: os eixos estão em escala log. A linha tracejada representa a tendência geral. Municípios acima da linha têm mais Pix per capita do que seu PIB per capita preveria, sugerindo alta penetração digital relativa à renda.
 
 ### 5.2 Figuras relevantes
 
@@ -116,6 +119,7 @@ Todas as regras de negócio validadas passaram:
 
 - **Municípios sem agência bancária**: **2.656 municípios (47,68%)** não possuem agência bancária ativa.
 - **UFs com maior gap**: Piauí (82,1%), Tocantins (80,6%), Paraíba (79,8%), Rio Grande do Norte (77,2%) e Roraima (66,7%).
+- **Banda larga fixa**: a variável `banda_larga_fixa_por_100_hab` mede o número de acessos de banda larga fixa a cada 100 habitantes (taxa de penetração), não a velocidade em Mbps. Valores acima de 100 são possíveis quando há mais de uma linha por residência/empresa.
 - **Quadrantes (banda larga × agências)**:
   - **Alto potencial**: 1.050 municípios (banda larga alta + poucas agências).
   - **Maduro saturado**: 1.735 municípios (banda larga alta + muitas agências).
@@ -204,7 +208,7 @@ A partir das tabelas `raw_*`, foram criadas as seguintes features na base enriqu
 
 1. **Vintage misto**: a base combina Censo 2022, PIB 2023, Pix 2025–2026, Anatel/Estban 2026 e IDHM 2010. Isso deve ser declarado na apresentação final.
 2. **Internet domiciliar**: a coluna `domicilios_com_internet_pct` está 100% nula; usamos banda larga fixa como proxy.
-3. **Pix**: o cálculo da trusted utiliza apenas `VL_PagadorPF`/`QT_PagadorPF`. Uma versão futura pode incorporar PJ e recebedores.
+3. **Pix**: os dados brutos do BCB incluem PF e PJ, mas o cálculo da `trusted_municipios` utiliza apenas `VL_PagadorPF`/`QT_PagadorPF` como proxy de adoção digital. Uma versão futura pode testar incluir PJ e/ou variáveis de recebedores.
 4. **Efeito polo regional**: municípios dormitório podem parecer desatendidos porque recursos financeiros fluem para cidades próximas.
 5. **Municípios com IPB zero**: indicam ausência de dados em algum pilar; devem ser analisados caso a caso.
 
