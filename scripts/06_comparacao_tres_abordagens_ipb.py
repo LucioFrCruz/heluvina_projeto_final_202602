@@ -115,17 +115,47 @@ def compute_ipb_recalibrado_rapido(df: pd.DataFrame) -> pd.DataFrame:
 
 def compute_ipb_abordagem_2(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Abordagem 2: inclui correspondentes bancarios e features derivadas.
+    Abordagem 2 refinada: inclui correspondentes bancarios por tipo,
+    penalidade suave para cidades turisticas e rankings separados por estrato.
+
     A cobertura 4G/5G nao foi integrada nesta rodada por dificuldade de
     acesso aos dados agregados por municipio; mantemos banda larga fixa
     como proxy de infraestrutura digital.
     """
     df = df.copy()
 
+    # Presenca bancaria ponderada por tipo de correspondente
+    # Postos sao pontos basicos; filiais e sedes tem capacidade maior.
+    df["correspondentes_ponderados"] = (
+        1.00 * df["quantidade_correspondentes_posto"].fillna(0)
+        + 0.70 * df["quantidade_correspondentes_filial"].fillna(0)
+        + 0.40 * df["quantidade_correspondentes_sede"].fillna(0)
+        + 1.00 * df["quantidade_correspondentes_agencia"].fillna(0)
+    )
+    df["correspondentes_ponderados_por_100k_hab"] = (
+        df["correspondentes_ponderados"] / df["populacao_total"]
+    ) * 100_000
+
     # Features derivadas
     df["tensao_digital_bancaria"] = df["pix_per_capita_12m"] / (df["agencias_por_100k_hab"] + 1)
     df["penetracao_digital_relativa"] = df["pix_per_capita_12m"] / df["pib_per_capita"]
-    df["gap_bancario_completo"] = 1 / (df["agencias_por_100k_hab"] + df["correspondentes_por_100k_hab"] + 1)
+    df["gap_bancario_completo"] = 1 / (
+        df["agencias_por_100k_hab"]
+        + df["correspondentes_ponderados_por_100k_hab"]
+        + 1
+    )
+
+    # Flag de turismo suave: alto Pix per capita combinado com PIB per capita
+    # abaixo da mediana e populacao pequena. Usamos um score continuo [0, 1]
+    # e aplicamos um desconto leve (max 15%) no pilar B.
+    pix_alto = df["pix_per_capita_12m"] >= df["pix_per_capita_12m"].quantile(0.90)
+    pib_baixo = df["pib_per_capita"] <= df["pib_per_capita"].median()
+    pequena = df["estrato_populacional"] == "pequena"
+    df["score_turismo"] = (
+        pix_alto.astype(int) * 0.5
+        + pib_baixo.astype(int) * 0.3
+        + pequena.astype(int) * 0.2
+    )
 
     # Evita infinitos
     df["penetracao_digital_relativa"] = df["penetracao_digital_relativa"].replace([np.inf, -np.inf], np.nan)
@@ -149,6 +179,9 @@ def compute_ipb_abordagem_2(df: pd.DataFrame) -> pd.DataFrame:
     df["D_a2"] = df[[f"{c}_norm" for c in vars_d]].mean(axis=1)
     df["E_a2"] = df[[f"{c}_norm" for c in vars_e]].mean(axis=1)
 
+    # Desconto suave de turismo no pilar B (maximo 15%)
+    df["B_a2"] = df["B_a2"] * (1 - 0.15 * df["score_turismo"])
+
     w_a, w_b, w_c, w_d, w_e = 0.75, 1.0, 0.75, 1.5, 1.0
     soma = w_a + w_b + w_c + w_d + w_e
 
@@ -163,6 +196,16 @@ def compute_ipb_abordagem_2(df: pd.DataFrame) -> pd.DataFrame:
     df["rank_abordagem_2"] = (
         df["ipb_abordagem_2"].rank(ascending=False, method="min").astype(int)
     )
+
+    # Rankings separados por estrato populacional
+    for estrato in df["estrato_populacional"].dropna().unique():
+        mask = df["estrato_populacional"] == estrato
+        df.loc[mask, f"rank_abordagem_2_{estrato}"] = (
+            df.loc[mask, "ipb_abordagem_2"]
+            .rank(ascending=False, method="min")
+            .astype(int)
+        )
+
     return df
 
 
@@ -212,7 +255,7 @@ def build_document(df: pd.DataFrame) -> str:
 
     md = f"""# Comparacao de Tres Abordagens do IPB
 
-> **Objetivo**: comparar o IPB atual, o IPB recalibrado rapido e o IPB com a Abordagem 2 (correspondentes bancarios + features derivadas).  
+> **Objetivo**: comparar o IPB atual, o IPB recalibrado rapido e o IPB com a Abordagem 2 (correspondentes bancarios por tipo + ajuste suave para turismo + segmentacao por estrato).  
 > **Escopo**: analise local, sem alterar dados no BigQuery.  
 > **Data**: 2026-08-31  
 > **Branch**: `feature/etapa2-eda-e-limpeza`
@@ -225,9 +268,9 @@ Tres versoes do indice foram calculadas a partir da mesma base `trusted_municipi
 
 | Versao | Conceito |
 |---|---|
-| **IPB Atual** | Formula original: 5 pilares com pesos iguais, Pilar D com 3 variaveis redundantes. |
-| **IPB Recalibrado (Rapido)** | Pesos diferenciados, Pilar D reduzido, Pilar E sem `populacao_urbana_pct`, inclusao de `tensao_digital_bancaria`. |
-| **IPB Abordagem 2** | Inclui correspondentes bancarios do BCB, `penetracao_digital_relativa` e `gap_bancario_completo`. |
+| **IPB Atual** | Formula original: 5 pilares com pesos iguais. Premia cidades ricas, conectadas e com demanda digital, mas pune pouco cidades ja bancarizadas (Pilar D usa 3 variaveis redundantes). |
+| **IPB Recalibrado (Rapido)** | Ajuste rapido anti-vies: pesos diferenciados, Pilar D reduzido a apenas `agencias_por_100k_hab`, Pilar E sem `populacao_urbana_pct` e inclusao de `tensao_digital_bancaria` (Pix / agencias). Diminui a influencia da renda pura. |
+| **IPB Abordagem 2** | Redesenho do Pilar D: agencias bancarias estao em queda, entao o indice passa a considerar **correspondentes bancarios do BCB por tipo** (posto, filial, sede, agencia) com pesos diferentes. Adiciona `penetracao_digital_relativa` (Pix / PIB) e `gap_bancario_completo`. Inclui ainda uma **flag de turismo suave** (score continuo, desconto maximo de 15% no pilar digital) para nao privilegiar cidades pequenas com fluxo turistico. |
 
 ### Estatisticas gerais
 
@@ -240,9 +283,47 @@ Tres versoes do indice foram calculadas a partir da mesma base `trusted_municipi
 
 ---
 
-## 2. Top 10 por versao
+## 2. Como cada versao funciona
 
 ### 2.1 IPB Atual
+
+Cinco pilares com **pesos iguais** (media geometrica):
+- **A. Capacidade de consumo**: PIB per capita + rendimento domiciliar per capita.
+- **B. Dinamismo economico**: Pix per capita ultimos 12 meses.
+- **C. Adocao digital**: banda larga fixa por 100 habitantes.
+- **D. Gap bancario**: agencias, depositos e credito per capita (todas invertidas).
+- **E. Perfil demografico**: escolaridade, populacao 18-35 anos e populacao urbana.
+
+**Problema**: cidades ricas ja bancarizadas (Barueri, Itapema, Balneario Camboriu) lideram porque a renda e o digital pesam muito, enquanto o gap bancario e fraco.
+
+### 2.2 IPB Recalibrado (Rapido)
+
+Mesma estrutura de 5 pilares, mas com **pesos diferenciados**:
+- Pilar A (renda) reduzido para 0.5.
+- Pilares B (digital) e C (infra) com 0.75 cada.
+- Pilar D (gap bancario) ampliado para 1.5 e simplificado para apenas agencias.
+- Pilar E sem `populacao_urbana_pct` (redundante com banda larga).
+- Feature nova: `tensao_digital_bancaria` = Pix per capita / (agencias por 100k + 1).
+
+**Efeito**: cidades pequenas com muito Pix e pouca agencia sobem no ranking. Ainda prevalecem SC e MT, mas ja nao e um ranking de riqueza pura.
+
+### 2.3 IPB Abordagem 2
+
+Redesenho mais profundo, principalmente no Pilar D:
+- **Agencias sozinhas nao refletem mais a realidade**: o numero de agencias bancarias vem caindo no Brasil. O BCB registra 216 mil **correspondentes** (lotericas, caixas eletronicos, correspondentes bancarios). O indice passa a considerar a **presenca bancaria completa** = agencias + correspondentes.
+- **Correspondentes ponderados por tipo**: postos (peso 1.0), filiais (0.7), sedes (0.4) e agencias (1.0). Postos sao pontos mais simples; filiais/sedes tem capacidade maior.
+- **Gap bancario completo** = 1 / (agencias + correspondentes ponderados por 100k + 1).
+- **Penetracao digital relativa** = Pix per capita / PIB per capita. Premia cidades que transacionam muito proporcionalmente a sua riqueza.
+- **Flag de turismo suave**: score continuo baseado em Pix alto + PIB baixo + cidade pequena. Aplica desconto maximo de 15% no pilar digital para evitar que cidades turisticas (Arraial do Cabo, Buzios) disparem so por fluxo de visitantes.
+- **Rankings separados por estrato**: pequena, media e grande.
+
+**Efeito**: quebra o vies para cidades ricas ja bancarizadas e passa a destacar municipios com alta demanda digital e baixa estrutura bancaria fisica.
+
+---
+
+## 3. Top 10 por versao
+
+### 3.1 IPB Atual
 
 | Rank | Municipio | UF | Estrato | IPB |
 |---|---|---|---|---|
@@ -251,7 +332,7 @@ Tres versoes do indice foram calculadas a partir da mesma base `trusted_municipi
         md += f"| {int(r['rank'])} | {r['nome_municipio']} | {r['sigla_uf']} | {r['estrato_populacional']} | {r['ipb']:.2f} |\n"
 
     md += """
-### 2.2 IPB Recalibrado (Rapido)
+### 3.2 IPB Recalibrado (Rapido)
 
 | Rank | Municipio | UF | Estrato | IPB |
 |---|---|---|---|---|
@@ -260,7 +341,7 @@ Tres versoes do indice foram calculadas a partir da mesma base `trusted_municipi
         md += f"| {int(r['rank'])} | {r['nome_municipio']} | {r['sigla_uf']} | {r['estrato_populacional']} | {r['ipb']:.2f} |\n"
 
     md += """
-### 2.3 IPB Abordagem 2
+### 3.3 IPB Abordagem 2
 
 | Rank | Municipio | UF | Estrato | IPB |
 |---|---|---|---|---|
@@ -271,9 +352,9 @@ Tres versoes do indice foram calculadas a partir da mesma base `trusted_municipi
     md += """
 ---
 
-## 3. Analise do Top 100
+## 4. Analise do Top 100
 
-### 3.1 Movimentacao geral
+### 4.1 Movimentacao geral
 
 | Comparacao | Sairam do Top 100 | Entraram no Top 100 |
 |---|---|---|
@@ -283,7 +364,7 @@ Tres versoes do indice foram calculadas a partir da mesma base `trusted_municipi
     md += f"| Atual -> Abordagem 2 | {len(top100_atual - top100_a2)} | {len(top100_a2 - top100_atual)} |\n"
 
     md += """
-### 3.2 Cidades que sairam do Top 100 (Atual -> Abordagem 2)
+### 4.2 Cidades que sairam do Top 100 (Atual -> Abordagem 2)
 
 Cidades ricas e ja bancarizadas que deixaram de figurar entre as 100 primeiras:
 
@@ -297,7 +378,7 @@ Cidades ricas e ja bancarizadas que deixaram de figurar entre as 100 primeiras:
         md += f"| {r['nome_municipio']} | {r['sigla_uf']} | {r['estrato_populacional']} | {int(r['rank_atual'])} | {int(r['rank_abordagem_2'])} |\n"
 
     md += """
-### 3.3 Cidades que entraram no Top 100 (Atual -> Abordagem 2)
+### 4.3 Cidades que entraram no Top 100 (Atual -> Abordagem 2)
 
 Cidades que subiram e passaram a figurar entre as 100 primeiras oportunidades:
 
@@ -310,26 +391,36 @@ Cidades que subiram e passaram a figurar entre as 100 primeiras oportunidades:
     for _, r in entraram.iterrows():
         md += f"| {r['nome_municipio']} | {r['sigla_uf']} | {r['estrato_populacional']} | {int(r['rank_atual'])} | {int(r['rank_abordagem_2'])} |\n"
 
-    # Top 5 por estrato - Abordagem 2
+    # Top 5 por estrato - todas as versoes
     md += """
 ---
 
-## 4. Top 5 por Estrato Populacional (Abordagem 2)
+## 5. Top 5 por Estrato Populacional
+
+Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas tres versoes. Isso evita que cidades pequenas e grandes concorram no mesmo criterio.
 
 """
     for estrato in ["grande", "media", "pequena"]:
-        sub = df[df["estrato_populacional"] == estrato].nsmallest(5, "rank_abordagem_2")[
-            ["rank_abordagem_2", "nome_municipio", "sigla_uf", "ipb_abordagem_2"]
-        ].rename(columns={"rank_abordagem_2": "rank", "ipb_abordagem_2": "ipb"})
-        md += f"### {estrato.capitalize()}\n\n| Rank | Municipio | UF | IPB |\n|---|---|---|---|\n"
-        for _, r in sub.iterrows():
-            md += f"| {int(r['rank'])} | {r['nome_municipio']} | {r['sigla_uf']} | {r['ipb']:.2f} |\n"
-        md += "\n"
+        md += f"### Estrato: {estrato.capitalize()}\n\n"
+        sub = df[df["estrato_populacional"] == estrato]
+
+        for col_rank, col_rank_estrato, col_ipb, label in [
+            ("rank_atual", f"rank_atual_{estrato}", "ipb_atual", "IPB Atual"),
+            ("rank_recalibrado", f"rank_recalibrado_{estrato}", "ipb_recalibrado", "IPB Recalibrado"),
+            ("rank_abordagem_2", f"rank_abordagem_2_{estrato}", "ipb_abordagem_2", "IPB Abordagem 2"),
+        ]:
+            top5 = sub.nsmallest(5, col_rank)[[col_rank, col_rank_estrato, "nome_municipio", "sigla_uf", col_ipb]].rename(
+                columns={col_rank: "rank_geral", col_rank_estrato: "rank_estrato", col_ipb: "ipb"}
+            )
+            md += f"#### {label}\n\n| Rank Geral | Rank no Estrato | Municipio | UF | IPB |\n|---|---|---|---|---|---|\n"
+            for _, r in top5.iterrows():
+                md += f"| {int(r['rank_geral'])} | {int(r['rank_estrato'])} | {r['nome_municipio']} | {r['sigla_uf']} | {r['ipb']:.2f} |\n"
+            md += "\n"
 
     # Distribuicao regional
     md += """---
 
-## 5. Distribuicao Regional no Top 100
+## 6. Distribuicao Regional no Top 100
 
 Quantidade de municipios por regiao entre os 100 primeiros de cada versao:
 
@@ -346,38 +437,61 @@ Quantidade de municipios por regiao entre os 100 primeiros de cada versao:
     md += """
 ---
 
-## 6. Interpretacao dos Resultados
+## 7. Interpretacao dos Resultados
 
-### 6.1 IPB Atual
+### 7.1 IPB Atual
 - Fortemente enviesado para cidades ricas e conectadas do Sudeste/Sul;
 - Top 10 com Barueri, Paulínia, Ilhabela, Nova Lima;
 - Pilar D redundante e com peso insuficiente para contrabalançar riqueza.
 
-### 6.2 IPB Recalibrado (Rapido)
+### 7.2 IPB Recalibrado (Rapido)
 - Reduziu o peso da renda e aumentou o gap bancario;
 - Cidades pequenas com alta tensao digital-bancaria subiram;
 - Ainda prevalecem cidades de SC e MT no topo, mas ja nao e um ranking de riqueza pura.
 
-### 6.3 IPB Abordagem 2
-- Incorporou correspondentes bancarios, o que pune cidades ricas com alta presenca de lotericas/correspondentes;
+### 7.3 IPB Abordagem 2
+- Redesenhou o Pilar D: agencias sozinhas perdem relevancia, entao o indice passa a considerar a presenca bancaria completa (agencias + correspondentes por tipo);
 - `penetracao_digital_relativa` premia cidades que transacionam muito Pix proporcionalmente a renda;
+- Flag de turismo suave reduz o impacto de cidades pequenas com fluxo de visitantes;
 - Top 100 ficou mais distribuido regionalmente e por estrato;
 - Reduziu ainda mais a dominancia de cidades obviamente ricas.
 
 ---
 
-## 7. Limitacoes e proximos passos
+## 7. Alertas importantes para discussao do grupo
+
+### 7.1 Abordagem 2 ainda privilegia cidades pequenas com eventos especiais
+
+O Top 10 da Abordagem 2 ainda traz cidades pequenas como Engenheiro Coelho-SP, Arraial do Cabo-RJ, Armacao dos Buzios-RJ e Barra dos Coqueiros-SE. Essas cidades provavelmente tem Pix alto por turismo ou por atividade econômica nao residente. A flag de turismo suave mitiga, mas nao elimina o efeito.
+
+### 7.2 Distribuicao regional no Top 100
+
+A Abordagem 2 concentra grande parte do Top 100 no Sudeste. Isso nao e necessariamente ruim (e a regiao mais populosa), mas precisa ser analisado: sao cidades-dormitorio da metropole? Sao cidades turisticas? Sao polos regionais reais?
+
+### 7.3 Grandes cidades no ranking da Abordagem 2
+
+Entraram no Top 100: Rio de Janeiro, Sao Paulo, Brasilia, Manaus, Salvador. Isso e positivo porque mostra que o indice nao exclui grandes cidades automaticamente. Mas tambem levanta a questao: essas cidades realmente sao oportunidades de expansao bancaria digital ou ja estao saturadas?
+
+### 7.4 Correspondentes bancarios como proxy de acesso
+
+O BCB classifica correspondentes em sede, filial, posto e agencia. A ponderacao usada (posto=1.0, filial=0.7, sede=0.4, agencia=1.0) e uma primeira aproximacao. O grupo precisa validar se essa hierarquia faz sentido de negocio.
+
+---
+
+## 8. Limitacoes e proximos passos
 
 ### Limitacoes desta analise
 - A cobertura 4G/5G nao foi integrada nesta rodada por dificuldade de acesso a dados agregados por municipio. A banda larga fixa continua como proxy;
 - Nao houve validacao externa com dados reais de expansao bancaria;
+- A flag de turismo e uma heuristica (Pix alto + PIB baixo + cidade pequena). Sem dados de visitacao, e um ajuste pragmatico;
 - Variaveis per capita ainda favorecem cidades pequenas com eventos especiais (turismo, comercio de fronteira).
 
 ### Proximos passos recomendados
 1. Validar os Top 100 da Abordagem 2 com conhecimento de negocio;
-2. Testar segmentacao por estrato como ranking oficial;
+2. Publicar rankings oficiais separados por estrato populacional;
 3. Coletar cobertura 4G/5G (painel STEL/Anatel) para enriquecer o Pilar C;
-4. Coletar CNPJ/MEI e Caged para a Abordagem 3 (modelo residual).
+4. Coletar CNPJ/MEI e Caged para a Abordagem 3 (modelo residual);
+5. Refinar a flag de turismo com dados reais de visitacao/turismo (Embratur, MTur) se disponiveis.
 
 ---
 
@@ -390,15 +504,35 @@ def main() -> None:
     logger.info("Carregando base enriquecida...")
     df = pd.read_parquet(PROCESSED_DIR / "trusted_municipios_eda.parquet")
 
-    logger.info("Carregando correspondentes bancarios...")
-    corr = pd.read_parquet(
-        RAW_DIR / "bcb_correspondentes" / "correspondentes_por_municipio.parquet"
+    logger.info("Carregando correspondentes bancarios por tipo...")
+    corr_raw = pd.read_parquet(
+        RAW_DIR / "bcb_correspondentes" / "bcb_correspondentes.parquet"
     )
-    corr = corr.rename(columns={"MunicipioIBGE": "id_municipio"})
+    corr_raw = corr_raw.rename(columns={"MunicipioIBGE": "id_municipio"})
 
-    # Junta correspondentes
-    df = df.merge(corr, on="id_municipio", how="left")
-    df["quantidade_correspondentes"] = df["quantidade_correspondentes"].fillna(0)
+    # Agrega correspondentes por tipo
+    corr_por_tipo = (
+        corr_raw.groupby(["id_municipio", "Tipo"])
+        .size()
+        .unstack(fill_value=0)
+        .reset_index()
+    )
+    for tipo in ["Posto", "Filial", "Sede", "Agência"]:
+        if tipo not in corr_por_tipo.columns:
+            corr_por_tipo[tipo] = 0
+
+    corr_total = corr_por_tipo.copy()
+    corr_total["quantidade_correspondentes"] = (
+        corr_total["Posto"] + corr_total["Filial"] + corr_total["Sede"] + corr_total["Agência"]
+    )
+
+    # Junta no dataframe principal
+    df = df.merge(corr_total, on="id_municipio", how="left")
+    df["quantidade_correspondentes"] = df["quantidade_correspondentes"].fillna(0).astype(int)
+    df["quantidade_correspondentes_posto"] = df["Posto"].fillna(0).astype(int)
+    df["quantidade_correspondentes_filial"] = df["Filial"].fillna(0).astype(int)
+    df["quantidade_correspondentes_sede"] = df["Sede"].fillna(0).astype(int)
+    df["quantidade_correspondentes_agencia"] = df["Agência"].fillna(0).astype(int)
     df["correspondentes_por_100k_hab"] = (
         df["quantidade_correspondentes"] / df["populacao_total"]
     ) * 100_000
@@ -411,6 +545,17 @@ def main() -> None:
 
     logger.info("Calculando IPB abordagem 2...")
     df = compute_ipb_abordagem_2(df)
+
+    # Rankings separados por estrato para todas as versoes
+    logger.info("Calculando rankings por estrato...")
+    for estrato in df["estrato_populacional"].dropna().unique():
+        mask = df["estrato_populacional"] == estrato
+        df.loc[mask, f"rank_atual_{estrato}"] = (
+            df.loc[mask, "ipb_atual"].rank(ascending=False, method="min").astype(int)
+        )
+        df.loc[mask, f"rank_recalibrado_{estrato}"] = (
+            df.loc[mask, "ipb_recalibrado"].rank(ascending=False, method="min").astype(int)
+        )
 
     logger.info("Salvando resultados...")
     df.to_parquet(PROCESSED_DIR / "ipb_comparacao_3_abordagens.parquet", index=False)
