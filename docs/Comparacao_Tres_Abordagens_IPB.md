@@ -1,76 +1,76 @@
 # Comparacao de Tres Abordagens do IPB
 
-> **Objetivo**: comparar o IPB atual, o IPB recalibrado rapido e o IPB com a Abordagem 2 (correspondentes bancarios por tipo + ajuste suave para turismo + segmentacao por estrato).  
-> **Escopo**: analise local, sem alterar dados no BigQuery.  
-> **Data**: 2026-08-31  
-> **Branch**: `feature/etapa2-eda-e-limpeza`
+> **Objetivo**: comparar o IPB Clássico (V1), o IPB Recalibrado (V2) e o IPB Presença Bancária Completa (V3, ex-Abordagem 2).  
+> **Escopo**: a V3 já foi publicada no BigQuery (tabelas `analytics_ipb_*`); este documento consolida a comparação das três versões a partir da mesma base.  
+> **Data**: 2026-09-02  
+> **Código-fonte das fórmulas**: `src/analytics/ipb.py`
 
 ---
 
 ## 1. Resumo Executivo
 
-Tres versoes do indice foram calculadas a partir da mesma base `trusted_municipios` (com o bug do Pix corrigido):
+Três versões do índice foram calculadas a partir da mesma base `trusted_municipios` (com o bug do Pix corrigido):
 
-| Versao | Conceito |
+| Versão | Conceito |
 |---|---|
-| **IPB Atual** | Formula original: 5 pilares com pesos iguais. Premia cidades ricas, conectadas e com demanda digital, mas pune pouco cidades ja bancarizadas (Pilar D usa 3 variaveis redundantes). |
-| **IPB Recalibrado (Rapido)** | Ajuste rapido anti-vies: pesos diferenciados, Pilar D reduzido a apenas `agencias_por_100k_hab`, Pilar E sem `populacao_urbana_pct` e inclusao de `tensao_digital_bancaria` (Pix / agencias). Diminui a influencia da renda pura. |
-| **IPB Abordagem 2** | Redesenho do Pilar D: agencias bancarias estao em queda, entao o indice passa a considerar **correspondentes bancarios do BCB por tipo** (posto, filial, sede, agencia) com pesos diferentes. Adiciona `penetracao_digital_relativa` (Pix / PIB) e `gap_bancario_completo`. Inclui ainda uma **flag de turismo suave** (score continuo, desconto maximo de 15% no pilar digital) para nao privilegiar cidades pequenas com fluxo turistico. |
+| **IPB Clássico (V1)** | Fórmula original: 5 pilares com pesos iguais. Premia cidades ricas, conectadas e com demanda digital, mas pune pouco cidades já bancarizadas (Pilar D usa 3 variáveis redundantes). |
+| **IPB Recalibrado (V2)** | Ajuste rápido anti-viés: pesos diferenciados, Pilar D reduzido a apenas `agencias_por_100k_hab`, Pilar E sem `populacao_urbana_pct` e inclusão de `tensao_digital_bancaria` (Pix / agências). Diminui a influência da renda pura. |
+| **IPB Presença Bancária Completa (V3, ex-Abordagem 2)** | Redesenho do Pilar D: agências bancárias estão em queda, então o índice passa a considerar **correspondentes bancários do BCB por tipo** (posto, filial, sede, agência) com pesos diferentes. Adiciona `penetracao_digital_relativa` (Pix / PIB) e `gap_bancario_completo`. Inclui ainda uma **flag de turismo suave** (score contínuo, desconto máximo de 15% no pilar digital) para não privilegiar cidades pequenas com fluxo turístico. |
 
-### Estatisticas gerais
+### Estatísticas gerais
 
-| Metrica | IPB Atual | IPB Recalibrado | IPB Abordagem 2 |
+| Métrica | IPB Clássico (V1) | IPB Recalibrado (V2) | IPB Presença Bancária Completa (V3) |
 |---|---|---|---|
-| Media | 35.85 | 40.85 | 25.63 |
+| Média | 35.85 | 40.85 | 25.63 |
 | Mediana | 35.86 | 40.65 | 25.23 |
-| Maximo | 82.54 | 83.85 | 61.38 |
-| Minimo | 0.0 | 0.0 | 0.0 |
+| Máximo | 82.54 | 83.85 | 61.38 |
+| Mínimo | 0.0 | 0.0 | 0.0 |
 
 ---
 
-## 2. Como cada versao funciona
+## 2. Como cada versão funciona
 
-### 2.1 IPB Atual
+### 2.1 IPB Clássico (V1)
 
-Cinco pilares com **pesos iguais** (media geometrica):
+Cinco pilares com **pesos iguais** (média geométrica):
 - **A. Capacidade de consumo**: PIB per capita + rendimento domiciliar per capita.
-- **B. Dinamismo economico**: Pix per capita ultimos 12 meses.
-- **C. Adocao digital**: banda larga fixa por 100 habitantes.
-- **D. Gap bancario**: agencias, depositos e credito per capita (todas invertidas).
-- **E. Perfil demografico**: escolaridade, populacao 18-35 anos e populacao urbana.
+- **B. Dinamismo econômico**: Pix per capita últimos 12 meses.
+- **C. Adoção digital**: banda larga fixa por 100 habitantes.
+- **D. Gap bancário**: agências, depósitos e crédito per capita (todas invertidas).
+- **E. Perfil demográfico**: escolaridade, população 18-35 anos e população urbana.
 
-**Problema**: cidades ricas ja bancarizadas (Barueri, Itapema, Balneario Camboriu) lideram porque a renda e o digital pesam muito, enquanto o gap bancario e fraco.
+**Problema**: cidades ricas já bancarizadas (Barueri, Itapema, Balneário Camboriú) lideram porque a renda e o digital pesam muito, enquanto o gap bancário é fraco.
 
-### 2.2 IPB Recalibrado (Rapido)
+### 2.2 IPB Recalibrado (V2)
 
 Mesma estrutura de 5 pilares, mas com **pesos diferenciados**:
 - Pilar A (renda) reduzido para 0.5.
 - Pilares B (digital) e C (infra) com 0.75 cada.
-- Pilar D (gap bancario) ampliado para 1.5 e simplificado para apenas agencias.
+- Pilar D (gap bancário) ampliado para 1.5 e simplificado para apenas agências.
 - Pilar E sem `populacao_urbana_pct` (redundante com banda larga).
-- Feature nova: `tensao_digital_bancaria` = Pix per capita / (agencias por 100k + 1).
+- Feature nova: `tensao_digital_bancaria` = Pix per capita / (agências por 100k + 1).
 
-**Efeito**: cidades pequenas com muito Pix e pouca agencia sobem no ranking. Ainda prevalecem SC e MT, mas ja nao e um ranking de riqueza pura.
+**Efeito**: cidades pequenas com muito Pix e pouca agência sobem no ranking. Ainda prevalecem SC e MT, mas já não é um ranking de riqueza pura.
 
-### 2.3 IPB Abordagem 2
+### 2.3 IPB Presença Bancária Completa (V3, ex-Abordagem 2)
 
 Redesenho mais profundo, principalmente no Pilar D:
-- **Agencias sozinhas nao refletem mais a realidade**: o numero de agencias bancarias vem caindo no Brasil. O BCB registra 216 mil **correspondentes** (lotericas, caixas eletronicos, correspondentes bancarios). O indice passa a considerar a **presenca bancaria completa** = agencias + correspondentes.
-- **Correspondentes ponderados por tipo**: postos (peso 1.0), filiais (0.7), sedes (0.4) e agencias (1.0). Postos sao pontos mais simples; filiais/sedes tem capacidade maior.
-- **Gap bancario completo** = 1 / (agencias + correspondentes ponderados por 100k + 1).
-- **Penetracao digital relativa** = Pix per capita / PIB per capita. Premia cidades que transacionam muito proporcionalmente a sua riqueza.
-- **Flag de turismo suave**: score continuo baseado em Pix alto + PIB baixo + cidade pequena. Aplica desconto maximo de 15% no pilar digital para evitar que cidades turisticas (Arraial do Cabo, Buzios) disparem so por fluxo de visitantes.
-- **Rankings separados por estrato**: pequena, media e grande.
+- **Agências sozinhas não refletem mais a realidade**: o número de agências bancárias vem caindo no Brasil. O BCB registra 216 mil **correspondentes** (lotéricas, caixas eletrônicos, correspondentes bancários). O índice passa a considerar a **presença bancária completa** = agências + correspondentes.
+- **Correspondentes ponderados por tipo**: postos (peso 1.0), filiais (0.7), sedes (0.4) e agências (1.0). Postos são pontos mais simples; filiais/sedes têm capacidade maior.
+- **Gap bancário completo** = 1 / (agências + correspondentes ponderados por 100k + 1).
+- **Penetração digital relativa** = Pix per capita / PIB per capita. Premia cidades que transacionam muito proporcionalmente à sua riqueza.
+- **Flag de turismo suave**: score contínuo baseado em Pix alto + PIB baixo + cidade pequena. Aplica desconto máximo de 15% no pilar digital para evitar que cidades turísticas (Arraial do Cabo, Búzios) disparem só por fluxo de visitantes.
+- **Rankings separados por estrato**: pequena, média e grande.
 
-**Efeito**: quebra o vies para cidades ricas ja bancarizadas e passa a destacar municipios com alta demanda digital e baixa estrutura bancaria fisica.
+**Efeito**: quebra o viés para cidades ricas já bancarizadas e passa a destacar municípios com alta demanda digital e baixa estrutura bancária física.
 
 ---
 
-## 3. Top 10 por versao
+## 3. Top 10 por versão
 
-### 3.1 IPB Atual
+### 3.1 IPB Clássico (V1)
 
-| Rank | Municipio | UF | Estrato | IPB |
+| Rank | Município | UF | Estrato | IPB |
 |---|---|---|---|---|
 | 1 | Barueri | SP | media | 82.54 |
 | 2 | Itapema | SC | media | 82.24 |
@@ -83,9 +83,9 @@ Redesenho mais profundo, principalmente no Pilar D:
 | 9 | Santa Carmem | MT | pequena | 78.93 |
 | 10 | Nova Mutum | MT | media | 78.80 |
 
-### 3.2 IPB Recalibrado (Rapido)
+### 3.2 IPB Recalibrado (V2)
 
-| Rank | Municipio | UF | Estrato | IPB |
+| Rank | Município | UF | Estrato | IPB |
 |---|---|---|---|---|
 | 1 | Bombinhas | SC | pequena | 83.85 |
 | 2 | Confins | MG | pequena | 82.39 |
@@ -98,9 +98,9 @@ Redesenho mais profundo, principalmente no Pilar D:
 | 9 | Primavera do Leste | MT | media | 74.70 |
 | 10 | Itajaí | SC | media | 74.65 |
 
-### 3.3 IPB Abordagem 2
+### 3.3 IPB Presença Bancária Completa (V3)
 
-| Rank | Municipio | UF | Estrato | IPB |
+| Rank | Município | UF | Estrato | IPB |
 |---|---|---|---|---|
 | 1 | Engenheiro Coelho | SP | pequena | 61.38 |
 | 2 | Mário Campos | MG | pequena | 59.92 |
@@ -115,21 +115,21 @@ Redesenho mais profundo, principalmente no Pilar D:
 
 ---
 
-## 4. Analise do Top 100
+## 4. Análise do Top 100
 
-### 4.1 Movimentacao geral
+### 4.1 Movimentação geral
 
-| Comparacao | Sairam do Top 100 | Entraram no Top 100 |
+| Comparação | Saíram do Top 100 | Entraram no Top 100 |
 |---|---|---|
-| Atual -> Recalibrado | 40 | 40 |
-| Recalibrado -> Abordagem 2 | 74 | 74 |
-| Atual -> Abordagem 2 | 77 | 77 |
+| V1 -> V2 | 40 | 40 |
+| V2 -> V3 | 74 | 74 |
+| V1 -> V3 | 77 | 77 |
 
-### 4.2 Cidades que sairam do Top 100 (Atual -> Abordagem 2)
+### 4.2 Cidades que saíram do Top 100 (V1 -> V3)
 
-Cidades ricas e ja bancarizadas que deixaram de figurar entre as 100 primeiras:
+Cidades ricas e já bancarizadas que deixaram de figurar entre as 100 primeiras:
 
-| Municipio | UF | Estrato | Rank Atual | Rank Abordagem 2 |
+| Município | UF | Estrato | Rank V1 | Rank V3 |
 |---|---|---|---|---|
 | Barueri | SP | media | 1 | 246 |
 | Balneário Camboriú | SC | media | 3 | 119 |
@@ -209,11 +209,11 @@ Cidades ricas e ja bancarizadas que deixaram de figurar entre as 100 primeiras:
 | Nova Odessa | SP | media | 99 | 430 |
 | Tapurah | MT | pequena | 100 | 1007 |
 
-### 4.3 Cidades que entraram no Top 100 (Atual -> Abordagem 2)
+### 4.3 Cidades que entraram no Top 100 (V1 -> V3)
 
 Cidades que subiram e passaram a figurar entre as 100 primeiras oportunidades:
 
-| Municipio | UF | Estrato | Rank Atual | Rank Abordagem 2 |
+| Município | UF | Estrato | Rank V1 | Rank V3 |
 |---|---|---|---|---|
 | Engenheiro Coelho | SP | pequena | 191 | 1 |
 | Mário Campos | MG | pequena | 833 | 2 |
@@ -297,13 +297,13 @@ Cidades que subiram e passaram a figurar entre as 100 primeiras oportunidades:
 
 ## 5. Top 5 por Estrato Populacional
 
-Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas tres versoes. Isso evita que cidades pequenas e grandes concorram no mesmo criterio.
+Além do ranking geral, apresentamos os líderes de cada estrato populacional nas três versões. Isso evita que cidades pequenas e grandes concorram no mesmo critério.
 
 ### Estrato: Grande
 
-#### IPB Atual
+#### IPB Clássico (V1)
 
-| Rank Geral | Rank no Estrato | Municipio | UF | IPB |
+| Rank Geral | Rank no Estrato | Município | UF | IPB |
 |---|---|---|---|---|
 | 41 | 1 | Florianópolis | SC | 70.00 |
 | 46 | 2 | Cuiabá | MT | 68.95 |
@@ -311,9 +311,9 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 | 51 | 4 | Ribeirão Preto | SP | 68.68 |
 | 61 | 5 | Goiânia | GO | 67.68 |
 
-#### IPB Recalibrado
+#### IPB Recalibrado (V2)
 
-| Rank Geral | Rank no Estrato | Municipio | UF | IPB |
+| Rank Geral | Rank no Estrato | Município | UF | IPB |
 |---|---|---|---|---|
 | 19 | 1 | Brasília | DF | 72.75 |
 | 27 | 2 | Florianópolis | SC | 71.89 |
@@ -321,9 +321,9 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 | 32 | 4 | Cuiabá | MT | 71.04 |
 | 47 | 5 | Uberlândia | MG | 69.47 |
 
-#### IPB Abordagem 2
+#### IPB Presença Bancária Completa (V3)
 
-| Rank Geral | Rank no Estrato | Municipio | UF | IPB |
+| Rank Geral | Rank no Estrato | Município | UF | IPB |
 |---|---|---|---|---|
 | 51 | 1 | Rio de Janeiro | RJ | 49.33 |
 | 53 | 2 | Brasília | DF | 49.18 |
@@ -333,9 +333,9 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 
 ### Estrato: Media
 
-#### IPB Atual
+#### IPB Clássico (V1)
 
-| Rank Geral | Rank no Estrato | Municipio | UF | IPB |
+| Rank Geral | Rank no Estrato | Município | UF | IPB |
 |---|---|---|---|---|
 | 1 | 1 | Barueri | SP | 82.54 |
 | 2 | 2 | Itapema | SC | 82.24 |
@@ -343,9 +343,9 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 | 4 | 4 | Paulínia | SP | 80.87 |
 | 5 | 5 | Itajaí | SC | 80.05 |
 
-#### IPB Recalibrado
+#### IPB Recalibrado (V2)
 
-| Rank Geral | Rank no Estrato | Municipio | UF | IPB |
+| Rank Geral | Rank no Estrato | Município | UF | IPB |
 |---|---|---|---|---|
 | 6 | 1 | Nova Mutum | MT | 76.33 |
 | 7 | 2 | Balneário Camboriú | SC | 75.82 |
@@ -353,9 +353,9 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 | 9 | 4 | Primavera do Leste | MT | 74.70 |
 | 10 | 5 | Itajaí | SC | 74.65 |
 
-#### IPB Abordagem 2
+#### IPB Presença Bancária Completa (V3)
 
-| Rank Geral | Rank no Estrato | Municipio | UF | IPB |
+| Rank Geral | Rank no Estrato | Município | UF | IPB |
 |---|---|---|---|---|
 | 4 | 1 | Nova Lima | MG | 58.40 |
 | 6 | 2 | Santana de Parnaíba | SP | 57.70 |
@@ -365,9 +365,9 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 
 ### Estrato: Pequena
 
-#### IPB Atual
+#### IPB Clássico (V1)
 
-| Rank Geral | Rank no Estrato | Municipio | UF | IPB |
+| Rank Geral | Rank no Estrato | Município | UF | IPB |
 |---|---|---|---|---|
 | 6 | 1 | Ilhabela | SP | 79.87 |
 | 9 | 2 | Santa Carmem | MT | 78.93 |
@@ -375,9 +375,9 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 | 13 | 4 | Fernando de Noronha | PE | 78.08 |
 | 17 | 5 | Armação dos Búzios | RJ | 76.77 |
 
-#### IPB Recalibrado
+#### IPB Recalibrado (V2)
 
-| Rank Geral | Rank no Estrato | Municipio | UF | IPB |
+| Rank Geral | Rank no Estrato | Município | UF | IPB |
 |---|---|---|---|---|
 | 1 | 1 | Bombinhas | SC | 83.85 |
 | 2 | 2 | Confins | MG | 82.39 |
@@ -385,9 +385,9 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 | 4 | 4 | Santa Carmem | MT | 80.11 |
 | 5 | 5 | Alto Horizonte | GO | 77.09 |
 
-#### IPB Abordagem 2
+#### IPB Presença Bancária Completa (V3)
 
-| Rank Geral | Rank no Estrato | Municipio | UF | IPB |
+| Rank Geral | Rank no Estrato | Município | UF | IPB |
 |---|---|---|---|---|
 | 1 | 1 | Engenheiro Coelho | SP | 61.38 |
 | 2 | 2 | Mário Campos | MG | 59.92 |
@@ -397,11 +397,11 @@ Alem do ranking geral, apresentamos os lideres de cada estrato populacional nas 
 
 ---
 
-## 6. Distribuicao Regional no Top 100
+## 6. Distribuição Regional no Top 100
 
-Quantidade de municipios por regiao entre os 100 primeiros de cada versao:
+Quantidade de municípios por região entre os 100 primeiros de cada versão:
 
-| Regiao | IPB Atual | IPB Recalibrado | IPB Abordagem 2 |
+| Região | IPB Clássico (V1) | IPB Recalibrado (V2) | IPB Presença Bancária Completa (V3) |
 |---|---|---|---|
 | Centro-Oeste | 22 | 20 | 7 |
 | Nordeste | 4 | 3 | 11 |
@@ -411,62 +411,62 @@ Quantidade de municipios por regiao entre os 100 primeiros de cada versao:
 
 ---
 
-## 7. Interpretacao dos Resultados
+## 7. Interpretação dos Resultados
 
-### 7.1 IPB Atual
+### 7.1 IPB Clássico (V1)
 - Fortemente enviesado para cidades ricas e conectadas do Sudeste/Sul;
 - Top 10 com Barueri, Paulínia, Ilhabela, Nova Lima;
 - Pilar D redundante e com peso insuficiente para contrabalançar riqueza.
 
-### 7.2 IPB Recalibrado (Rapido)
-- Reduziu o peso da renda e aumentou o gap bancario;
-- Cidades pequenas com alta tensao digital-bancaria subiram;
-- Ainda prevalecem cidades de SC e MT no topo, mas ja nao e um ranking de riqueza pura.
+### 7.2 IPB Recalibrado (V2)
+- Reduziu o peso da renda e aumentou o gap bancário;
+- Cidades pequenas com alta tensão digital-bancária subiram;
+- Ainda prevalecem cidades de SC e MT no topo, mas já não é um ranking de riqueza pura.
 
-### 7.3 IPB Abordagem 2
-- Redesenhou o Pilar D: agencias sozinhas perdem relevancia, entao o indice passa a considerar a presenca bancaria completa (agencias + correspondentes por tipo);
-- `penetracao_digital_relativa` premia cidades que transacionam muito Pix proporcionalmente a renda;
+### 7.3 IPB Presença Bancária Completa (V3)
+- Redesenhou o Pilar D: agências sozinhas perdem relevância, então o índice passa a considerar a presença bancária completa (agências + correspondentes por tipo);
+- `penetracao_digital_relativa` premia cidades que transacionam muito Pix proporcionalmente à renda;
 - Flag de turismo suave reduz o impacto de cidades pequenas com fluxo de visitantes;
-- Top 100 ficou mais distribuido regionalmente e por estrato;
-- Reduziu ainda mais a dominancia de cidades obviamente ricas.
+- Top 100 ficou mais distribuído regionalmente e por estrato;
+- Reduziu ainda mais a dominância de cidades obviamente ricas.
 
 ---
 
-## 7. Alertas importantes para discussao do grupo
+## 8. Alertas importantes para discussão do grupo
 
-### 7.1 Abordagem 2 ainda privilegia cidades pequenas com eventos especiais
+### 8.1 V3 ainda privilegia cidades pequenas com eventos especiais
 
-O Top 10 da Abordagem 2 ainda traz cidades pequenas como Engenheiro Coelho-SP, Arraial do Cabo-RJ, Armacao dos Buzios-RJ e Barra dos Coqueiros-SE. Essas cidades provavelmente tem Pix alto por turismo ou por atividade econômica nao residente. A flag de turismo suave mitiga, mas nao elimina o efeito.
+O Top 10 da V3 ainda traz cidades pequenas como Engenheiro Coelho-SP, Arraial do Cabo-RJ, Armação dos Búzios-RJ e Barra dos Coqueiros-SE. Essas cidades provavelmente têm Pix alto por turismo ou por atividade econômica não residente. A flag de turismo suave mitiga, mas não elimina o efeito.
 
-### 7.2 Distribuicao regional no Top 100
+### 8.2 Distribuição regional no Top 100
 
-A Abordagem 2 concentra grande parte do Top 100 no Sudeste. Isso nao e necessariamente ruim (e a regiao mais populosa), mas precisa ser analisado: sao cidades-dormitorio da metropole? Sao cidades turisticas? Sao polos regionais reais?
+A V3 concentra grande parte do Top 100 no Sudeste. Isso não é necessariamente ruim (é a região mais populosa), mas precisa ser analisado: são cidades-dormitório da metrópole? São cidades turísticas? São polos regionais reais?
 
-### 7.3 Grandes cidades no ranking da Abordagem 2
+### 8.3 Grandes cidades no ranking da V3
 
-Entraram no Top 100: Rio de Janeiro, Sao Paulo, Brasilia, Manaus, Salvador. Isso e positivo porque mostra que o indice nao exclui grandes cidades automaticamente. Mas tambem levanta a questao: essas cidades realmente sao oportunidades de expansao bancaria digital ou ja estao saturadas?
+Entraram no Top 100: Rio de Janeiro, São Paulo, Brasília, Manaus, Salvador. Isso é positivo porque mostra que o índice não exclui grandes cidades automaticamente. Mas também levanta a questão: essas cidades realmente são oportunidades de expansão bancária digital ou já estão saturadas?
 
-### 7.4 Correspondentes bancarios como proxy de acesso
+### 8.4 Correspondentes bancários como proxy de acesso
 
-O BCB classifica correspondentes em sede, filial, posto e agencia. A ponderacao usada (posto=1.0, filial=0.7, sede=0.4, agencia=1.0) e uma primeira aproximacao. O grupo precisa validar se essa hierarquia faz sentido de negocio.
+O BCB classifica correspondentes em sede, filial, posto e agência. A ponderação usada (posto=1.0, filial=0.7, sede=0.4, agência=1.0) é uma primeira aproximação. O grupo precisa validar se essa hierarquia faz sentido de negócio.
 
 ---
 
-## 8. Limitacoes e proximos passos
+## 9. Limitações e próximos passos
 
-### Limitacoes desta analise
-- A cobertura 4G/5G nao foi integrada nesta rodada por dificuldade de acesso a dados agregados por municipio. A banda larga fixa continua como proxy;
-- Nao houve validacao externa com dados reais de expansao bancaria;
-- A flag de turismo e uma heuristica (Pix alto + PIB baixo + cidade pequena). Sem dados de visitacao, e um ajuste pragmatico;
-- Variaveis per capita ainda favorecem cidades pequenas com eventos especiais (turismo, comercio de fronteira).
+### Limitações desta análise
+- A cobertura 4G/5G não foi integrada nesta rodada por dificuldade de acesso a dados agregados por município. A banda larga fixa continua como proxy;
+- Não houve validação externa com dados reais de expansão bancária;
+- A flag de turismo é uma heurística (Pix alto + PIB baixo + cidade pequena). Sem dados de visitação, é um ajuste pragmático;
+- Variáveis per capita ainda favorecem cidades pequenas com eventos especiais (turismo, comércio de fronteira).
 
-### Proximos passos recomendados
-1. Validar os Top 100 da Abordagem 2 com conhecimento de negocio;
+### Próximos passos recomendados
+1. Validar os Top 100 da V3 com conhecimento de negócio;
 2. Publicar rankings oficiais separados por estrato populacional;
 3. Coletar cobertura 4G/5G (painel STEL/Anatel) para enriquecer o Pilar C;
 4. Coletar CNPJ/MEI e Caged para a Abordagem 3 (modelo residual);
-5. Refinar a flag de turismo com dados reais de visitacao/turismo (Embratur, MTur) se disponiveis.
+5. Refinar a flag de turismo com dados reais de visitação/turismo (Embratur, MTur) se disponíveis.
 
 ---
 
-*Documento gerado automaticamente por scripts/06_comparacao_tres_abordagens_ipb.py*
+*Documento gerado automaticamente a partir de `src/analytics/ipb.py` (orquestração: `scripts/07_publica_ipb_bigquery.py`)*
