@@ -2,9 +2,9 @@
 
 > **Projeto**: Índice de Potencial Bancário (IPB)  
 > **Etapa**: 2 — Análise Exploratória e Limpeza  
-> **Base**: `trusted_municipios` (5.570 municípios)  
-> **Período de referência**: Censo 2022, PIB 2023, Pix jul/2025–jun/2026, Anatel/Estban 2026, IDHM 2010  
-> **Gerado em**: 2026-08-26
+> **Base**: `trusted_municipios` (5.570 municípios) + tabelas `analytics_ipb_*` (3 versões do índice publicadas)  
+> **Período de referência**: Censo 2022, PIB 2023, Pix jul/2025–jun/2026, Anatel/Estban 2026, Correspondentes BCB 30/08/2026, IDHM 2010  
+> **Gerado em**: 2026-09-02
 
 ---
 
@@ -21,7 +21,7 @@ Este relatório consolida os principais achados da análise exploratória de dad
 
 ## 2. Base de dados e método
 
-A análise foi conduzida em 6 notebooks reprodutíveis localizados em `notebooks/00_exploracao/`:
+A análise foi conduzida em 7 notebooks reprodutíveis localizados em `notebooks/00_exploracao/`:
 
 | Notebook | Propósito |
 |----------|-----------|
@@ -31,6 +31,7 @@ A análise foi conduzida em 6 notebooks reprodutíveis localizados em `notebooks
 | `02_economia_e_dinamismo.ipynb` | Análise dos pilares A e B (renda, PIB, Pix). |
 | `03_infra_digital_e_gap_bancario.ipynb` | Análise dos pilares C e D (banda larga, agências). |
 | `04_integracao_correlacoes.ipynb` | Correlações, PCA e cálculo alpha do IPB. |
+| `05_comparacao_abordagens_ipb.ipynb` | Comparação das 3 versões do IPB **lendo as tabelas `analytics_ipb_*` do BigQuery** (seção 8 deste relatório). |
 
 Os outputs de dados (parquet e relatórios JSON) foram salvos em `data/processed/`.  
 As figuras geradas pela EDA foram salvas em `docs/assets/figures/` para ficarem versionadas junto com este relatório.
@@ -217,7 +218,86 @@ O Top 10 permaneceu bastante estável, com pequenas trocas de posição. A corre
 
 ---
 
-## 8. Features adicionais criadas
+## 8. Comparação das três abordagens do IPB (publicadas em produção)
+
+A EDA do IPB *alpha* (seção 7) revelou o viés central do índice: um ranking de riqueza, não de oportunidade. A partir desse diagnóstico, a evolução do método seguiu uma cadeia documentada:
+
+1. **Diagnóstico** (esta EDA, seção 7): Pilar D redundante (corr 0,88–0,91) e sem força para contrabalançar renda; normalização min-max dilui o gap.
+2. **`docs/Plano_Recalibracao_IPB.md`**: princípios anti-viés e desenho de 3 abordagens — (1) rápida, (2) estrutural, (3) modelo residual.
+3. **V2 — Recalibrado**: a abordagem rápida implementada (ajuste de pesos e de variáveis com os dados atuais).
+4. **`docs/Gap_Analysis_e_Potencial_IPB.md`**: a análise de gap mostrou que agências sozinhas não medem mais acesso — o BCB registra 216 mil correspondentes — motivando o redesenho do Pilar D.
+5. **V3 — Presença Bancária Completa** (ex-"Abordagem 2"): correspondentes bancários por tipo + heurísticas anti-turismo.
+
+As três versões foram calculadas pelo módulo `src/analytics/ipb.py` (fórmulas testadas em `tests/unit/test_ipb.py`), publicadas em 4 tabelas no BigQuery por `scripts/07_publica_ipb_bigquery.py` e validadas por `tests/data_quality/test_analytics_ipb.py`. A `trusted_municipios` **não** carrega colunas de índice — o IPB é produto da camada `analytics_`, não dado limpo.
+
+### 8.1 As três estratégias
+
+| Versão | Tabela | O que muda em relação à anterior |
+|---|---|---|
+| **V1 — IPB Clássico** | `analytics_ipb_v1_classico` | Fórmula original: 5 pilares, pesos iguais (média geométrica). |
+| **V2 — IPB Recalibrado** | `analytics_ipb_v2_recalibrado` | Pesos A=0,5 / B=0,75 / C=0,75 / D=1,5 / E=1,0; Pilar D só com `agencias_por_100k_hab`; Pilar E sem `populacao_urbana_pct` (redundante); feature nova `tensao_digital_bancaria` = Pix per capita / (agências por 100k + 1). |
+| **V3 — Presença Bancária Completa** | `analytics_ipb_v3_presenca_completa` | Redesenho do Pilar D: `gap_bancario_completo` = 1 / (agências + correspondentes ponderados por 100k + 1), com correspondentes do BCB por tipo (posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0); nova feature `penetracao_digital_relativa` = Pix per capita / PIB per capita; pesos A=0,75 / B=1,0 / C=0,75 / D=1,5 / E=1,0. |
+
+Ainda vale uma tabela de apoio `analytics_ipb_comparacao` (visão larga com os 3 IPBs e 6 ranks por município) para consultas ad hoc e para a EDA.
+
+**Mecânica da flag de turismo (V3)** — documentada aqui por ser uma heurística de projeto:
+
+```
+score_turismo = 0,5·(Pix per capita ≥ percentil 90)
+              + 0,3·(PIB per capita ≤ mediana)
+              + 0,2·(estrato populacional = pequena)     → score ∈ [0, 1]
+pilar B final = pilar B × (1 − 0,15 × score_turismo)     → desconto de 0% a 15%
+```
+
+Justificativa: sem dados de visitação (Embratur/MTur), usa-se o próprio comportamento transacional como proxy de fluxo não residente. Limitação declarada: mitiga, mas não elimina cidades de evento especial (Arraial do Cabo, Búzios seguem no Top 10 da V3).
+
+**Origem do estrato populacional**: a classificação pequena (<50 mil) / média (50–500 mil) / grande (>500 mil) é **decisão do projeto** (seção 5.1), não classificação externa. Sua consequência direta: 4.913 municípios (88,2%) são "pequena", 616 "média" e 41 "grande". A escolha só afeta o rank *dentro* do estrato (`rank_estrato`); o ranking geral independe dela. A análise de sensibilidade (seção 8.5) testa tercis populacionais como alternativa.
+
+### 8.2 Resultados
+
+Estatísticas gerais (idênticas às validadas no documento comparativo anterior — reprodução confirmada):
+
+| Métrica | V1 Clássico | V2 Recalibrado | V3 Presença Completa |
+|---|---|---|---|
+| Média | 35,85 | 40,85 | 25,63 |
+| Mediana | 35,86 | 40,65 | 25,23 |
+| Máximo | 82,54 | 83,85 | 61,38 |
+| Mínimo | 0,00 | 0,00 | 0,00 |
+
+Correlação de Spearman entre os rankings: **V1×V2 = 0,842**, **V2×V3 = 0,709**, **V1×V3 = 0,654**. A V2 reordena pouco (só pesos); a V3 reordena de verdade (redesenho do pilar D) — a comparação não é cosmética.
+
+Movimentação no Top 100: V1→V2 trocam 40 cidades; V2→V3 trocam 74; V1→V3 trocam 77.
+
+Top 10 da V3 (a versão candidata a oficial): Engenheiro Coelho-SP (61,38), Mário Campos-MG (59,92), Alumínio-SP (58,53), Nova Lima-MG (58,40), Santana do Paraíso-MG (58,33), Santana de Parnaíba-SP (57,70), Arraial do Cabo-RJ (56,96), Confins-MG (56,85), Botuverá-SC (55,07), Passo de Torres-SC (55,02). Os Top 10s completos por versão estão em `docs/Comparacao_Tres_Abordagens_IPB.md`.
+
+Distribuição regional do Top 100 (V1 → V3): Sudeste 48 → 64, Sul 24 → 14, Centro-Oeste 22 → 7, Nordeste 4 → 11, Norte 2 → 4. A V3 dilui a dominância de CO/Sul (agro/riqueza) e sobe Nordeste/Norte.
+
+### 8.3 Alertas e sensibilidade
+
+- **Turismo**: o Top 10 da V3 ainda contém cidades de evento especial (Arraial do Cabo, Búzios). A flag reduz o pilar B em até 15%; é mitigação, não solução (ver figura abaixo).
+- **Estrato populacional**: comparando a posição relativa no estrato oficial vs em tercis populacionais, ρ de Spearman = 0,890 — a classificação não revoluciona posições, mas os Top 20 de cada grupo mudam bastante (ex.: nenhuma das 20 maiores cidades líderes oficiais aparece no Top 20 do tercil superior). Manter ou revisar a classificação é **decisão de negócio documentada**, com evidências no notebook 05.
+- **Município extinto**: a base de correspondentes cobre 5.571 municípios; o código extra é **Boa Esperança do Norte/MT (5101837), município extinto** que consta no cadastro do BCB mas não no Censo 2022. O pipeline usa left join a partir da trusted (5.570) e o caso é coberto por teste de integridade.
+- **Correspondentes**: a fonte oficial é a API OData do BCB (`Informes_Correspondentes`, posição 30/08/2026), coletada pelo ingestor `src/ingestors/bcb_correspondentes.py` com cache idempotente. A ponderação por tipo (posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0) é uma primeira aproximação a validar com negócio.
+
+### 8.4 Figuras
+
+![Distribuição dos três IPBs](assets/figures/05_dist_ipb_tres_versoes.png)
+
+![Correlação de Spearman entre os rankings](assets/figures/05_correlacao_spearman_ranks.png)
+
+![Ranking V1 × V3: movimentação no Top 100](assets/figures/05_scatter_rank_v1_v3.png)
+
+![Top 100 por região e versão](assets/figures/05_top100_regional.png)
+
+![Perfil médio dos Top 100 por versão](assets/figures/05_perfis_top100.png)
+
+![Flag de turismo vs IPB V3](assets/figures/05_score_turismo_rank.png)
+
+![Sensibilidade da classificação por estrato](assets/figures/05_sensibilidade_estrato.png)
+
+---
+
+## 9. Features adicionais criadas
 
 A partir das tabelas `raw_*`, foram criadas as seguintes features na base enriquecida `trusted_municipios_eda.parquet`:
 
@@ -232,26 +312,31 @@ A partir das tabelas `raw_*`, foram criadas as seguintes features na base enriqu
 
 ---
 
-## 9. Limitações e ressalvas
+## 10. Limitações e ressalvas
 
-1. **Vintage misto**: a base combina Censo 2022, PIB 2023, Pix 2025–2026, Anatel/Estban 2026 e IDHM 2010. Isso deve ser declarado na apresentação final.
+1. **Vintage misto**: a base combina Censo 2022, PIB 2023, Pix 2025–2026, Anatel/Estban 2026, Correspondentes BCB 30/08/2026 e IDHM 2010. Isso deve ser declarado na apresentação final.
 2. **Internet domiciliar**: a coluna `domicilios_com_internet_pct` está 100% nula; usamos banda larga fixa como proxy.
 3. **Pix**: os dados brutos do BCB incluem PF e PJ, mas o cálculo da `trusted_municipios` utiliza apenas `VL_PagadorPF`/`QT_PagadorPF` como proxy de adoção digital. Uma versão futura pode testar incluir PJ e/ou variáveis de recebedores.
 4. **Efeito polo regional**: municípios dormitório podem parecer desatendidos porque recursos financeiros fluem para cidades próximas.
 5. **Municípios com IPB zero**: indicam ausência de dados em algum pilar; devem ser analisados caso a caso.
+6. **IPB = 0 estrutural**: município com qualquer pilar = 0 tem IPB 0 (média geométrica). Nos 3 índices há grupos de municípios empatados na última posição; suavização (ex.: epsilon) ficou como decisão de método futura.
+7. **Flag de turismo é heurística**: Pix alto + PIB baixo + cidade pequena, por ausência de dados de visitação; desconto máximo de 15% no pilar B.
+8. **Correspondentes como proxy de acesso**: a ponderação por tipo é uma primeira aproximação; e a base inclui o município extinto Boa Esperança do Norte/MT (excluído via left join na trusted).
 
 ---
 
-## 10. Próximos passos
+## 11. Próximos passos
 
-1. **Refinar a fórmula do IPB**: testar cenários de pesos e sensibilidade do ranking.
-2. **Explorar clusterização (opcional)**: aplicar K-Means nos pilares para criar arquétipos de municípios.
-3. **Construir visualizações executivas**: mapas, quadrantes e fichas de municípios.
-4. **Definir ondas de expansão**: Top 50, Top 100, etc.
+1. **Validar os Top 100 da V3 com conhecimento de negócio** e decidir a versão oficial do índice.
+2. **Decidir a classificação por estrato** com base na análise de sensibilidade (seção 8.3) — manter as faixas atuais ou adotar tercis.
+3. **Explorar clusterização (opcional)**: aplicar K-Means nos pilares para criar arquétipos de municípios.
+4. **Construir visualizações executivas**: mapas, quadrantes e fichas de municípios.
+5. **Definir ondas de expansão**: Top 50, Top 100, etc.
+6. **Enriquecimentos futuros**: cobertura 4G/5G (pilar C), CNPJ/MEI e Caged (modelo residual / Abordagem 3), dados de visitação para refinar a flag de turismo.
 
 ---
 
-## 11. Como reproduzir
+## 12. Como reproduzir
 
 ```bash
 # 1. Re-executar o Pix (12 meses)
@@ -260,9 +345,16 @@ poetry run python -m src.ingestors.bcb_pix
 # 2. Re-executar a trusted
 poetry run python -m src.preparacao.trusted_municipios
 
-# 3. Executar os notebooks
+# 3. (Re)publicar as 3 versões do IPB no BigQuery
+#    (lê trusted + raw_bcb_correspondentes do BQ, calcula V1/V2/V3,
+#     sobe analytics_ipb_* e regenera docs/Comparacao_Tres_Abordagens_IPB.md)
+poetry run python scripts/07_publica_ipb_bigquery.py
+
+# 4. Executar os notebooks (inclui o 05, que lê as tabelas do BigQuery)
 poetry run jupyter nbconvert --to notebook --execute notebooks/00_exploracao/*.ipynb
 ```
+
+Testes: `poetry run pytest` (unitários + integridade das tabelas `analytics_ipb_*` + conexão BQ).
 
 ---
 
