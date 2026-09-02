@@ -55,8 +55,16 @@ poetry run python -m src.ingestors.anatel_banda_larga_fixa
 # 5. IDHM histórico (API Ipeadata — Censo 2010)
 poetry run python -m src.ingestors.pnud_idhm
 
-# 6. Consolidação (Camada Trusted)
+# 6. Correspondentes bancários (API OData BCB — cache idempotente)
+poetry run python -m src.ingestors.bcb_correspondentes
+
+# 7. Consolidação (Camada Trusted)
 poetry run python -m src.preparacao.trusted_municipios
+
+# 8. Publicação das 3 versões do IPB (Camada Analytics)
+#    Lê trusted + correspondentes do BQ, calcula V1/V2/V3, sobe analytics_ipb_*
+#    e regenera docs/Comparacao_Tres_Abordagens_IPB.md
+poetry run python scripts/07_publica_ipb_bigquery.py
 ```
 
 ---
@@ -142,5 +150,27 @@ WHERE
     AND va_servicos IS NOT NULL
 ORDER BY 
     pct_servicos_no_pib DESC
+LIMIT 10;
+```
+
+### 4.5. Índice de Potencial Bancário (Camada Analytics)
+*Top 10 oportunidades da V3 (IPB Presença Bancária Completa), com os ranks nas outras versões para comparação.*  
+As tabelas `analytics_ipb_*` são publicadas por `scripts/07_publica_ipb_bigquery.py`; integridade validada por `tests/data_quality/test_analytics_ipb.py`.
+```sql
+SELECT 
+    c.nome_municipio,
+    c.sigla_uf,
+    c.estrato_populacional,
+    ROUND(v3.ipb, 2) AS ipb_v3,
+    c.rank_v1,
+    c.rank_v2,
+    c.rank_v3
+FROM 
+    `mba-projetc-final.ipb_staging.analytics_ipb_v3_presenca_completa` v3
+JOIN 
+    `mba-projetc-final.ipb_staging.analytics_ipb_comparacao` c
+    ON v3.id_municipio = c.id_municipio
+ORDER BY 
+    v3.rank
 LIMIT 10;
 ```

@@ -27,10 +27,12 @@ Para responder a essa pergunta, estamos construindo o IPB. As cidades são ranke
 
 ## 🏗️ Estrutura do Projeto e Documentação Técnica
 
-O projeto é suportado por um pipeline robusto de Engenharia de Dados (Python, Pandas, Google BigQuery), dividido em camadas `raw` (bruta) e `trusted` (padronizada). 
+O projeto é suportado por um pipeline robusto de Engenharia de Dados (Python, Pandas, Google BigQuery), dividido em camadas `raw` (bruta), `trusted` (padronizada) e `analytics` (3 versões do IPB publicadas). 
 
 Dê preferência para leitura de nossos guias detalhados na pasta `docs/`:
 
+- [Relatório de EDA (inclui a comparação das 3 versões do IPB)](docs/Relatorio_EDA.md) 📊 *Achados da EDA, qualidade dos dados e comparação V1/V2/V3*
+- [Comparação das Três Abordagens do IPB](docs/Comparacao_Tres_Abordagens_IPB.md) ⚖️ *Rankings, movimentação do Top 100 e alertas por versão*
 - [Guia de Execução Técnica (Pipeline & SQL)](docs/Guia_de_Execucao.md) 💻 *Instruções de setup e queries SQL (100% automatizado)*
 - [Plano de Implementação (Fases 0 a 4)](docs/Plano_de_Implementacao.md)
 - [Guia de Bases e Desenho (Tese, Pilares e Fórmula do IPB)](docs/IPB_Guia_de_Bases_e_Desenho.md)
@@ -55,18 +57,18 @@ Estamos desenvolvendo o projeto em etapas ágeis. Acompanhe nosso progresso:
 - [x] **Proposta Validada** (Concluído - 13/08)
   - Definição da arquitetura, tese e pilares do índice.
 
-- [x] **Etapa 1: Processamento e Ingestão** (Prazo: 25/08) 📍 **<-- ESTAMOS AQUI**
+- [x] **Etapa 1: Processamento e Ingestão** (Concluída)
   - Implementação do Data Lake (BigQuery + GCS).
-  - Coleta automatizada de APIs (Pix, IBGE) e Data Lake centralizado para arquivos manuais (Estban, Anatel).
+  - Coleta automatizada de APIs (Pix, IBGE, Correspondentes BCB) e Data Lake centralizado para arquivos manuais (Estban, Anatel).
   - Tabela consolidadora `trusted_municipios`.
 
-- [ ] **Etapa 2: Análise Exploratória (EDA) e Limpeza** (Prazo: 03/09)
-  - Tratamento de outliers e dados faltantes.
-  - Exploração de correlações entre os pilares e agrupamentos.
+- [x] **Etapa 2: Análise Exploratória (EDA) e Índice** (EDA concluída) 📍 **<-- ESTAMOS AQUI**
+  - Tratamento de outliers e dados faltantes, correlações entre os pilares.
+  - **3 versões do IPB publicadas no BigQuery** (`analytics_ipb_v1_classico`, `analytics_ipb_v2_recalibrado`, `analytics_ipb_v3_presenca_completa` + visão `analytics_ipb_comparacao`): Clássico, Recalibrado e Presença Bancária Completa, com comparação documentada no Relatório de EDA.
 
-- [ ] **Etapa 3: Aplicação de ML e Modelos** (Prazo: 15/09)
-  - Normalização e modelagem matemática do Índice (IPB).
-  - Aplicação de técnicas de Machine Learning para rankeamento e *clustering* das cidades.
+- [ ] **Etapa 3: Refinamento e ML** (Prazo: 15/09)
+  - Validação de negócio dos Top 100 e escolha da versão oficial do IPB.
+  - Aplicação de técnicas de Machine Learning para *clustering* das cidades.
 
 - [ ] **Apresentação Final** (Pitch: 17/09)
   - Dashboard executivo e entrega final do projeto.
