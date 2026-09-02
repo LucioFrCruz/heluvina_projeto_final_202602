@@ -156,6 +156,35 @@ curl -s --max-time 60 \
 - A chave `Municipio_Ibge` é o código IBGE de 7 dígitos.
 - Recomenda-se fazer loop pelos últimos 12–24 meses e agregar por município.
 
+### 2.4 BCB — Correspondentes bancários (Informes Correspondentes)
+
+**O que é**: relação completa de correspondentes bancários no Brasil (lotéricas, caixas eletrônicos, correspondentes próprios de bancos/fintechs) registrados no BCB. Cada linha é um vínculo entre uma instituição contratante e um correspondente, com o município do ponto de atendimento. Usada no **Pilar D da V3 (IPB Presença Bancária Completa)**.
+
+**Endpoint**: `https://olinda.bcb.gov.br/olinda/servico/Informes_Correspondentes/versao/v1/odata/Correspondentes`
+
+**Documentação oficial**: `https://dadosabertos.bcb.gov.br/dataset/informes-correspondentes`
+
+**Coleta**: ingestor `src/ingestors/bcb_correspondentes.py` — paginação `$top`/`$skip` com retentativas, cache parquet idempotente em `data/raw/bcb_correspondentes/` (não rebaixa a API se o cache existir; `run(refresh=True)` força a coleta).
+
+**Extração de referência** (30/08/2026):
+- **216.873 vínculos** contratante ↔ correspondente;
+- **5.571 municípios** cobertos (todas as 27 UFs);
+- Distribuição por tipo: **Sede 175.919**, **Filial 33.423**, **Posto 7.510**, **Agência 21**.
+
+**Colunas**:
+- `CnpjContratante` / `NomeContratante` — banco/fintech contratante;
+- `CnpjCorrespondente` / `NomeCorrespondente` — empresa correspondente;
+- `Tipo` — Sede / Filial / Posto / Agência;
+- `MunicipioIBGE` — código IBGE de 7 dígitos (chave de join com a trusted; renomeado para `id_municipio` na raw);
+- `Municipio` / `UF` — nome e UF;
+- `ServicosCorrespondentes` — serviços prestados (ex.: "Inc. V");
+- `Posicao` — data de referência do registro.
+
+**Observações importantes**:
+- A cobertura inclui o município extinto **Boa Esperança do Norte/MT (5101837)**, presente no cadastro do BCB mas fora do Censo 2022 — o pipeline usa left join a partir da trusted e o caso é coberto por teste de integridade.
+- Existe 1 registro com `MunicipioIBGE` nulo (correspondente no exterior), mantido na raw por fidelidade com a fonte.
+- Agregação usada no IPB: `groupby(id_municipio, Tipo)` → contagens por tipo → ponderação (posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0) → `correspondentes_ponderados_por_100k_hab`.
+
 ---
 
 ## 3. Fontes de download manual
