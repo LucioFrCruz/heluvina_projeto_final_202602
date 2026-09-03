@@ -141,7 +141,12 @@ def test_v3_features_documentadas(tabelas):
         "V3: quantidade_correspondentes != soma dos tipos"
     )
     assert 0 <= df["score_turismo"].min() and df["score_turismo"].max() <= 1
-    assert (df["gap_bancario_completo"] > 0).all(), "V3: gap_bancario_completo deve ser > 0"
+    # Gap linear (recalibrado em 2026-09): cidades no percentil de maior
+    # presenca bancaria tem gap exatamente 0 — mesma regra dos demais
+    # pilares invertidos por min-max (ex.: D_v1 = 0 nas cidades com mais
+    # agencias). Antes da recalibracao o gap hiperbolico era estritamente > 0.
+    assert (df["gap_bancario_completo"] >= 0).all(), "V3: gap_bancario_completo deve ser >= 0"
+    assert (df["gap_bancario_completo"] <= 1).all(), "V3: gap_bancario_completo deve ser <= 1"
 
 
 def test_municipio_extinto_fora_das_analytics(tabelas):
