@@ -236,7 +236,7 @@ As três versões foram calculadas pelo módulo `src/analytics/ipb.py` (fórmula
 |---|---|---|
 | **V1 — IPB Clássico** | `analytics_ipb_v1_classico` | Fórmula original: 5 pilares, pesos iguais (média geométrica). |
 | **V2 — IPB Recalibrado** | `analytics_ipb_v2_recalibrado` | Pesos A=0,5 / B=0,75 / C=0,75 / D=1,5 / E=1,0; Pilar D só com `agencias_por_100k_hab`; Pilar E sem `populacao_urbana_pct` (redundante); feature nova `tensao_digital_bancaria` = Pix per capita / (agências por 100k + 1). |
-| **V3 — Presença Bancária Completa** | `analytics_ipb_v3_presenca_completa` | Redesenho do Pilar D: `gap_bancario_completo` = 1 / (agências + correspondentes ponderados por 100k + 1), com correspondentes do BCB por tipo (posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0); nova feature `penetracao_digital_relativa` = Pix per capita / PIB per capita; pesos A=0,75 / B=1,0 / C=0,75 / D=1,5 / E=1,0. |
+| **V3 — Presença Bancária Completa** | `analytics_ipb_v3_presenca_completa` | Redesenho do Pilar D: `gap_bancario_completo` linear = `1 − min-max(winsorize(presença combinada))`, com presença = agências + correspondentes ponderados por 100k (correspondentes do BCB por tipo: posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0); nova feature `penetracao_digital_relativa` = Pix per capita / PIB per capita; pesos A=0,75 / B=1,0 / C=0,75 / D=1,5 / E=1,0. |
 
 Ainda vale uma tabela de apoio `analytics_ipb_comparacao` (visão larga com os 3 IPBs e 6 ranks por município) para consultas ad hoc e para a EDA.
 
@@ -249,32 +249,34 @@ score_turismo = 0,5·(Pix per capita ≥ percentil 90)
 pilar B final = pilar B × (1 − 0,15 × score_turismo)     → desconto de 0% a 15%
 ```
 
-Justificativa: sem dados de visitação (Embratur/MTur), usa-se o próprio comportamento transacional como proxy de fluxo não residente. Limitação declarada: mitiga, mas não elimina cidades de evento especial (Arraial do Cabo, Búzios seguem no Top 10 da V3).
+Justificativa: sem dados de visitação (Embratur/MTur), usa-se o próprio comportamento transacional como proxy de fluxo não residente. Limitação declarada: mitiga, mas não elimina cidades de evento especial — Bombinhas, Balneário Camboriú e Itapema seguem no Top 10 da V3; Arraial do Cabo e Búzios (líderes da V3 hiperbólica) ficaram em 34º e 14º após a recalibração do gap.
 
 **Origem do estrato populacional**: a classificação pequena (<50 mil) / média (50–500 mil) / grande (>500 mil) é **decisão do projeto** (seção 5.1), não classificação externa. Sua consequência direta: 4.913 municípios (88,2%) são "pequena", 616 "média" e 41 "grande". A escolha só afeta o rank *dentro* do estrato (`rank_estrato`); o ranking geral independe dela. A análise de sensibilidade (seção 8.5) testa tercis populacionais como alternativa.
 
 ### 8.2 Resultados
 
-Estatísticas gerais (idênticas às validadas no documento comparativo anterior — reprodução confirmada):
+Estatísticas gerais (após recalibração do gap da V3 — ver nota abaixo):
 
 | Métrica | V1 Clássico | V2 Recalibrado | V3 Presença Completa |
 |---|---|---|---|
-| Média | 35,85 | 40,85 | 25,63 |
-| Mediana | 35,86 | 40,65 | 25,23 |
-| Máximo | 82,54 | 83,85 | 61,38 |
+| Média | 35,85 | 40,85 | 36,21 |
+| Mediana | 35,86 | 40,65 | 36,30 |
+| Máximo | 82,54 | 83,85 | 71,72 |
 | Mínimo | 0,00 | 0,00 | 0,00 |
 
-Correlação de Spearman entre os rankings: **V1×V2 = 0,842**, **V2×V3 = 0,709**, **V1×V3 = 0,654**. A V2 reordena pouco (só pesos); a V3 reordena de verdade (redesenho do pilar D) — a comparação não é cosmética.
+**Nota de recalibração (V3)** — a primeira versão do `gap_bancario_completo` era hiperbólica: `1 / (agências + correspondentes ponderados por 100k + 1)`. Como correspondentes chegam a centenas por 100k hab em cidades pequenas (densidade de lotéricas), o denominador explodia, o gap colapsava para ~0 e — pela média geométrica — o IPB de ~119 municípios zerava, todos empatados na última posição. A fórmula foi recalibrada para **gap linear** = `1 − min-max(winsorize(presença combinada))`, o mesmo padrão de inversão dos pilares D da V1/V2 (com teste de regressão dedicado em `tests/unit/test_ipb.py`). A direção do sinal se mantém (mais presença → menos gap), sem o colapso de escala.
 
-Movimentação no Top 100: V1→V2 trocam 40 cidades; V2→V3 trocam 74; V1→V3 trocam 77.
+Correlação de Spearman entre os rankings: **V1×V2 = 0,842**, **V2×V3 = 0,853**, **V1×V3 = 0,852**. Leitura honesta: com o gap hiperbólico, a V3 parecia reordenar drasticamente (V1×V3 = 0,654) — boa parte desse efeito era artefato de calibração, não sinal. Com o gap linear, as três versões concordam em ~85% das posições; o que separa a V3 é o eixo concorrência (presença completa vs só agências), não uma revolução no ranking.
 
-Top 10 da V3 (a versão candidata a oficial): Engenheiro Coelho-SP (61,38), Mário Campos-MG (59,92), Alumínio-SP (58,53), Nova Lima-MG (58,40), Santana do Paraíso-MG (58,33), Santana de Parnaíba-SP (57,70), Arraial do Cabo-RJ (56,96), Confins-MG (56,85), Botuverá-SC (55,07), Passo de Torres-SC (55,02). Os Top 10s completos por versão estão em `docs/Comparacao_Tres_Abordagens_IPB.md`.
+Movimentação no Top 100: V1→V2 trocam 40 cidades; V2→V3 trocam 38; V1→V3 trocam 38.
 
-Distribuição regional do Top 100 (V1 → V3): Sudeste 48 → 64, Sul 24 → 14, Centro-Oeste 22 → 7, Nordeste 4 → 11, Norte 2 → 4. A V3 dilui a dominância de CO/Sul (agro/riqueza) e sobe Nordeste/Norte.
+Top 10 da V3 (a versão candidata a oficial): Bombinhas-SC (71,72), Nova Lima-MG (71,39), Confins-MG (70,86), Santa Rita do Trivelato-MT (69,42), Balneário Camboriú-SC (69,36), Santana de Parnaíba-SP (69,30), Itapema-SC (69,09), Eusébio-CE (68,77), Palmas-TO (67,46), Paulínia-SP (67,04). Os Top 10s completos por versão estão em `docs/Comparacao_Tres_Abordagens_IPB.md`.
+
+Distribuição regional do Top 100 (V1 → V3): Sudeste 48 → 57, Sul 24 → 19, Centro-Oeste 22 → 15, Nordeste 4 → 6, Norte 2 → 3. A V3 mantém o centro de gravidade no Sudeste, diluindo CO/Sul (agro/riqueza) e subindo levemente Nordeste/Norte.
 
 ### 8.3 Alertas e sensibilidade
 
-- **Turismo**: o Top 10 da V3 ainda contém cidades de evento especial (Arraial do Cabo, Búzios). A flag reduz o pilar B em até 15%; é mitigação, não solução (ver figura abaixo).
+- **Turismo**: o Top 10 da V3 segue com cidades de evento especial (Bombinhas, Balneário Camboriú, Itapema — litoral catarinense turístico). A flag reduz o pilar B em até 15%; é mitigação, não solução (ver figura abaixo).
 - **Estrato populacional**: comparando a posição relativa no estrato oficial vs em tercis populacionais, ρ de Spearman = 0,890 — a classificação não revoluciona posições, mas os Top 20 de cada grupo mudam bastante (ex.: nenhuma das 20 maiores cidades líderes oficiais aparece no Top 20 do tercil superior). Manter ou revisar a classificação é **decisão de negócio documentada**, com evidências no notebook 05.
 - **Município extinto**: a base de correspondentes cobre 5.571 municípios; o código extra é **Boa Esperança do Norte/MT (5101837), município extinto** que consta no cadastro do BCB mas não no Censo 2022. O pipeline usa left join a partir da trusted (5.570) e o caso é coberto por teste de integridade.
 - **Correspondentes**: a fonte oficial é a API OData do BCB (`Informes_Correspondentes`, posição 30/08/2026), coletada pelo ingestor `src/ingestors/bcb_correspondentes.py` com cache idempotente. A ponderação por tipo (posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0) é uma primeira aproximação a validar com negócio.
@@ -319,7 +321,7 @@ A partir das tabelas `raw_*`, foram criadas as seguintes features na base enriqu
 3. **Pix**: os dados brutos do BCB incluem PF e PJ, mas o cálculo da `trusted_municipios` utiliza apenas `VL_PagadorPF`/`QT_PagadorPF` como proxy de adoção digital. Uma versão futura pode testar incluir PJ e/ou variáveis de recebedores.
 4. **Efeito polo regional**: municípios dormitório podem parecer desatendidos porque recursos financeiros fluem para cidades próximas.
 5. **Municípios com IPB zero**: indicam ausência de dados em algum pilar; devem ser analisados caso a caso.
-6. **IPB = 0 estrutural**: município com qualquer pilar = 0 tem IPB 0 (média geométrica). Nos 3 índices há grupos de municípios empatados na última posição; suavização (ex.: epsilon) ficou como decisão de método futura.
+6. **IPB = 0 estrutural**: município com qualquer pilar = 0 tem IPB 0 (média geométrica). Nas 3 versões a proporção de zerados é semelhante (V1: 120, V2: 126, V3: 124 municípios) — propriedade do método (min-max + média geométrica), não bug da V3; na V3, 56 desses 124 são o percentil de maior presença bancária combinada. Suavização (ex.: epsilon) ficou como decisão de método futura.
 7. **Flag de turismo é heurística**: Pix alto + PIB baixo + cidade pequena, por ausência de dados de visitação; desconto máximo de 15% no pilar B.
 8. **Correspondentes como proxy de acesso**: a ponderação por tipo é uma primeira aproximação; e a base inclui o município extinto Boa Esperança do Norte/MT (excluído via left join na trusted).
 

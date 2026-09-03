@@ -165,7 +165,7 @@ Presente nas três tabelas específicas (`analytics_ipb_v1_classico`, `analytics
 | `correspondentes_por_100k_hab` | Total por 100 mil habitantes. |
 | `correspondentes_ponderados_por_100k_hab` | Ponderação por tipo: posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0. |
 | `penetracao_digital_relativa` | `pix_per_capita_12m / pib_per_capita` — transaciona muito proporcionalmente à riqueza. |
-| `gap_bancario_completo` | `1 / (agencias_por_100k_hab + correspondentes_ponderados_por_100k_hab + 1)` — pilar D já em formato inverso. |
+| `gap_bancario_completo` | `1 − min-max(winsorize(presenca_bancaria_combinada))`, com presença = `agencias_por_100k_hab + correspondentes_ponderados_por_100k_hab` (recalibrado em 2026-09: a forma hiperbólica original `1/(presença+1)` saturava em cidades pequenas lotérica-dense e zerava o IPB delas) — pilar D já em formato inverso. |
 | `score_turismo` | Heurística ∈ [0,1]: 0,5·(Pix ≥ p90) + 0,3·(PIB ≤ mediana) + 0,2·(estrato pequena). Aplica desconto de 0–15% no `score_b`. |
 
 ### 3.3 `analytics_ipb_comparacao` (visão larga)

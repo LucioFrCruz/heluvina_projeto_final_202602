@@ -195,6 +195,8 @@ gap_bancario_completo = 1 / (agencias_por_100k_hab + correspondentes_por_100k_ha
 
 Interpretação: presença bancária total (tradicional + correspondentes). Cidades ricas com muitas lotéricas deixam de parecer "desbancarizadas".
 
+> **ATUALIZAÇÃO (2026-09) — fórmula recalibrada.** A forma hiperbólica acima saturava: como correspondentes chegam a centenas por 100k hab em cidades pequenas, o gap colapsava e o IPB de ~119 municípios zerava. A implementação atual (`src/analytics/ipb.py`) usa **gap linear** = `1 − min-max(winsorize(presença combinada))`, mesmo padrão dos pilares D da V1/V2.
+
 #### 4.3.3 `oportunidade_relativa`
 
 ```
