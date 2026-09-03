@@ -1,6 +1,6 @@
 # Dicionário de Dados — IPB (Índice de Potencial Bancário)
 
-Este dicionário detalha os schemas e a semântica de negócios de todas as tabelas coletadas e processadas na Etapa 1. O pipeline é composto por camadas `raw_` (dados brutos extraídos diretamente das fontes) e `trusted_` (tabela mestre consolidada).
+Este dicionário detalha os schemas e a semântica de negócios de todas as tabelas coletadas e processadas. O pipeline é composto por camadas `raw_` (dados brutos extraídos diretamente das fontes), `trusted_` (tabela mestre consolidada) e `analytics_` (produtos finais: as 3 versões do IPB e a visão de comparação).
 
 ---
 
@@ -100,7 +100,24 @@ Abaixo estão os dicionários das fontes individuais (ingestores) antes do proce
 | `volume_depositos` | FLOAT | R$ | Soma de conta corrente e poupança nas agências locais (Verbete 420). |
 | `volume_credito` | FLOAT | R$ | Operações de empréstimos/financiamentos cedidos (Verbete 160). |
 
-### 2.7 `raw_pnud_idhm`
+### 2.7 `raw_bcb_correspondentes`
+| Coluna | Tipo | Unidade | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id_municipio` | STRING | ID | Código IBGE de 7 dígitos (derivado de `MunicipioIBGE`). Chave de join com a trusted. |
+| `CnpjContratante` | STRING | CNPJ | Banco/fintech contratante do correspondente. |
+| `NomeContratante` | STRING | Texto | Nome da instituição contratante. |
+| `CnpjCorrespondente` | STRING | CNPJ | Empresa correspondente. |
+| `NomeCorrespondente` | STRING | Texto | Nome do correspondente. |
+| `Tipo` | STRING | Categoria | Tipo do ponto: Sede, Filial, Posto ou Agência. |
+| `MunicipioIBGE` | STRING | ID | Código IBGE original da fonte (7 dígitos). |
+| `Municipio` | STRING | Texto | Nome do município de atendimento. |
+| `UF` | STRING | Texto | UF do ponto de atendimento. |
+| `ServicosCorrespondentes` | STRING | Texto | Serviços prestados pelo correspondente (ex.: "Inc. V"). |
+| `Posicao` | STRING | Data | Data de referência do registro (extração de referência: 30/08/2026). |
+
+**Notas**: 216.873 vínculos; cobertura de 5.571 municípios, incluindo o município extinto Boa Esperança do Norte/MT (5101837) e 1 registro com município nulo (correspondente no exterior). Fonte: API OData do BCB (`Informes_Correspondentes`).
+
+### 2.8 `raw_pnud_idhm`
 | Coluna | Tipo | Unidade | Descrição |
 | :--- | :--- | :--- | :--- |
 | `id_municipio` | STRING | ID | Código IBGE. |
@@ -109,4 +126,66 @@ Abaixo estão os dicionários das fontes individuais (ingestores) antes do proce
 | `_source_url` | STRING | URL | URL da API do Ipeadata. |
 | `_extracted_at` | TIMESTAMP | Timestamp | Data/hora da extração. |
 
+### 2.9 `raw_ibge_cempre`
+| Coluna | Tipo | Unidade | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id_municipio` | STRING | ID | Código IBGE de 7 dígitos. Chave de join com a trusted. |
+| `ano` | STRING | Ano | Ano de referência do CEMPRE (série 2022+; extração de referência: 2024). |
+| `variavel_codigo` | INTEGER | Código | Código SIDRA da variável (706 = unidades locais; 707 = pessoal ocupado total). |
+| `variavel` | STRING | Texto | Nome amigável da variável (`unidades_locais`, `pessoal_ocupado_total`). |
+| `cnae_codigo` | STRING | Código | Código da categoria CNAE 2.0 no SIDRA (117897 = Total; 117363 = Comércio G; 117543 = Alojamento e alimentação I; 117608 = Atividades financeiras K). |
+| `cnae_secao` | STRING | Texto | Nome amigável da seção (`total`, `comercio`, `alojamento_alimentacao`, `atividades_financeiras`). |
+| `valor` | FLOAT | Contagem | Valor da variável; nulo quando suprimido por sigilo estatístico (< 3 informantes — ocorre só em seções detalhadas). |
+
+**Notas**: formato longo (uma linha por município × variável × seção CNAE), 44.560 registros em 2024. Cobertura completa dos 5.570 municípios na seção Total, sem supressões. **MEIs são excluídos** pelo critério do CEMPRE. Fonte: SIDRA, tabela 9528 (API Agregados v3), ingestor `src/ingestors/ibge_cempre.py`.
+
 *(Nota Geral: Todas as tabelas `raw_` contém as colunas técnicas `_source_url` informando a proveniência dos dados, e `_extracted_at` com o carimbo de data e hora em que a rotina do ingestor foi disparada).*
+
+---
+
+## 3. Camada Analytics (Produto — 3 versões do IPB)
+
+Tabelas publicadas por `scripts/07_publica_ipb_bigquery.py` a partir da `trusted_municipios` + `raw_bcb_correspondentes` + `raw_ibge_cempre`. Fórmulas em `src/analytics/ipb.py` (testadas em `tests/unit/test_ipb.py`); integridade validada em `tests/data_quality/test_analytics_ipb.py`. Nomes oficiais: **V1 = IPB Clássico**, **V2 = IPB Recalibrado**, **V3 = IPB Presença Bancária Completa** (ex-Abordagem 2). A narrativa completa da comparação está em `docs/Relatorio_EDA.md` (seção 8) e `docs/Comparacao_Tres_Abordagens_IPB.md`.
+
+### 3.1 Estrutura comum (identidade, pilares e rankings)
+
+Presente nas três tabelas específicas (`analytics_ipb_v1_classico`, `analytics_ipb_v2_recalibrado`, `analytics_ipb_v3_presenca_completa`):
+
+| Coluna | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `id_municipio` | STRING | Código IBGE de 7 dígitos. Chave primária (5.570 municípios). |
+| `nome_municipio` | STRING | Nome do município. |
+| `sigla_uf` | STRING | UF. |
+| `nome_regiao` | STRING | Região (derivada da UF pelo pipeline). |
+| `estrato_populacional` | STRING | **Decisão do projeto** (Relatório EDA 5.1): `pequena` (<50 mil), `media` (50–500 mil), `grande` (>500 mil). 88,2% dos municípios são `pequena`. |
+| `score_a` … `score_e` | FLOAT | Scores dos pilares A (consumo), B (dinamismo digital), C (infraestrutura), D (gap bancário), E (perfil) em [0,1], já com winsorização (1%/99%), normalização min-max e inversões aplicadas conforme a versão. |
+| `ipb` | FLOAT | Índice final em [0, 100] — média geométrica dos pilares com os pesos da versão × 100. Município com qualquer pilar 0 tem IPB 0 (comportamento estrutural, ver Relatório EDA seção 10). |
+| `rank` | INTEGER | Posição no ranking geral (método `min`; empates compartilham posição). |
+| `rank_estrato` | INTEGER | Posição dentro do estrato populacional. |
+
+### 3.2 Colunas específicas por versão
+
+**`analytics_ipb_v2_recalibrado`** (além da estrutura comum):
+| Coluna | Descrição |
+| :--- | :--- |
+| `tensao_digital_bancaria` | `pix_per_capita_12m / (agencias_por_100k_hab + 1)` — adoção digital relativa à presença física. |
+
+**`analytics_ipb_v3_presenca_completa`** (além da estrutura comum):
+| Coluna | Descrição |
+| :--- | :--- |
+| `quantidade_correspondentes` | Total de correspondentes (soma dos 4 tipos). 0 para municípios sem correspondente. |
+| `quantidade_correspondentes_posto` / `_filial` / `_sede` / `_agencia` | Contagem por tipo (BCB). |
+| `correspondentes_por_100k_hab` | Total por 100 mil habitantes. |
+| `correspondentes_ponderados_por_100k_hab` | Ponderação por tipo: posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0. |
+| `penetracao_digital_relativa` | `pix_per_capita_12m / pib_per_capita` — transaciona muito proporcionalmente à riqueza. |
+| `gap_bancario_completo` | `1 − min-max(winsorize(presenca_bancaria_combinada))`, com presença = `agencias_por_100k_hab + correspondentes_ponderados_por_100k_hab` (recalibrado em 2026-09: a forma hiperbólica original `1/(presença+1)` saturava em cidades pequenas lotérica-dense e zerava o IPB delas) — pilar D já em formato inverso. |
+| `score_turismo` | Heurística ∈ [0,1]: 0,5·(Pix ≥ p90) + 0,3·(PIB ≤ mediana) + 0,2·(estrato pequena). Aplica desconto de 0–15% no `score_b`. |
+| `empregos_formais` | Pessoal ocupado total (CEMPRE/SIDRA 9528, ano 2024), seção Total. **Exclui MEIs**. |
+| `unidades_locais` | Unidades locais (estabelecimentos) no município, seção Total (CEMPRE 2024). |
+| `empregos_formais_por_1000_hab` | `empregos_formais / populacao_total × 1000` — **entra no pilar A da V3** (média com PIB pc e rendimento), desde 2026-09. Captura formalização que o PIB per capita sub-declara (folha de pagamento = gancho de conta-salário/consignado/PJ). |
+| `unidades_locais_por_1000_hab` | `unidades_locais / populacao_total × 1000` — feature de análise (densidade empresarial). |
+| `unidades_alojamento_alimentacao_por_1000_hab` | Unidades de alojamento e alimentação por 1.000 hab — **validador objetivo de turismo** (acompanha a tabela, não entra na fórmula). |
+
+### 3.3 `analytics_ipb_comparacao` (visão larga)
+
+`id_municipio`, `nome_municipio`, `sigla_uf`, `nome_regiao`, `estrato_populacional`, `ipb_v1_classico`, `ipb_v2_recalibrado`, `ipb_v3_presenca_completa`, `rank_v1`, `rank_v2`, `rank_v3`, `rank_v1_estrato`, `rank_v2_estrato`, `rank_v3_estrato` — as 3 versões lado a lado para consultas ad hoc e EDA (notebook 05).
