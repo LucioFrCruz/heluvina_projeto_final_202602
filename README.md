@@ -11,15 +11,17 @@ O mercado financeiro digital está em constante expansão. No entanto, a estrat�
 
 O objetivo deste projeto é responder: **Quais municípios brasileiros apresentam a melhor relação entre potencial econômico, adoção digital e oportunidade de mercado (baixa concorrência física)?**
 
-Para responder a essa pergunta, estamos construindo o IPB. As cidades são rankeadas a partir de uma combinação matemática de 5 pilares fundamentais de dados públicos:
+Para responder a essa pergunta, estamos construindo o IPB. As cidades são rankeadas a partir da média geométrica de 5 pilares fundamentais de dados públicos:
 
-1. **Pilar Demográfico e Educacional (IBGE / Censo 2022):** População total e nível de escolaridade.
-2. **Pilar Econômico (IBGE):** PIB per capita e força do setor de serviços.
-3. **Pilar de Dinamismo Financeiro (BCB - Pix):** Adoção e volume transacionado no Pix.
-4. **Pilar de Infraestrutura Digital (Anatel):** Densidade de banda larga fixa instalada.
-5. **Pilar de Desbancarização Física (BCB - Estban):** Quantidade de agências físicas (concorrência tradicional) versus depósitos em poupança.
+1. **Pilar de Capacidade de Consumo (IBGE / Censo 2022 + PIB dos Municípios):** PIB per capita e rendimento domiciliar per capita.
+2. **Pilar de Dinamismo Financeiro (BCB - Pix):** Volume transacionado no Pix per capita (12 meses).
+3. **Pilar de Adoção Digital (Anatel):** Densidade de banda larga fixa instalada por 100 habitantes.
+4. **Pilar de Gap Bancário (BCB - Estban):** Agências, depósitos e crédito per capita — invertido: quanto menor a infraestrutura bancária tradicional, maior a oportunidade.
+5. **Pilar de Perfil Demográfico (IBGE / Censo 2022):** % da população com 18–35 anos, % urbana e escolaridade (% ensino médio completo).
 
-**IPB = Oportunidade Financeira + Infraestrutura Digital - Concorrência Física**
+> O desenho original da proposta previa também valor adicionado de serviços e população total como variáveis do índice. O VA de serviços ficou indisponível para 2023 (mantido apenas na camada `raw`) e a população total passou a definir estratos e denominadores de taxas, não o índice. Ver `docs/IPB_Guia_de_Bases_e_Desenho.md`.
+
+**IPB = média geométrica dos 5 pilares × 100** — intuição: Oportunidade Financeira + Infraestrutura Digital − Concorrência Física
 
 <img width="359" height="68" alt="Exemplo de Ranking" src="https://github.com/user-attachments/assets/36f880c8-dbae-439a-9e2e-19e97d8fbaa9" />
 
