@@ -11,6 +11,7 @@ Inclui resultados de testes de conectividade feitos em `2026-08-22` e indica qua
 |---|---|---|---|
 | IBGE — Localidades | API | ✅ Funciona | `GET` direto; retorna JSON com 5.570 municípios. |
 | IBGE — SIDRA Censo 2022 | API | ✅ Funciona | `GET` com `localidades=N6[all]`; colchetes devem ser URL-encoded. |
+| IBGE — CEMPRE (tabela 9528) | API | ✅ Funciona | SIDRA Agregados v3; série 2022+ (quebra metodológica); ano 2024 coletado. |
 | BCB — Pix por município | API | ✅ Funciona | `GET` no endpoint Olinda; exige `$filter=AnoMes eq YYYYMM`. |
 | IBGE — PIB dos Municípios | XLSX | ⚠️ Download manual | Site do IBGE bloqueia requisições automatizadas; baixar pelo navegador. |
 | Anatel — Banda Larga Fixa | CSV | ⚠️ Download manual | Arquivo já baixado; 5.571 registros no mês mais recente. |
@@ -184,6 +185,26 @@ curl -s --max-time 60 \
 - A cobertura inclui o município extinto **Boa Esperança do Norte/MT (5101837)**, presente no cadastro do BCB mas fora do Censo 2022 — o pipeline usa left join a partir da trusted e o caso é coberto por teste de integridade.
 - Existe 1 registro com `MunicipioIBGE` nulo (correspondente no exterior), mantido na raw por fidelidade com a fonte.
 - Agregação usada no IPB: `groupby(id_municipio, Tipo)` → contagens por tipo → ponderação (posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0) → `correspondentes_ponderados_por_100k_hab`.
+
+### 2.5 IBGE — CEMPRE (Cadastro Central de Empresas)
+
+**O que é**: cadastro do IBGE com o universo de empresas e organizações formais ativas (fontes: CNPJ/Receita Federal, RAIS/eSocial e pesquisas estruturais do IBGE). Usado no projeto como **dimensão PJ/empresarial do potencial bancário** — o que medimos hoje no índice é essencialmente PF (renda, Pix, demografia).
+
+**Fonte**: SIDRA, tabela 9528 (série iniciada em 2022, após quebra metodológica do CEMPRE — não comparar com anos ≤ 2021). API Agregados v3, mesmo padrão do Censo 2022.
+
+**Coleta**: ingestor `src/ingestors/ibge_cempre.py`; formato longo (município × variável × seção CNAE); cache parquet idempotente em `data/raw/ibge_cempre/`; carga em `raw_ibge_cempre`.
+
+**Extração de referência** (ano 2024):
+- 5.570 municípios, sem supressões na seção Total;
+- Brasil: 11.867.005 unidades locais e 68.039.600 pessoas ocupadas;
+- Variáveis: `unidades_locais` (706) e `pessoal_ocupado_total` (707);
+- Seções CNAE coletadas: Total, Comércio (G), Alojamento e alimentação (I — proxy objetivo de turismo), Atividades financeiras (K).
+
+**Observações importantes**:
+- **MEIs são excluídos** pelo critério do CEMPRE — a base de microempreendedores não está representada (limitação declarada para o uso como proxy de mercado PJ).
+- Valores com menos de 3 informantes são suprimidos ("X" na fonte → nulo na raw); na prática só ocorre em seções detalhadas.
+- A unidade territorial da *empresa* é a sede; para distribuição de estabelecimentos usar as unidades locais (é o que coletamos).
+- **Ainda não integrado ao índice**: as features derivadas (`empregos_formais_por_1000_hab`, `unidades_locais_por_1000_hab`, `unidades_alojamento_por_1000_hab` como validador da flag de turismo) estão em análise de relevância incremental sobre o PIB per capita — decisão para a Etapa 3.
 
 ---
 

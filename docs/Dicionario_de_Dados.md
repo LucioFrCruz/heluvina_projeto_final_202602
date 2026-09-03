@@ -126,6 +126,19 @@ Abaixo estão os dicionários das fontes individuais (ingestores) antes do proce
 | `_source_url` | STRING | URL | URL da API do Ipeadata. |
 | `_extracted_at` | TIMESTAMP | Timestamp | Data/hora da extração. |
 
+### 2.9 `raw_ibge_cempre`
+| Coluna | Tipo | Unidade | Descrição |
+| :--- | :--- | :--- | :--- |
+| `id_municipio` | STRING | ID | Código IBGE de 7 dígitos. Chave de join com a trusted. |
+| `ano` | STRING | Ano | Ano de referência do CEMPRE (série 2022+; extração de referência: 2024). |
+| `variavel_codigo` | INTEGER | Código | Código SIDRA da variável (706 = unidades locais; 707 = pessoal ocupado total). |
+| `variavel` | STRING | Texto | Nome amigável da variável (`unidades_locais`, `pessoal_ocupado_total`). |
+| `cnae_codigo` | STRING | Código | Código da categoria CNAE 2.0 no SIDRA (117897 = Total; 117363 = Comércio G; 117543 = Alojamento e alimentação I; 117608 = Atividades financeiras K). |
+| `cnae_secao` | STRING | Texto | Nome amigável da seção (`total`, `comercio`, `alojamento_alimentacao`, `atividades_financeiras`). |
+| `valor` | FLOAT | Contagem | Valor da variável; nulo quando suprimido por sigilo estatístico (< 3 informantes — ocorre só em seções detalhadas). |
+
+**Notas**: formato longo (uma linha por município × variável × seção CNAE), 44.560 registros em 2024. Cobertura completa dos 5.570 municípios na seção Total, sem supressões. **MEIs são excluídos** pelo critério do CEMPRE. Fonte: SIDRA, tabela 9528 (API Agregados v3), ingestor `src/ingestors/ibge_cempre.py`.
+
 *(Nota Geral: Todas as tabelas `raw_` contém as colunas técnicas `_source_url` informando a proveniência dos dados, e `_extracted_at` com o carimbo de data e hora em que a rotina do ingestor foi disparada).*
 
 ---

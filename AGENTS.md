@@ -83,6 +83,7 @@ heluvina_projeto_final_202602/
 │   │   ├── __init__.py
 │   │   ├── ibge_localidades.py  # API
 │   │   ├── sidra_censo_2022.py  # API
+│   │   ├── ibge_cempre.py       # API (CEMPRE/SIDRA 9528, série 2022+)
 │   │   ├── ibge_pib_municipios.py  # XLSX manual
 │   │   ├── bcb_pix.py           # API
 │   │   ├── bcb_correspondentes.py  # API OData BCB (cache idempotente)
@@ -237,6 +238,7 @@ A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* e d
 - **Estban**: Apenas ~2.900 municípios possuem agências. Os outros devem receber imputação zero para `quantidade_agencias`, `volume_depositos`, etc.
 - **PIB**: A coluna `va_servicos` teve o mapeamento corrigido no ingestor `ibge_pib_municipios.py`; validar se agora vem preenchida no trusted.
 - **IDHM**: Mantido como variável histórica (2010) via Ipeadata. O indicador principal de capital humano passa a ser a **escolaridade (% ensino médio completo)** do Censo 2022 (SIDRA Tabela 10061).
+- **CEMPRE (IBGE, 2024)**: coletado em `raw_ibge_cempre` (unidades locais e pessoal ocupado por município e seção CNAE, via SIDRA 9528) — dimensão PJ/empresarial do potencial bancário. MEIs excluídos pela fonte; ainda não integrado ao índice (análise de relevância incremental em curso, ver `DISCUSSAO_IPB_CHAPEU_NEGOCIO.md`).
 - **Correspondentes (BCB/OData, posição 30/08/2026)**: cobre 5.571 municípios — inclui **Boa Esperança do Norte/MT (5101837), município extinto**, que não está no Censo 2022. O pipeline (`agregar_correspondentes_por_tipo`) usa left join a partir da trusted e o caso é coberto por teste de integridade (`tests/data_quality/test_analytics_ipb.py`).
 - **Estrato populacional e região**: derivados no pipeline (`derive_estrato`/`derive_regiao`), não existem como colunas na trusted. Faixas oficiais: pequena <50k, média 50–500k, grande >500k (decisão do projeto, Relatório EDA 5.1).
 - **Analytics publicadas**: `analytics_ipb_v1_classico`, `analytics_ipb_v2_recalibrado`, `analytics_ipb_v3_presenca_completa` e `analytics_ipb_comparacao` (5.570 linhas cada, integridade testada). Nomes oficiais: V1 Clássico, V2 Recalibrado, V3 Presença Bancária Completa (ex-Abordagem 2).
