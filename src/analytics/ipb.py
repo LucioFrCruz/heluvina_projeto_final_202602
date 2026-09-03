@@ -9,12 +9,16 @@ Versoes:
       por tipo, `penetracao_digital_relativa`, `gap_bancario_completo` e flag
       de turismo com desconto maximo de 15% no pilar B.
 
-Esta logica e uma refatoracao fiel de `scripts/06_comparacao_tres_abordagens_ipb.py`
-(fonte da verdade das formulas, validadas e publicadas em
-`docs/Comparacao_Tres_Abordagens_IPB.md`). As formulas NAO foram alteradas;
-apenas os nomes de colunas de saida foram padronizados (ex.: `A_atual` -> `A_v1`,
-`ipb_atual` -> `ipb_v1_classico`). Os rankings foram extraidos das funcoes de
-calculo para `adicionar_ranks`, que adota os prefixos oficiais `v1`, `v2`, `v3`.
+Esta logica e uma refatoracao de `scripts/06_comparacao_tres_abordagens_ipb.py`
+(fonte original das formulas, validadas e publicadas em
+`docs/Comparacao_Tres_Abordagens_IPB.md`), com UMA correcao: o
+`gap_bancario_completo` da V3 deixou de ser hiperbolico
+(`1 / (presenca + 1)`, que saturava e zerava o IPB de cidades pequenas com
+muitas lotericas) e passou a ser linear (`1 - min-max(winsorize(presenca))`,
+mesmo padrao de inversao dos pilares D da V1/V2). Os nomes de colunas de
+saida foram padronizados (ex.: `A_atual` -> `A_v1`, `ipb_atual` ->
+`ipb_v1_classico`) e os rankings foram extraidos das funcoes de calculo para
+`adicionar_ranks`, que adota os prefixos oficiais `v1`, `v2`, `v3`.
 
 A orquestracao (leitura de parquet, chamada das funcoes, publicacao no
 BigQuery) fica em `scripts/07_publica_ipb_bigquery.py` (fora deste modulo).
@@ -47,6 +51,12 @@ PONDERACAO_CORRESPONDENTES = {
     "quantidade_correspondentes_sede": 0.40,
     "quantidade_correspondentes_agencia": 1.00,
 }
+
+# Equivalencia global correspondente -> agencia no pilar D da V3. Fator de
+# calibracao em aberto na discussao do grupo (loterica ajuda, mas nao
+# substitui agencia); 1.0 = correspondente ponderado conta em escala plena
+# somada a das agencias.
+EQUIVALENCIA_CORRESPONDENTE_AGENCIA = 1.0
 
 # Mapeamento UF -> regiao (classificacao oficial do IBGE).
 UF_PARA_REGIAO = {
@@ -288,10 +298,15 @@ def computar_ipb_v3_presenca_completa(df: pd.DataFrame) -> pd.DataFrame:
 
     Replica `compute_ipb_abordagem_2` do script 06: correspondentes bancarios
     ponderados por tipo (posto=1.0, filial=0.7, sede=0.4, agencia=1.0),
-    `penetracao_digital_relativa` = Pix per capita / PIB per capita,
-    `gap_bancario_completo` = 1 / (agencias + correspondentes ponderados por
-    100k + 1) e flag de turismo suave (score continuo [0, 1], desconto maximo
-    de 15% no pilar B). Pesos exportados em `PESOS_V3`.
+    `penetracao_digital_relativa` = Pix per capita / PIB per capita e
+    `gap_bancario_completo` LINEAR = 1 - min-max(winsorize(presenca
+    combinada)), com presenca = agencias + correspondentes ponderados por
+    100k (fator de equivalencia global em `EQUIVALENCIA_CORRESPONDENTE_AGENCIA`).
+    A forma hiperbolica original, 1 / (agencias + correspondentes + 1),
+    saturava: como correspondentes chegam a centenas por 100k hab em cidades
+    pequenas, o gap colapsava para ~0 e, pela media geometrica, o IPB de
+    ~119 municipios zerava. Flag de turismo suave (score continuo [0, 1],
+    desconto maximo de 15% no pilar B). Pesos exportados em `PESOS_V3`.
 
     Pre-requisitos alem das variaveis base: colunas
     `quantidade_correspondentes_{posto,filial,sede,agencia}` (municipios sem
@@ -325,10 +340,19 @@ def computar_ipb_v3_presenca_completa(df: pd.DataFrame) -> pd.DataFrame:
     # Features derivadas
     df["tensao_digital_bancaria"] = df["pix_per_capita_12m"] / (df["agencias_por_100k_hab"] + 1)
     df["penetracao_digital_relativa"] = df["pix_per_capita_12m"] / df["pib_per_capita"]
-    df["gap_bancario_completo"] = 1 / (
+
+    # Pilar D: presenca bancaria combinada (agencias + correspondentes em
+    # equivalencia) convertida em gap LINEAR. A forma hiperbolica
+    # 1/(presenca + 1) saturava em cidades pequenas com muitas lotericas
+    # (correspondentes chegam a centenas por 100k hab), zerando o gap — e,
+    # pela media geometrica, o IPB inteiro de ~119 municipios.
+    df["presenca_bancaria_combinada"] = (
         df["agencias_por_100k_hab"]
-        + df["correspondentes_ponderados_por_100k_hab"]
-        + 1
+        + EQUIVALENCIA_CORRESPONDENTE_AGENCIA
+        * df["correspondentes_ponderados_por_100k_hab"]
+    )
+    df["gap_bancario_completo"] = 1 - normalize(
+        winsorize(df["presenca_bancaria_combinada"])
     )
 
     # Flag de turismo suave: alto Pix per capita combinado com PIB per capita
@@ -350,19 +374,19 @@ def computar_ipb_v3_presenca_completa(df: pd.DataFrame) -> pd.DataFrame:
     vars_a = ["pib_per_capita", "rendimento_domiciliar_per_capita"]
     vars_b = ["pix_per_capita_12m", "tensao_digital_bancaria", "penetracao_digital_relativa"]
     vars_c = ["banda_larga_fixa_por_100_hab"]
-    vars_d = ["gap_bancario_completo"]
+    vars_d: list[str] = []  # gap_bancario_completo ja vem normalizado [0, 1]
     vars_e = ["escolaridade_ensino_medio_pct", "populacao_18_35_pct"]
 
     for col in vars_a + vars_b + vars_c + vars_d + vars_e:
         df[f"{col}_norm"] = normalize(winsorize(df[col]))
 
-    # Pilar D ja esta construido como inverso (gap = 1 / presenca bancaria)
-    # Normalizamos e usamos diretamente
+    # Pilar D: gap linear ja calculado acima (inversao via 1 - min-max)
+    df["gap_bancario_completo_norm"] = df["gap_bancario_completo"]
 
     df["A_v3"] = df[[f"{c}_norm" for c in vars_a]].mean(axis=1)
     df["B_v3"] = df[[f"{c}_norm" for c in vars_b]].mean(axis=1)
     df["C_v3"] = df[[f"{c}_norm" for c in vars_c]].mean(axis=1)
-    df["D_v3"] = df[[f"{c}_norm" for c in vars_d]].mean(axis=1)
+    df["D_v3"] = df["gap_bancario_completo"]
     df["E_v3"] = df[[f"{c}_norm" for c in vars_e]].mean(axis=1)
 
     # Desconto suave de turismo no pilar B (maximo 15%)
@@ -520,7 +544,7 @@ Mesma estrutura de 5 pilares, mas com **pesos diferenciados**:
 Redesenho mais profundo, principalmente no Pilar D:
 - **Agências sozinhas não refletem mais a realidade**: o número de agências bancárias vem caindo no Brasil. O BCB registra 216 mil **correspondentes** (lotéricas, caixas eletrônicos, correspondentes bancários). O índice passa a considerar a **presença bancária completa** = agências + correspondentes.
 - **Correspondentes ponderados por tipo**: postos (peso 1.0), filiais (0.7), sedes (0.4) e agências (1.0). Postos são pontos mais simples; filiais/sedes têm capacidade maior.
-- **Gap bancário completo** = 1 / (agências + correspondentes ponderados por 100k + 1).
+- **Gap bancário completo (linear)** = 1 − min-max(winsorize(presença combinada)), com presença = agências + correspondentes ponderados por 100k. A forma hiperbólica original (`1 / (presença + 1)`) saturava em cidades pequenas com muitas lotéricas e zerava o IPB delas; o gap linear preserva a ordenação sem o efeito colapso.
 - **Penetração digital relativa** = Pix per capita / PIB per capita. Premia cidades que transacionam muito proporcionalmente à sua riqueza.
 - **Flag de turismo suave**: score contínuo baseado em Pix alto + PIB baixo + cidade pequena. Aplica desconto máximo de 15% no pilar digital para evitar que cidades turísticas (Arraial do Cabo, Búzios) disparem só por fluxo de visitantes.
 - **Rankings separados por estrato**: pequena, média e grande.
@@ -690,6 +714,7 @@ O BCB classifica correspondentes em sede, filial, posto e agência. A ponderaç�
 
 ### Limitações desta análise
 - A cobertura 4G/5G não foi integrada nesta rodada por dificuldade de acesso a dados agregados por município. A banda larga fixa continua como proxy;
+- **Empates em IPB = 0**: por construção (normalização min-max + média geométrica), os municípios nos extremos de qualquer pilar recebem score 0 e o IPB zera. Isso ocorre nas três versões na mesma magnitude (V1: ~120, V2: ~126, V3: ~124 municípios). Na V3, 56 deles são o percentil de maior presença bancária combinada — uma afirmação defensável ("sem gap"), não um artefato de escala;
 - Não houve validação externa com dados reais de expansão bancária;
 - A flag de turismo é uma heurística (Pix alto + PIB baixo + cidade pequena). Sem dados de visitação, é um ajuste pragmático;
 - Variáveis per capita ainda favorecem cidades pequenas com eventos especiais (turismo, comércio de fronteira).

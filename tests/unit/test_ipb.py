@@ -348,6 +348,47 @@ def test_v3_pilar_zerado_implica_ipb_zero():
     assert resultado.loc[df.index[0], ipb.COL_IPB_V3] == pytest.approx(0.0)
 
 
+def test_v3_gap_linear_nao_saturo_com_presenca_moderada():
+    """Regressao do bug da saturacao: presenca moderada nao zera o gap.
+
+    Na forma hiperbolica 1/(presenca + 1), uma cidade com 50 pontos/100k
+    tinha gap ~0.02 e o IPB colapsava; com o gap linear ela deve ter
+    gap ~0.9 e IPB positivo.
+    """
+    n = 6
+    df = pd.DataFrame(
+        {
+            "pib_per_capita": np.linspace(20_000, 60_000, n),
+            "rendimento_domiciliar_per_capita": np.linspace(1_000, 3_000, n),
+            "pix_per_capita_12m": np.linspace(5.0, 50.0, n),
+            "banda_larga_fixa_por_100_hab": np.linspace(5.0, 30.0, n),
+            "agencias_por_100k_hab": [0.0, 10.0, 50.0, 100.0, 200.0, 500.0],
+            "escolaridade_ensino_medio_pct": np.linspace(15.0, 40.0, n),
+            "populacao_18_35_pct": np.linspace(22.0, 33.0, n),
+            # Populacao grande: correspondentes somam ~0 na taxa por 100k,
+            # deixando a presenca combinada igual a agencias_por_100k_hab.
+            "populacao_total": np.full(n, 2_000_000),
+            "quantidade_correspondentes_posto": [0] * n,
+            "quantidade_correspondentes_filial": [0] * n,
+            "quantidade_correspondentes_sede": [0] * n,
+            "quantidade_correspondentes_agencia": [0] * n,
+        }
+    )
+    df["estrato_populacional"] = ipb.derive_estrato(df["populacao_total"])
+
+    resultado = ipb.computar_ipb_v3_presenca_completa(df)
+
+    esperado = 1 - ipb.normalize(ipb.winsorize(df["agencias_por_100k_hab"]))
+    assert np.allclose(resultado["D_v3"], esperado)
+
+    # Cidade com presenca 50/100k: gap ~0.9 (na ~0.02 da hiperbolica)
+    assert resultado["D_v3"].iloc[2] == pytest.approx(esperado.iloc[2])
+    assert resultado["D_v3"].iloc[2] == pytest.approx(0.9, abs=0.01)
+    assert resultado.loc[resultado.index[2], ipb.COL_IPB_V3] > 0
+    # Monotonicidade: mais presenca -> menor gap
+    assert resultado["D_v3"].is_monotonic_decreasing
+
+
 def test_v3_regressao_contra_implementacao_de_referencia():
     """O calculo deve reproduzir a spec do script 06 implementada a parte."""
     df = _fixture_completo()
@@ -373,7 +414,11 @@ def test_v3_regressao_contra_implementacao_de_referencia():
     tensao = d["pix_per_capita_12m"] / (d["agencias_por_100k_hab"] + 1)
     pen = d["pix_per_capita_12m"] / d["pib_per_capita"]
     pen = pen.replace([np.inf, -np.inf], np.nan).fillna(0)
-    gap = 1 / (d["agencias_por_100k_hab"] + corr_100k + 1)
+    presenca = (
+        d["agencias_por_100k_hab"]
+        + ipb.EQUIVALENCIA_CORRESPONDENTE_AGENCIA * corr_100k
+    )
+    gap = 1 - normalizar(winsorizar(presenca))
 
     a_ = normalizar(winsorizar(d["pib_per_capita"]))
     a_ = pd.concat([a_, normalizar(winsorizar(d["rendimento_domiciliar_per_capita"]))], axis=1).mean(axis=1)
@@ -386,7 +431,7 @@ def test_v3_regressao_contra_implementacao_de_referencia():
         axis=1,
     ).mean(axis=1)
     c_ = normalizar(winsorizar(d["banda_larga_fixa_por_100_hab"]))
-    d_ = normalizar(winsorizar(gap))
+    d_ = gap
     e_ = pd.concat(
         [
             normalizar(winsorizar(d["escolaridade_ensino_medio_pct"])),
@@ -417,6 +462,7 @@ def test_v3_colunas_esperadas_presentes_e_ipb_no_intervalo():
     for col in [
         "correspondentes_ponderados",
         "correspondentes_ponderados_por_100k_hab",
+        "presenca_bancaria_combinada",
         "tensao_digital_bancaria",
         "penetracao_digital_relativa",
         "gap_bancario_completo",
