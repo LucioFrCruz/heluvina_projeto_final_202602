@@ -3,8 +3,8 @@
 > **Projeto**: Índice de Potencial Bancário (IPB)  
 > **Etapa**: 2 — Análise Exploratória e Limpeza  
 > **Base**: `trusted_municipios` (5.570 municípios) + tabelas `analytics_ipb_*` (3 versões do índice publicadas)  
-> **Período de referência**: Censo 2022, PIB 2023, Pix jul/2025–jun/2026, Anatel/Estban 2026, Correspondentes BCB 30/08/2026, IDHM 2010  
-> **Gerado em**: 2026-09-02
+> **Período de referência**: Censo 2022, PIB 2023, CEMPRE 2024, Pix jul/2025–jun/2026, Anatel/Estban 2026, Correspondentes BCB 30/08/2026, IDHM 2010  
+> **Gerado em**: 2026-09-03
 
 ---
 
@@ -30,7 +30,7 @@ A análise foi conduzida em 7 notebooks reprodutíveis localizados em `notebooks
 | `01_perfil_demografico_e_geo.ipynb` | Análise do pilar E (perfil demográfico). |
 | `02_economia_e_dinamismo.ipynb` | Análise dos pilares A e B (renda, PIB, Pix). |
 | `03_infra_digital_e_gap_bancario.ipynb` | Análise dos pilares C e D (banda larga, agências). |
-| `04_integracao_correlacoes.ipynb` | Correlações, PCA e cálculo alpha do IPB. |
+| `04_integracao_correlacoes.ipynb` | Correlações (incl. variáveis novas da V3) e cálculo alpha do IPB. |
 | `05_comparacao_abordagens_ipb.ipynb` | Comparação das 3 versões do IPB **lendo as tabelas `analytics_ipb_*` do BigQuery** (seção 8 deste relatório). |
 
 Os outputs de dados (parquet e relatórios JSON) foram salvos em `data/processed/`.  
@@ -101,6 +101,8 @@ Todas as regras de negócio validadas passaram:
 
 ![Distribuição da escolaridade (% ensino médio completo)](assets/figures/01_dist_escolaridade_ensino_medio_pct.png)
 
+![Perfil médio por região: população jovem (18–35) e urbana (%)](assets/figures/01_perfil_regiao_barras.png)
+
 ![Escolaridade por região](assets/figures/01_boxplot_escolaridade_ensino_medio_pct_regiao.png)
 
 ![Correlação entre variáveis demográficas](assets/figures/01_correlacao_demografica.png)
@@ -113,16 +115,17 @@ Todas as regras de negócio validadas passaram:
 
 - **Renda e PIB**: cidades grandes apresentam renda domiciliar per capita mediana de R$ 2.079,68 e PIB per capita de R$ 56.227,29; cidades pequenas ficam com R$ 1.145,36 e R$ 28.216,86, respectivamente. As distribuições de renda e PIB usam escala log porque ambas são fortemente assimétricas: poucos municípios concentram valores muito altos.
 - **Pix per capita (12 meses)**: cresce conforme o estrato populacional — pequenas R$ 348.814, médias R$ 478.673, grandes R$ 645.788. A estratificação populacional segue o critério: pequena (< 50 mil hab.), média (50 mil–500 mil hab.) e grande (> 500 mil hab.).
-- **Outlier no estrato pequeno**: Pacaraima (RR), com população de ~19 mil habitantes, registra R$ 4,1 milhões de Pix per capita — provavelmente efeito do comércio de fronteira.
-- **859 municípios** apresentam alta adoção Pix (acima da mediana) e renda abaixo da mediana, indicando potencial de inclusão financeira digital.
+- **Outlier no estrato pequeno**: Pacaraima (RR), com população de ~19 mil habitantes, registra R$ 516.520 de Pix per capita em 12 meses (meio milhão de reais) — provavelmente efeito do comércio de fronteira.
+- **864 municípios** apresentam alta adoção Pix (acima da mediana) e renda abaixo da mediana, indicando potencial de inclusão financeira digital. O quadrante correspondente no scatter Pix × renda (`02_quadrante_pix_renda.png`) destaca o grupo em vermelho.
 - A série temporal do Pix mostra concentração crescente de volume em meses recentes. O volume é apresentado em trilhões de reais (R$) e separado entre Pessoa Física (PF) e Pessoa Jurídica (PJ). Os dados brutos do BCB já contêm PJ, mas a camada `trusted` do IPB utiliza apenas PF como proxy de adoção digital no pilar B.
-- **Pix vs PIB**: os eixos estão em escala log. A linha tracejada representa a tendência geral. Municípios acima da linha têm mais Pix per capita do que seu PIB per capita preveria, sugerindo alta penetração digital relativa à renda.
 
 ### 5.2 Figuras relevantes
 
-![Distribuição do log do rendimento domiciliar per capita](assets/figures/02_dist_log_rendimento_domiciliar_per_capita.png)
+![Distribuição do log do PIB per capita](assets/figures/02_dist_log_pib_per_capita.png)
 
-![Pix per capita vs PIB per capita](assets/figures/02_pix_vs_pib.png)
+![Distribuição do log do Pix per capita](assets/figures/02_dist_log_pix_per_capita.png)
+
+![Quadrantes: Pix per capita × rendimento domiciliar per capita](assets/figures/02_quadrante_pix_renda.png)
 
 ![Série temporal do Pix](assets/figures/02_serie_pix.png)
 
@@ -142,10 +145,16 @@ Todas as regras de negócio validadas passaram:
   - **Maduro saturado**: 1.735 municípios (banda larga alta + muitas agências).
   - **Desconectado**: 1.735 municípios (banda larga baixa + poucas agências).
   - **Bancarizado sem infra**: 1.050 municípios (banda larga baixa + muitas agências).
+- **Correspondentes bancários (pilar D da V3)**: dos 216.873 correspondentes ativos do BCB (30/08/2026), **81,1% são do tipo Sede** (estabelecimento-sede do correspondente no cadastro do BCB), 15,4% Filial e 3,5% Posto — composição homogênea entre regiões (figura `03_correspondentes_tipo_regiao.png`). Ou seja, a presença física no interior é majoritariamente de correspondentes, não de agências — o que motivou a ponderação por tipo (posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0) adotada no pilar D da V3.
+- **Quadrantes revisados (presença combinada)**: trocando agências pela presença combinada da V3 (agências + correspondentes ponderados por 100k hab.), a distribuição muda de (alto potencial 1.050 / maduro saturado 1.735 / desconectado 1.735 / bancarizado sem infra 1.050) para **1.233 / 1.552 / 1.552 / 1.233**. Dos 1.735 "maduros saturados" do recorte antigo, apenas **1.015 (58,5%) permanecem saturados**; 720 municípios classificados como "alto potencial" deixam de sê-lo porque na prática têm rede de correspondentes densa, e 620 "desconectados" revelam presença combinada alta apesar da banda larga baixa. Figuras: `03_quadrantes_infra_gap.png` (agências) e `03_quadrantes_presenca_combinada.png` (V3).
 
 ### 6.2 Figuras relevantes
 
 ![Quadrantes de infraestrutura digital e gap bancário](assets/figures/03_quadrantes_infra_gap.png)
+
+![Composição de correspondentes bancários por tipo e região](assets/figures/03_correspondentes_tipo_regiao.png)
+
+![Quadrantes com presença bancária combinada (V3)](assets/figures/03_quadrantes_presenca_combinada.png)
 
 ![Percentual de municípios sem agência por UF](assets/figures/03_pct_sem_agencia_uf.png)
 
@@ -173,7 +182,6 @@ IPB_alpha = (A × B × C × D × E)^(1/5) × 100
 
 - **Média do IPB alpha**: 35,85
 - **Mediana do IPB alpha**: 35,86
-- **Variância explicada pelos 2 primeiros componentes PCA**: 70,45%
 
 #### Top 10 municípios no ranking alpha
 
@@ -210,11 +218,18 @@ O Top 10 permaneceu bastante estável, com pequenas trocas de posição. A corre
 
 ![Correlação entre pilares do IPB](assets/figures/04_correlacao_pilares.png)
 
+![Correlação das variáveis novas da V3 × pilares, scores e IPB](assets/figures/04_correlacao_novas_variaveis.png)
+
 ![Distribuição do IPB alpha](assets/figures/04_dist_ipb_alpha.png)
 
 ![Top 30 municípios no ranking IPB alpha](assets/figures/04_top30_ipb_alpha.png)
 
-![PCA dos pilares do IPB](assets/figures/04_pca_pilares.png)
+#### Leitura das correlações das novas variáveis (Spearman)
+
+- **Empregos formais por 1000 hab.** (CEMPRE) corrige bem com riqueza e dinamismo: ρ = 0,79 com PIB per capita, 0,54 com Pix per capita e 0,93 com o score do pilar A — captura formalização que o PIB per capita sub-declara, validando sua entrada no pilar A da V3.
+- **Unidades de alojamento/alimentação por 1000 hab.** têm correlação negativa com o rank da V3 (ρ = −0,59): municípios com densidade alta de hospedagem/alimentação tendem a ranquear melhor, validando o uso do setor como proxy objetivo de turismo.
+- **Correspondentes por 100k hab. × agências por 100k hab.: ρ = −0,09** — as duas presenças não se movem juntas: correspondentes compensam justamente onde não há agência, reforçando a necessidade da presença combinada do pilar D da V3 (correspondentes ponderados × `gap_bancario_completo`: ρ = −0,97, forte por construção).
+- `score_turismo` × PIB per capita: ρ = −0,56 (a heurística realmente seleciona cidades pobres com Pix alto); `penetracao_digital_relativa` × Pix per capita: ρ = −0,12 (fraca, como esperado para uma razão normalizadora).
 
 ---
 
