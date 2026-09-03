@@ -33,9 +33,9 @@
    - Isso garante idempotência, desacoplamento e evita re-execuções desnecessárias contra APIs públicas.
 
 7. **Cultura de Testes Rigorosa**:
-   - Todo módulo ou parser em `src/utils/` e `src/ingestors/` deve ter testes unitários correspondentes em `tests/unit/`.
+   - Todo módulo ou parser em `src/utils/`, `src/ingestors/` e `src/analytics/` deve ter testes unitários correspondentes em `tests/unit/`.
    - Teste de conexão GCP em `tests/integration/test_bq_connection.py`.
-   - Testes de integridade na camada `trusted` (`tests/data_quality/`) validando os 5.570 municípios.
+   - Testes de integridade na camada `trusted` e nas tabelas `analytics_ipb_*` (`tests/data_quality/`) validando os 5.570 municípios.
 
 ---
 
@@ -43,16 +43,19 @@
 
 Esta base de código entrega o **Índice de Potencial Bancário (IPB)**.
 
-**STATUS ATUAL: A Etapa 1 (Engenharia de Dados e Ingestão) foi CONCLUÍDA com sucesso.**
-- Todos os ingestores das fontes abertas e manuais estão implementados (Poetry, BigQuery).
-- A base mestra `trusted_municipios` contendo os 5.570 municípios está ativa no GCP e cruzando perfeitamente dados de PIB, Anatel, Pix e Estban.
+**STATUS ATUAL:**
+- **Etapa 1 (Engenharia de Dados e Ingestão): CONCLUÍDA.** Todos os ingestores implementados (Poetry, BigQuery), incluído o de **correspondentes bancários** (`src/ingestors/bcb_correspondentes.py`, fonte oficial BCB/OData, cache parquet idempotente).
+- **Etapa 2 (EDA + Índice): comparação das 3 abordagens CONCLUÍDA e PUBLICADA.** As 3 versões do IPB estão em produção na camada `analytics_` do BigQuery:
+  - `analytics_ipb_v1_classico` — fórmula original, pesos iguais;
+  - `analytics_ipb_v2_recalibrado` — pesos diferenciados + `tensao_digital_bancaria`;
+  - `analytics_ipb_v3_presenca_completa` — correspondentes por tipo + flag de turismo suave + `empregos_formais_por_1000_hab` (CEMPRE) no pilar A (ex-"Abordagem 2");
+  - `analytics_ipb_comparacao` — visão larga das 3 versões lado a lado.
+- Pipeline do índice: `src/analytics/ipb.py` (fórmulas, com testes unitários) + `scripts/07_publica_ipb_bigquery.py` (lê trusted + correspondentes + CEMPRE do BQ e publica). Integridade das tabelas: `tests/data_quality/test_analytics_ipb.py`. A `trusted_municipios` **não** carrega colunas de índice — IPB é produto da camada analytics.
 
-**ESCOPO DA SESSÃO (ETAPA 2 - Análise Exploratória e Limpeza):**
-- O foco a partir de agora é qualidade de dados (Data Quality).
-- Identificar nulos (missing values) e decidir técnicas de imputação.
-- Tratamento de outliers e análise de distribuição.
-- Não retroceder para a arquitetura da Etapa 1, a menos que seja para corrigir bugs críticos que bloqueiem a EDA.
-- Começar a preparar o ambiente em `notebooks/00_exploracao/` ou scripts equivalentes.
+**ESCOPO DA SESSÃO (próximos passos):**
+- Validação de negócio dos Top 100 e escolha da versão oficial do IPB.
+- Clusterização/ML (Etapa 3) e enriquecimentos (4G/5G, CNPJ/Caged, dados de visitação para a flag de turismo).
+- Manter a EDA sincronizada com as tabelas `analytics_ipb_*` (notebook 05 lê do BigQuery).
 
 ---
 
@@ -80,24 +83,30 @@ heluvina_projeto_final_202602/
 │   │   ├── __init__.py
 │   │   ├── ibge_localidades.py  # API
 │   │   ├── sidra_censo_2022.py  # API
+│   │   ├── ibge_cempre.py       # API (CEMPRE/SIDRA 9528, série 2022+)
 │   │   ├── ibge_pib_municipios.py  # XLSX manual
 │   │   ├── bcb_pix.py           # API
+│   │   ├── bcb_correspondentes.py  # API OData BCB (cache idempotente)
 │   │   ├── anatel_banda_larga_fixa.py  # CSV manual
 │   │   ├── bcb_estban.py        # CSV manual
 │   │   └── pnud_idhm.py         # XLSX manual (se disponível)
-│   └── preparacao/              # scripts de limpeza e consolidação trusted
+│   ├── preparacao/              # scripts de limpeza e consolidação trusted
+│   │   ├── __init__.py
+│   │   └── trusted_municipios.py
+│   └── analytics/               # cálculo das 3 versões do IPB (V1/V2/V3)
 │       ├── __init__.py
-│       └── trusted_municipios.py
-├── sql/
-│   └── trusted/
-│       └── create_trusted_municipios.sql
+│       └── ipb.py
+├── scripts/
+│   └── 07_publica_ipb_bigquery.py  # publica analytics_ipb_* no BigQuery
 ├── data/
 │   ├── raw/                     # dumps locais temporários (não commitados)
 │   └── processed/               # resultados intermediários (não commitados)
 ├── notebooks/
-│   └── 00_exploracao/           # EDA futura; nada aqui ainda
+│   └── 00_exploracao/           # EDA (7 notebooks, incl. 05 de comparação das abordagens)
 └── tests/
-    └── unit/                    # testes pequenos para utilitários
+    ├── unit/                    # testes pequenos para utilitários e módulos
+    ├── integration/             # teste de conexão BigQuery
+    └── data_quality/            # integridade da trusted e das analytics_ipb_*
 ```
 
 **Regra de ouro**: nenhum dado bruto ou credencial entra no Git. Apenas código, SQL, documentação e configuração segura.
@@ -116,7 +125,7 @@ heluvina_projeto_final_202602/
 - **python-dotenv** — carregamento de variáveis de ambiente locais.
 - **openpyxl** — leitura de arquivos Excel (.xlsx).
 
-Todas as dependências devem ser listadas em `requirements.txt` (a ser criado na fase de implementação).
+Todas as dependências devem ser declaradas em `pyproject.toml` e travadas em `poetry.lock` (ver Diretriz 0.3 — Poetry exclusivamente; não usar `requirements.txt`).
 
 ---
 
@@ -171,11 +180,13 @@ Dataset padrão: `ipb_staging` (ajustável via `.env`).
 |--------|---------|---------|----------|
 | Raw | `raw_` | `raw_sidra_censo_2022` | Dados coletados quase sem alteração. |
 | Trusted | `trusted_` | `trusted_municipios` | Dados limpos, com código IBGE padronizado e tipos corretos. |
-| Analytics | `analytics_` | `analytics_ipb_ranking` | Agregações e produtos finais (futuro). |
+| Analytics | `analytics_` | `analytics_ipb_v3_presenca_completa` | Produtos finais do IPB (V1/V2/V3 + comparação), publicados por `scripts/07_publica_ipb_bigquery.py`. |
 
 Regras:
 - Sempre incluir colunas de auditoria: `_extracted_at`, `_source_url`.
 - Chave primária lógica em tabelas municipais: `id_municipio` (código IBGE de 7 dígitos).
+- Tabelas `analytics_ipb_*` obrigatórias: identidade (`id_municipio`, `nome_municipio`, `sigla_uf`, `nome_regiao`, `estrato_populacional`), `score_a`…`score_e`, `ipb` (em [0,100]), `rank` e `rank_estrato` (método `min`; empates compartilham posição).
+- A camada `trusted_` **nunca** carrega colunas de índice (IPB, scores, ranks) — índice é produto da camada `analytics_`. Features derivadas por abordagem ficam na tabela `analytics_` correspondente.
 
 ---
 
@@ -184,25 +195,25 @@ Regras:
 Fluxo sugerido para rodar a ingestão na máquina:
 
 ```bash
-# 1. Criar ambiente virtual
-python -m venv .venv
-source .venv/bin/activate
+# 1. Instalar dependências e ambiente (Poetry, ambiente local em .venv/)
+poetry config virtualenvs.in-project true
+poetry install
 
-# 2. Instalar dependências (quando existir)
-pip install -r requirements.txt
-
-# 3. Configurar variáveis de ambiente
+# 2. Configurar variáveis de ambiente
 cp .env.example .env
 # editar .env com seus valores
 
-# 4. Autenticar no GCP (se necessário)
+# 3. Autenticar no GCP (se necessário)
 gcloud auth application-default login
 
-# 5. Rodar um ingestor específico
-python -m src.ingestors.ibge_pib_municipios
+# 4. Rodar um ingestor específico
+poetry run python -m src.ingestors.ibge_pib_municipios
 
-# 6. Rodar a consolidação trusted
-python -m src.preparacao.trusted_municipios
+# 5. Rodar a consolidação trusted
+poetry run python -m src.preparacao.trusted_municipios
+
+# 6. Publicar as 3 versões do IPB (camada analytics_)
+poetry run python scripts/07_publica_ipb_bigquery.py
 ```
 
 ---
@@ -220,15 +231,19 @@ Antes de marcar uma fonte como "coletada", verificar:
 
 ---
 
-## 9. Status da Consolidação (Trusted)
+## 9. Status da Consolidação (Trusted) e Analytics
 
-A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* a serem tratados na Etapa 2:
+A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* e decisões conhecidas:
 - **Internet (Censo 2022)**: A tabela 7307 do SIDRA retorna HTTP 500 para `N6[all]` desde agosto/2026. A coluna `domicilios_com_internet_pct` permanece nula; usar `banda_larga_fixa_por_100_hab` (Anatel) como proxy na EDA.
 - **Estban**: Apenas ~2.900 municípios possuem agências. Os outros devem receber imputação zero para `quantidade_agencias`, `volume_depositos`, etc.
 - **PIB**: A coluna `va_servicos` teve o mapeamento corrigido no ingestor `ibge_pib_municipios.py`; validar se agora vem preenchida no trusted.
 - **IDHM**: Mantido como variável histórica (2010) via Ipeadata. O indicador principal de capital humano passa a ser a **escolaridade (% ensino médio completo)** do Censo 2022 (SIDRA Tabela 10061).
+- **CEMPRE (IBGE, 2024)**: coletado em `raw_ibge_cempre` (unidades locais e pessoal ocupado por município e seção CNAE, via SIDRA 9528) — dimensão PJ/empresarial do potencial bancário. **Integrado à V3 desde 2026-09**: `empregos_formais_por_1000_hab` entra no pilar A (agregado por `agregar_cempre` no script 07); `unidades_alojamento_alimentacao_por_1000_hab` acompanha a tabela como validador objetivo de turismo, sem entrar na fórmula. MEIs excluídos pela fonte (limitação declarada).
+- **Correspondentes (BCB/OData, posição 30/08/2026)**: cobre 5.571 municípios — inclui **Boa Esperança do Norte/MT (5101837), município extinto**, que não está no Censo 2022. O pipeline (`agregar_correspondentes_por_tipo`) usa left join a partir da trusted e o caso é coberto por teste de integridade (`tests/data_quality/test_analytics_ipb.py`).
+- **Estrato populacional e região**: derivados no pipeline (`derive_estrato`/`derive_regiao`), não existem como colunas na trusted. Faixas oficiais: pequena <50k, média 50–500k, grande >500k (decisão do projeto, Relatório EDA 5.1).
+- **Analytics publicadas**: `analytics_ipb_v1_classico`, `analytics_ipb_v2_recalibrado`, `analytics_ipb_v3_presenca_completa` e `analytics_ipb_comparacao` (5.570 linhas cada, integridade testada). Nomes oficiais: V1 Clássico, V2 Recalibrado, V3 Presença Bancária Completa (ex-Abordagem 2).
 
-> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix 2023/2024, Anatel/Estban 2026, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
+> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix 2023/2024, Anatel/Estban 2026, Correspondentes 30/08/2026, CEMPRE 2024, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
 
 > **Base dos Dados**: reservada para validação cruzada futura, não como fonte primária do pipeline.
 
@@ -236,8 +251,11 @@ A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* a s
 
 ## 10. Evolução Futura (Etapa 3 - Não focar agora)
 
-- Cálculo final do Índice (fórmula e pesos).
-- ML para clusterização.
+- O cálculo do índice já foi realizado em 3 versões comparadas (seção 1). Resta:
+  - **Validação de negócio** dos Top 100 e escolha da versão oficial do IPB;
+  - **Sensibilidade/ajuste fino** de pesos e da flag de turismo;
+  - **ML para clusterização** (arquétipos de municípios) e possível modelo residual;
+  - **Enriquecimentos**: cobertura 4G/5G (pilar C), CNPJ/MEI + Caged, dados de visitação (Embratur/MTur) para a flag de turismo.
 
 ---
 
@@ -249,4 +267,4 @@ A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* a s
 - Proibido em qualquer hipótese: `rm -rf` fora de `data/`, `git push`, `git reset --hard`, `git clean`, expor conteúdo de `.env` ou credenciais.
 ---
 
-*Última atualização: SIDRA Censo 2022 implementado (renda, escolaridade, população 18-35 e urbana) — v4.*
+*Última atualização: V3 enriquecida com empregos formais do CEMPRE no pilar A (agregado `agregar_cempre`, analytics republicadas), ingestor oficial de correspondentes bancários (BCB/OData) e testes de integridade — v6.*

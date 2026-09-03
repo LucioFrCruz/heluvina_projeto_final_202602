@@ -61,6 +61,7 @@ flowchart LR
         F4["📁 IBGE PIB dos Municípios (XLSX)"]:::manual
         F5["📁 BCB Estban (CSV)"]:::manual
         F6["📁 PNUD IDHM (XLSX)"]:::manual
+        F7["🌐 BCB Correspondentes (API OData)"]:::api
     end
 
     subgraph Ingestao["Ingestão local (Python)"]
@@ -71,7 +72,7 @@ flowchart LR
     subgraph BigQuery["BigQuery — data lake / staging"]
         R["Camada raw\n(raw_*)"]:::bq
         T["Camada trusted\n(trusted_*)"]:::bq
-        A["Camada analytics\n(analytics_*) — futuro"]:::bq
+        A["Camada analytics\n(analytics_ipb_*)"]:::bq
     end
 
     F1 --> I1
@@ -80,6 +81,7 @@ flowchart LR
     F4 --> I1
     F5 --> I1
     F6 --> I1
+    F7 --> I1
 
     I1 --> I2
     I2 --> R
@@ -105,6 +107,7 @@ flowchart LR
         F4["📁 IBGE PIB dos Municípios (XLSX)"]:::manual
         F5["📁 BCB Estban (CSV)"]:::manual
         F6["📁 PNUD IDHM (XLSX)"]:::manual
+        F7["🌐 BCB Correspondentes (API OData)"]:::api
     end
 
     subgraph Ingestao["Ingestão local (Python)"]
@@ -115,7 +118,7 @@ flowchart LR
     subgraph BigQuery["BigQuery — data lake / staging"]
         R["Camada raw\n(raw_*)"]:::bq
         T["Camada trusted\n(trusted_*)"]:::bq
-        A["Camada analytics\n(analytics_*) — futuro"]:::bq
+        A["Camada analytics\n(analytics_ipb_*)"]:::bq
     end
 
     F1 --> I1
@@ -124,6 +127,7 @@ flowchart LR
     F4 --> I1
     F5 --> I1
     F6 --> I1
+    F7 --> I1
 
     I1 --> I2
     I2 --> R
@@ -239,6 +243,29 @@ erDiagram
         timestamp _extracted_at
     }
 
+    RAW_BCB_CORRESPONDENTES {
+        string id_municipio
+        string cnpj_contratante
+        string nome_contratante
+        string tipo
+        string municipio_ibge
+        string uf
+        string servicos_correspondentes
+        string posicao
+        string _source_url
+        timestamp _extracted_at
+    }
+
+    RAW_IBGE_CEMPRE {
+        string id_municipio
+        string ano
+        string variavel
+        string cnae_secao
+        float valor
+        string _source_url
+        timestamp _extracted_at
+    }
+
     TRUSTED_MUNICIPIOS {
         string id_municipio PK
         string nome_municipio
@@ -273,6 +300,13 @@ erDiagram
     RAW_ANATEL_BANDA_LARGA_FIXA ||--o{ TRUSTED_MUNICIPIOS : enriquece
     RAW_BCB_ESTBAN ||--o{ TRUSTED_MUNICIPIOS : enriquece
     RAW_PNUD_IDHM ||--o{ TRUSTED_MUNICIPIOS : enriquece
+    %% Camada analytics (analytics_ipb_v1_classico, _v2_recalibrado,
+    %% _v3_presenca_completa, _comparacao): schemas no Dicionário de Dados.
+    %% TRUSTED_MUNICIPIOS + RAW_BCB_CORRESPONDENTES + RAW_IBGE_CEMPRE
+    %% alimentam as analytics_ipb_*
+    TRUSTED_MUNICIPIOS ||--o{ ANALYTICS_IPB : origem
+    RAW_BCB_CORRESPONDENTES ||--o{ ANALYTICS_IPB : alimenta_v3
+    RAW_IBGE_CEMPRE ||--o{ ANALYTICS_IPB : alimenta_v3
 ```
 
 ---
@@ -284,6 +318,7 @@ erDiagram
 | A | População residente | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Chave: `id_municipio` |
 | A | Rendimento domiciliar per capita | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Mesma tabela do item acima |
 | A | PIB municipal / per capita | IBGE | Download XLSX | `raw_pib_municipios` | 📁 Manual | Planilha única 2010–2023 |
+| A | Empregos formais por 1.000 hab | IBGE — CEMPRE (SIDRA 9528) | API | `raw_ibge_cempre` | 🌐 API | Ano 2024; **entra no Pilar A da V3**; exclui MEIs |
 | B | Crescimento populacional 2010→2022 | IBGE SIDRA | API | `raw_sidra_censo_2010` + `raw_sidra_censo_2022` | 🌐 API | stretch — variação percentual |
 | B | Crescimento do Pix | BCB Olinda | API | `raw_bcb_pix_transacoes` | 🌐 API | stretch — calculado sobre a série |
 | C | Volume Pix PF/PJ per capita | BCB Olinda | API | `raw_bcb_pix_transacoes` | 🌐 API | `pix_total_volume_12m / populacao_total` |
@@ -291,6 +326,7 @@ erDiagram
 | C | Banda larga fixa por 100 hab. | Anatel | Download CSV | `raw_anatel_banda_larga_fixa` | 📁 Manual | Arquivo já baixado; 5.571 registros no mês mais recente |
 | D | Agências por 100 mil hab. | BCB — Estban | Download CSV | `raw_bcb_estban` | 📁 Manual | `quantidade_agencias / populacao * 100.000` |
 | D | Depósitos e crédito per capita | BCB — Estban | Download CSV | `raw_bcb_estban` | 📁 Manual | `volume_depositos` / `volume_credito` por população |
+| D | Correspondentes bancários por tipo | BCB — Informes Correspondentes | API OData | `raw_bcb_correspondentes` | 🌐 API | Posição 30/08/2026; 216.873 vínculos; ponderação posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0 (V3) |
 | E | % população 18–35 anos | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Tabela 9514 |
 | E | % população urbana | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Tabela 10089 |
 | E | Escolaridade (% ensino médio+) | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Tabela 10061 — indicador principal do pilar E |
@@ -322,9 +358,17 @@ Ingestores do núcleo:
 - `sidra_censo_2022.py` — API
 - `ibge_pib_municipios.py` — leitura de XLSX baixado manualmente
 - `bcb_pix.py` — API
+- `bcb_correspondentes.py` — API OData (Olinda), com cache parquet idempotente
+- `ibge_cempre.py` — API SIDRA (tabela 9528, série 2022+; ano 2024), dimensão PJ
 - `anatel_banda_larga_fixa.py` — leitura de CSV baixado manualmente
 - `bcb_estban.py` — leitura de CSV baixado manualmente
 - `pnud_idhm.py` — leitura de XLSX baixado manualmente (se disponível)
+
+Além dos ingestores, a camada de cálculo vive em `src/analytics/ipb.py` (3 versões
+do IPB + geração do documento comparativo), orquestrada por
+`scripts/07_publica_ipb_bigquery.py`, que lê `trusted_municipios`,
+`raw_bcb_correspondentes` e `raw_ibge_cempre` do BigQuery e publica as tabelas
+`analytics_ipb_*`.
 
 ### 6.2 Utilitários (`src/utils/`)
 
@@ -342,7 +386,7 @@ Ingestores do núcleo:
 - **Camadas**:
   - `raw_*`: dados quase intactos, com colunas de auditoria.
   - `trusted_*`: dados limpos e unificados.
-  - `analytics_*`: agregações (futuro).
+  - `analytics_*`: produtos finais — publicadas as 4 tabelas `analytics_ipb_*` (V1 Clássico, V2 Recalibrado, V3 Presença Bancária Completa e visão de comparação), via `scripts/07_publica_ipb_bigquery.py`. A trusted não carrega colunas de índice; o IPB é produto da camada analytics.
 
 ---
 

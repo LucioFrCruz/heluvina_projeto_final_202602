@@ -79,6 +79,15 @@ def transform_raw(raw_data: pd.DataFrame) -> pd.DataFrame:
         df = df.dropna(subset=["id_municipio"])
         df["id_municipio"] = df["id_municipio"].apply(normalize_ibge_code)
 
+    # Garante unicidade por municipio + mes, evitando duplicatas de execucoes
+    # anteriores ou retornos acumulados da API.
+    if "AnoMes" in df.columns:
+        antes = len(df)
+        df = df.drop_duplicates(subset=["id_municipio", "AnoMes"])
+        removidos = antes - len(df)
+        if removidos:
+            logger.warning("Removidos %d registros duplicados de Pix.", removidos)
+
     return df
 
 
@@ -87,6 +96,10 @@ def run() -> None:
     logger.info("Coletando bcb_pix...")
     raw_data = extract()
     df = transform_raw(raw_data)
+
+    # Validação defensiva: nao deve haver duplicatas na camada raw
+    if df.duplicated(subset=["id_municipio", "AnoMes"]).any():
+        raise ValueError("Existem registros duplicados de Pix apos transformacao.")
 
     save_raw_parquet(df, "bcb_pix", "bcb_pix")
     upload_dataframe_to_raw(df, TABLE_RAW_BCB_PIX, source_url="https://olinda.bcb.gov.br/")

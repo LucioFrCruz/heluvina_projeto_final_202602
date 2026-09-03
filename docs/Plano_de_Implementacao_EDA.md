@@ -588,15 +588,12 @@ for col in ["rendimento_domiciliar_per_capita", "pib_per_capita"]:
     plot_distribution(df, col, log_scale=True, filename=f"02_dist_log_{col}.png")
 ```
 
-**Célula B — Pix vs PIB per capita**
+**Célula B — Quadrantes Pix × renda (alta adoção Pix)** *(atualizado em 2026-09: o scatter Pix×PIB planejado aqui foi descartado na revisão da EDA — não continha informação. Foi substituído pelo quadrante Pix per capita × rendimento domiciliar per capita com destaque dos municípios de alta adoção Pix, figura `02_quadrante_pix_renda.png`)*
 
 ```python
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.scatterplot(data=df, x="pib_per_capita", y="pix_per_capita_12m", hue="nome_regiao", alpha=0.6, ax=ax)
-ax.set_xscale("log")
-ax.set_yscale("log")
-ax.set_title("Pix per capita vs PIB per capita")
-save_figure(fig, "02_pix_vs_pib.png")
+# Scatter Pix per capita × rendimento domiciliar per capita (log),
+# linhas nas medianas, quadrante "Pix alto + renda baixa" destacado.
+# Implementado no notebook 02; ver docs/Relatorio_EDA.md seção 5.
 ```
 
 **Célula C — Sazonalidade do Pix**

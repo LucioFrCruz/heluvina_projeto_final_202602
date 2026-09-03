@@ -45,7 +45,7 @@ Cinco pilares compõem o índice. As variáveis em **negrito** fazem parte do N�
 
 | Pilar | O que mede | Variáveis disponíveis |
 |---|---|---|
-| **A. Capacidade de Consumo** | Renda, população, PIB per capita | `populacao_total`, `rendimento_domiciliar_per_capita`, `pib_per_capita` |
+| **A. Capacidade de Consumo** | Renda, população, PIB per capita | `populacao_total`, `rendimento_domiciliar_per_capita`, `pib_per_capita` (+ `empregos_formais_por_1000_hab` do CEMPRE na V3, agregado na camada `analytics_`) |
 | **B. Dinamismo Econômico** | Crescimento populacional, crescimento do Pix | `pix_per_capita_12m`, `pix_total_transacoes_12m` |
 | **C. Adoção Digital** | Pix, banda larga fixa, internet domiciliar | `pix_per_capita_12m`, `banda_larga_fixa_por_100_hab` |
 | **D. Gap Bancário** | Agências, depósitos e crédito per capita | `agencias_por_100k_hab`, `depositos_per_capita`, `credito_per_capita` |
@@ -80,6 +80,7 @@ Cada variável é normalizada em 0–1 (min-max, com winsorização no 1% extrem
 | **População residente** | IBGE/SIDRA Censo 2022 | NÚCLEO |
 | **Rendimento domiciliar per capita** | IBGE/SIDRA Censo 2022 | NÚCLEO |
 | **PIB municipal e PIB per capita** | IBGE PIB dos Municípios 2023 | NÚCLEO |
+| Empregos formais por 1.000 hab | IBGE/CEMPRE (SIDRA 9528, 2024) | **NÚCLEO da V3** — entra no Pilar A da Presença Bancária Completa; agregado do `raw_ibge_cempre` pelo script 07 (camada `analytics_`). MEIs excluídos pelo critério do CEMPRE. |
 | Valor adicionado de serviços | IBGE PIB dos Municípios | STRETCH — **nulo para 2023** no arquivo de origem; mantido apenas na camada `raw`. |
 
 ### Pilar B — Dinamismo Econômico
