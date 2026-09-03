@@ -13,10 +13,10 @@ O objetivo deste projeto é responder: **Quais municípios brasileiros apresenta
 
 Para responder a essa pergunta, estamos construindo o IPB. As cidades são rankeadas a partir da média geométrica de 5 pilares fundamentais de dados públicos:
 
-1. **Pilar de Capacidade de Consumo (IBGE / Censo 2022 + PIB dos Municípios):** PIB per capita e rendimento domiciliar per capita.
+1. **Pilar de Capacidade de Consumo (IBGE / Censo 2022 + PIB dos Municípios + CEMPRE):** PIB per capita, rendimento domiciliar per capita e empregos formais por 1.000 hab (na V3, que enriquece este pilar com a dimensão PJ do CEMPRE/IBGE).
 2. **Pilar de Dinamismo Financeiro (BCB - Pix):** Volume transacionado no Pix per capita (12 meses).
 3. **Pilar de Adoção Digital (Anatel):** Densidade de banda larga fixa instalada por 100 habitantes.
-4. **Pilar de Gap Bancário (BCB - Estban):** Agências, depósitos e crédito per capita — invertido: quanto menor a infraestrutura bancária tradicional, maior a oportunidade.
+4. **Pilar de Gap Bancário (BCB - Estban + Correspondentes):** Agências, correspondentes por tipo, depósitos e crédito per capita — invertido: quanto menor a infraestrutura bancária tradicional, maior a oportunidade.
 5. **Pilar de Perfil Demográfico (IBGE / Censo 2022):** % da população com 18–35 anos, % urbana e escolaridade (% ensino médio completo).
 
 > O desenho original da proposta previa também valor adicionado de serviços e população total como variáveis do índice. O VA de serviços ficou indisponível para 2023 (mantido apenas na camada `raw`) e a população total passou a definir estratos e denominadores de taxas, não o índice. Ver `docs/IPB_Guia_de_Bases_e_Desenho.md`.
@@ -66,7 +66,7 @@ Estamos desenvolvendo o projeto em etapas ágeis. Acompanhe nosso progresso:
 
 - [x] **Etapa 2: Análise Exploratória (EDA) e Índice** (EDA concluída) 📍 **<-- ESTAMOS AQUI**
   - Tratamento de outliers e dados faltantes, correlações entre os pilares.
-  - **3 versões do IPB publicadas no BigQuery** (`analytics_ipb_v1_classico`, `analytics_ipb_v2_recalibrado`, `analytics_ipb_v3_presenca_completa` + visão `analytics_ipb_comparacao`): Clássico, Recalibrado e Presença Bancária Completa, com comparação documentada no Relatório de EDA.
+  - **3 versões do IPB publicadas no BigQuery** (`analytics_ipb_v1_classico`, `analytics_ipb_v2_recalibrado`, `analytics_ipb_v3_presenca_completa` + visão `analytics_ipb_comparacao`): Clássico, Recalibrado e Presença Bancária Completa — esta última enriquecida com empregos formais do CEMPRE/IBGE no pilar de capacidade de consumo, com comparação documentada no Relatório de EDA.
 
 - [ ] **Etapa 3: Refinamento e ML** (Prazo: 15/09)
   - Validação de negócio dos Top 100 e escolha da versão oficial do IPB.

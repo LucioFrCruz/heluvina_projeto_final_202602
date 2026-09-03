@@ -58,12 +58,15 @@ poetry run python -m src.ingestors.pnud_idhm
 # 6. Correspondentes bancários (API OData BCB — cache idempotente)
 poetry run python -m src.ingestors.bcb_correspondentes
 
+# 6.1 CEMPRE — empregos formais por município (API SIDRA, tabela 9528)
+poetry run python -m src.ingestors.ibge_cempre
+
 # 7. Consolidação (Camada Trusted)
 poetry run python -m src.preparacao.trusted_municipios
 
 # 8. Publicação das 3 versões do IPB (Camada Analytics)
-#    Lê trusted + correspondentes do BQ, calcula V1/V2/V3, sobe analytics_ipb_*
-#    e regenera docs/Comparacao_Tres_Abordagens_IPB.md
+#    Lê trusted + correspondentes + CEMPRE do BQ, calcula V1/V2/V3,
+#    sobe analytics_ipb_* e regenera docs/Comparacao_Tres_Abordagens_IPB.md
 poetry run python scripts/07_publica_ipb_bigquery.py
 ```
 

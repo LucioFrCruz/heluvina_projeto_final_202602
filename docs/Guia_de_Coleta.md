@@ -204,7 +204,7 @@ curl -s --max-time 60 \
 - **MEIs são excluídos** pelo critério do CEMPRE — a base de microempreendedores não está representada (limitação declarada para o uso como proxy de mercado PJ).
 - Valores com menos de 3 informantes são suprimidos ("X" na fonte → nulo na raw); na prática só ocorre em seções detalhadas.
 - A unidade territorial da *empresa* é a sede; para distribuição de estabelecimentos usar as unidades locais (é o que coletamos).
-- **Ainda não integrado ao índice**: as features derivadas (`empregos_formais_por_1000_hab`, `unidades_locais_por_1000_hab`, `unidades_alojamento_por_1000_hab` como validador da flag de turismo) estão em análise de relevância incremental sobre o PIB per capita — decisão para a Etapa 3.
+- **Integrado ao índice (V3, desde 2026-09)**: `empregos_formais_por_1000_hab` entra no Pilar A da V3 (média com PIB pc e rendimento) — folha de pagamento formal como gancho produtivo de banco/fintech. As demais features derivadas (`unidades_locais_por_1000_hab` e `unidades_alojamento_alimentacao_por_1000_hab` como validador objetivo da flag de turismo) acompanham a tabela `analytics_ipb_v3_presenca_completa` sem entrar na fórmula. Movimento validado: 10 trocas no Top 100, capitais/polos formais entrando e dormitórios de baixa formalização saindo.
 
 ---
 

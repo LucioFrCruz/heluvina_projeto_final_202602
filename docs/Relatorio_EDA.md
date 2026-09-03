@@ -223,12 +223,12 @@ O Top 10 permaneceu bastante estável, com pequenas trocas de posição. A corre
 A EDA do IPB *alpha* (seção 7) revelou o viés central do índice: um ranking de riqueza, não de oportunidade. A partir desse diagnóstico, a evolução do método seguiu uma cadeia documentada:
 
 1. **Diagnóstico** (esta EDA, seção 7): Pilar D redundante (corr 0,88–0,91) e sem força para contrabalançar renda; normalização min-max dilui o gap.
-2. **`docs/Plano_Recalibracao_IPB.md`**: princípios anti-viés e desenho de 3 abordagens — (1) rápida, (2) estrutural, (3) modelo residual.
-3. **V2 — Recalibrado**: a abordagem rápida implementada (ajuste de pesos e de variáveis com os dados atuais).
-4. **`docs/Gap_Analysis_e_Potencial_IPB.md`**: a análise de gap mostrou que agências sozinhas não medem mais acesso — o BCB registra 216 mil correspondentes — motivando o redesenho do Pilar D.
-5. **V3 — Presença Bancária Completa** (ex-"Abordagem 2"): correspondentes bancários por tipo + heurísticas anti-turismo.
+2. **V2 — Recalibrado**: abordagem rápida anti-viés (ajuste de pesos e de variáveis com os dados atuais): pesos diferenciados, Pilar D simplificado e feature `tensao_digital_bancaria`.
+3. **Gap analysis** (durante a EDA): agências sozinhas não medem mais acesso — o BCB registra 216 mil correspondentes — motivando o redesenho do Pilar D.
+4. **V3 — Presença Bancária Completa** (ex-"Abordagem 2"): correspondentes bancários por tipo + heurísticas anti-turismo + `penetracao_digital_relativa`.
+5. **Enriquecimento CEMPRE (2026-09)**: `empregos_formais_por_1000_hab` (pessoal ocupado total, CEMPRE/SIDRA 9528) entra no Pilar A da V3 — folha de pagamento formal é o gancho produtivo nº 1 de banco/fintech e captura formalização que o PIB per capita sub-declara.
 
-As três versões foram calculadas pelo módulo `src/analytics/ipb.py` (fórmulas testadas em `tests/unit/test_ipb.py`), publicadas em 4 tabelas no BigQuery por `scripts/07_publica_ipb_bigquery.py` e validadas por `tests/data_quality/test_analytics_ipb.py`. A `trusted_municipios` **não** carrega colunas de índice — o IPB é produto da camada `analytics_`, não dado limpo.
+As três versões foram calculadas pelo módulo `src/analytics/ipb.py` (fórmulas testadas em `tests/unit/test_ipb.py`), publicadas em 4 tabelas no BigQuery por `scripts/07_publica_ipb_bigquery.py` e validadas por `tests/data_quality/test_analytics_ipb.py`. A `trusted_municipios` **não** carrega colunas de índice — o IPB é produto da camada `analytics_`, não dado limpo. A comparação completa das três versões, com tabelas de Top 10/Top 100 e distribuição regional, está em `docs/Comparacao_Tres_Abordagens_IPB.md` (regenerado automaticamente pelo script 07).
 
 ### 8.1 As três estratégias
 
@@ -236,7 +236,7 @@ As três versões foram calculadas pelo módulo `src/analytics/ipb.py` (fórmula
 |---|---|---|
 | **V1 — IPB Clássico** | `analytics_ipb_v1_classico` | Fórmula original: 5 pilares, pesos iguais (média geométrica). |
 | **V2 — IPB Recalibrado** | `analytics_ipb_v2_recalibrado` | Pesos A=0,5 / B=0,75 / C=0,75 / D=1,5 / E=1,0; Pilar D só com `agencias_por_100k_hab`; Pilar E sem `populacao_urbana_pct` (redundante); feature nova `tensao_digital_bancaria` = Pix per capita / (agências por 100k + 1). |
-| **V3 — Presença Bancária Completa** | `analytics_ipb_v3_presenca_completa` | Redesenho do Pilar D: `gap_bancario_completo` linear = `1 − min-max(winsorize(presença combinada))`, com presença = agências + correspondentes ponderados por 100k (correspondentes do BCB por tipo: posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0); nova feature `penetracao_digital_relativa` = Pix per capita / PIB per capita; pesos A=0,75 / B=1,0 / C=0,75 / D=1,5 / E=1,0. |
+| **V3 — Presença Bancária Completa** | `analytics_ipb_v3_presenca_completa` | Redesenho do Pilar D: `gap_bancario_completo` linear = `1 − min-max(winsorize(presença combinada))`, com presença = agências + correspondentes ponderados por 100k (correspondentes do BCB por tipo: posto 1,0 / filial 0,7 / sede 0,4 / agência 1,0); nova feature `penetracao_digital_relativa` = Pix per capita / PIB per capita; pesos A=0,75 / B=1,0 / C=0,75 / D=1,5 / E=1,0. Pilar A enriquecido com `empregos_formais_por_1000_hab` (CEMPRE/IBGE, 2024). |
 
 Ainda vale uma tabela de apoio `analytics_ipb_comparacao` (visão larga com os 3 IPBs e 6 ranks por município) para consultas ad hoc e para a EDA.
 
@@ -255,24 +255,26 @@ Justificativa: sem dados de visitação (Embratur/MTur), usa-se o próprio compo
 
 ### 8.2 Resultados
 
-Estatísticas gerais (após recalibração do gap da V3 — ver nota abaixo):
+Estatísticas gerais (após recalibração do gap e enriquecimento CEMPRE da V3 — ver notas abaixo):
 
 | Métrica | V1 Clássico | V2 Recalibrado | V3 Presença Completa |
 |---|---|---|---|
-| Média | 35,85 | 40,85 | 36,21 |
-| Mediana | 35,86 | 40,65 | 36,30 |
-| Máximo | 82,54 | 83,85 | 71,72 |
+| Média | 35,85 | 40,85 | 36,64 |
+| Mediana | 35,86 | 40,65 | 36,67 |
+| Máximo | 82,54 | 83,85 | 73,33 |
 | Mínimo | 0,00 | 0,00 | 0,00 |
 
 **Nota de recalibração (V3)** — a primeira versão do `gap_bancario_completo` era hiperbólica: `1 / (agências + correspondentes ponderados por 100k + 1)`. Como correspondentes chegam a centenas por 100k hab em cidades pequenas (densidade de lotéricas), o denominador explodia, o gap colapsava para ~0 e — pela média geométrica — o IPB de ~119 municípios zerava, todos empatados na última posição. A fórmula foi recalibrada para **gap linear** = `1 − min-max(winsorize(presença combinada))`, o mesmo padrão de inversão dos pilares D da V1/V2 (com teste de regressão dedicado em `tests/unit/test_ipb.py`). A direção do sinal se mantém (mais presença → menos gap), sem o colapso de escala.
 
-Correlação de Spearman entre os rankings: **V1×V2 = 0,842**, **V2×V3 = 0,853**, **V1×V3 = 0,852**. Leitura honesta: com o gap hiperbólico, a V3 parecia reordenar drasticamente (V1×V3 = 0,654) — boa parte desse efeito era artefato de calibração, não sinal. Com o gap linear, as três versões concordam em ~85% das posições; o que separa a V3 é o eixo concorrência (presença completa vs só agências), não uma revolução no ranking.
+**Nota de enriquecimento (V3, 2026-09)** — o Pilar A da V3 ganhou `empregos_formais_por_1000_hab` (pessoal ocupado total do CEMPRE/IBGE, ano 2024). Racional: folha de pagamento formal é o gancho produtivo nº 1 de banco/fintech (conta-salário, crédito consignado, PJ) e captura formalização que o PIB per capita sub-declara — capitais como São Luís e Belém têm massa salarial bancarizável com PIB pc mediano. O efeito foi cirúrgico: 10 trocas no Top 100, todas capitais/polos formais entrando (São Luís 132→70, Belém 149→99, Rio Branco 146→86, Porto Velho 138→78, Fortaleza 126→75, Boa Vista 120→80, + Montes Claros, Guarulhos, Patos de Minas, Gramado) e dormitórios de baixa formalização saindo (Valparaíso de Goiás 68→101, Mário Campos, Florestal, Canarana-MT). Cidades conhecidas estáveis (São Paulo 18→15, Florianópolis 11→9, Campinas 44→48).
 
-Movimentação no Top 100: V1→V2 trocam 40 cidades; V2→V3 trocam 38; V1→V3 trocam 38.
+Correlação de Spearman entre os rankings: **V1×V2 = 0,842**, **V2×V3 = 0,846**, **V1×V3 = 0,840**. Leitura honesta: com o gap hiperbólico, a V3 parecia reordenar drasticamente (V1×V3 = 0,654) — boa parte desse efeito era artefato de calibração, não sinal. Com o gap linear e o enriquecimento CEMPRE, as três versões continuam concordando em ~85% das posições; o que separa a V3 é o eixo concorrência (presença completa vs só agências) e a dimensão PJ (formalização), não uma revolução no ranking.
 
-Top 10 da V3 (a versão candidata a oficial): Bombinhas-SC (71,72), Nova Lima-MG (71,39), Confins-MG (70,86), Santa Rita do Trivelato-MT (69,42), Balneário Camboriú-SC (69,36), Santana de Parnaíba-SP (69,30), Itapema-SC (69,09), Eusébio-CE (68,77), Palmas-TO (67,46), Paulínia-SP (67,04). Os Top 10s completos por versão estão em `docs/Comparacao_Tres_Abordagens_IPB.md`.
+Movimentação no Top 100: V1→V2 trocam 40 cidades; V2→V3 trocam 39; V1→V3 trocam 39.
 
-Distribuição regional do Top 100 (V1 → V3): Sudeste 48 → 57, Sul 24 → 19, Centro-Oeste 22 → 15, Nordeste 4 → 6, Norte 2 → 3. A V3 mantém o centro de gravidade no Sudeste, diluindo CO/Sul (agro/riqueza) e subindo levemente Nordeste/Norte.
+Top 10 da V3 (a versão candidata a oficial): Bombinhas-SC (73,33), Nova Lima-MG (72,41), Confins-MG (71,97), Balneário Camboriú-SC (71,00), Eusébio-CE (70,65), Itapema-SC (70,39), Palmas-TO (70,27), Santana de Parnaíba-SP (70,19), Florianópolis-SC (68,85), Santa Rita do Trivelato-MT (68,74). Os Top 10s completos por versão estão em `docs/Comparacao_Tres_Abordagens_IPB.md`.
+
+Distribuição regional do Top 100 (V1 → V3): Sudeste 48 → 52, Sul 24 → 20, Centro-Oeste 22 → 13, Nordeste 4 → 8, Norte 2 → 7. A V3 mantém o centro de gravidade no Sudeste, dilui CO/Sul (agro/riqueza) e sobe Nordeste/Norte — efeito direto do enriquecimento CEMPRE, que valoriza capitais e polos formais dessas regiões.
 
 ### 8.3 Alertas e sensibilidade
 
@@ -312,16 +314,18 @@ A partir das tabelas `raw_*`, foram criadas as seguintes features na base enriqu
 | `depositos_por_agencia` | Volume de depósitos por agência. |
 | `credito_por_agencia` | Volume de crédito por agência. |
 
+As features do CEMPRE (`empregos_formais`, `unidades_locais`, `empregos_formais_por_1000_hab`, `unidades_locais_por_1000_hab`, `unidades_alojamento_alimentacao_por_1000_hab`) foram agregadas do `raw_ibge_cempre` diretamente na camada `analytics_` (tabela `analytics_ipb_v3_presenca_completa`), por serem insumo exclusivo da V3 — não entram em `trusted_municipios_eda`.
+
 ---
 
 ## 10. Limitações e ressalvas
 
-1. **Vintage misto**: a base combina Censo 2022, PIB 2023, Pix 2025–2026, Anatel/Estban 2026, Correspondentes BCB 30/08/2026 e IDHM 2010. Isso deve ser declarado na apresentação final.
+1. **Vintage misto**: a base combina Censo 2022, PIB 2023, Pix 2025–2026, Anatel/Estban 2026, Correspondentes BCB 30/08/2026, CEMPRE 2024 e IDHM 2010. Isso deve ser declarado na apresentação final.
 2. **Internet domiciliar**: a coluna `domicilios_com_internet_pct` está 100% nula; usamos banda larga fixa como proxy.
 3. **Pix**: os dados brutos do BCB incluem PF e PJ, mas o cálculo da `trusted_municipios` utiliza apenas `VL_PagadorPF`/`QT_PagadorPF` como proxy de adoção digital. Uma versão futura pode testar incluir PJ e/ou variáveis de recebedores.
 4. **Efeito polo regional**: municípios dormitório podem parecer desatendidos porque recursos financeiros fluem para cidades próximas.
 5. **Municípios com IPB zero**: indicam ausência de dados em algum pilar; devem ser analisados caso a caso.
-6. **IPB = 0 estrutural**: município com qualquer pilar = 0 tem IPB 0 (média geométrica). Nas 3 versões a proporção de zerados é semelhante (V1: 120, V2: 126, V3: 124 municípios) — propriedade do método (min-max + média geométrica), não bug da V3; na V3, 56 desses 124 são o percentil de maior presença bancária combinada. Suavização (ex.: epsilon) ficou como decisão de método futura.
+6. **IPB = 0 estrutural**: município com qualquer pilar = 0 tem IPB 0 (média geométrica). Nas 3 versões a proporção de zerados é semelhante (V1: 120, V2: 126, V3: 119 municípios) — propriedade do método (min-max + média geométrica), não bug da V3. Suavização (ex.: epsilon) ficou como decisão de método futura.
 7. **Flag de turismo é heurística**: Pix alto + PIB baixo + cidade pequena, por ausência de dados de visitação; desconto máximo de 15% no pilar B.
 8. **Correspondentes como proxy de acesso**: a ponderação por tipo é uma primeira aproximação; e a base inclui o município extinto Boa Esperança do Norte/MT (excluído via left join na trusted).
 
@@ -348,8 +352,9 @@ poetry run python -m src.ingestors.bcb_pix
 poetry run python -m src.preparacao.trusted_municipios
 
 # 3. (Re)publicar as 3 versões do IPB no BigQuery
-#    (lê trusted + raw_bcb_correspondentes do BQ, calcula V1/V2/V3,
-#     sobe analytics_ipb_* e regenera docs/Comparacao_Tres_Abordagens_IPB.md)
+#    (lê trusted + raw_bcb_correspondentes + raw_ibge_cempre do BQ,
+#     calcula V1/V2/V3, sobe analytics_ipb_* e regenera
+#     docs/Comparacao_Tres_Abordagens_IPB.md)
 poetry run python scripts/07_publica_ipb_bigquery.py
 
 # 4. Executar os notebooks (inclui o 05, que lê as tabelas do BigQuery)

@@ -145,7 +145,7 @@ Abaixo estão os dicionários das fontes individuais (ingestores) antes do proce
 
 ## 3. Camada Analytics (Produto — 3 versões do IPB)
 
-Tabelas publicadas por `scripts/07_publica_ipb_bigquery.py` a partir da `trusted_municipios` + `raw_bcb_correspondentes`. Fórmulas em `src/analytics/ipb.py` (testadas em `tests/unit/test_ipb.py`); integridade validada em `tests/data_quality/test_analytics_ipb.py`. Nomes oficiais: **V1 = IPB Clássico**, **V2 = IPB Recalibrado**, **V3 = IPB Presença Bancária Completa** (ex-Abordagem 2). A narrativa completa da comparação está em `docs/Relatorio_EDA.md` (seção 8) e `docs/Comparacao_Tres_Abordagens_IPB.md`.
+Tabelas publicadas por `scripts/07_publica_ipb_bigquery.py` a partir da `trusted_municipios` + `raw_bcb_correspondentes` + `raw_ibge_cempre`. Fórmulas em `src/analytics/ipb.py` (testadas em `tests/unit/test_ipb.py`); integridade validada em `tests/data_quality/test_analytics_ipb.py`. Nomes oficiais: **V1 = IPB Clássico**, **V2 = IPB Recalibrado**, **V3 = IPB Presença Bancária Completa** (ex-Abordagem 2). A narrativa completa da comparação está em `docs/Relatorio_EDA.md` (seção 8) e `docs/Comparacao_Tres_Abordagens_IPB.md`.
 
 ### 3.1 Estrutura comum (identidade, pilares e rankings)
 
@@ -180,6 +180,11 @@ Presente nas três tabelas específicas (`analytics_ipb_v1_classico`, `analytics
 | `penetracao_digital_relativa` | `pix_per_capita_12m / pib_per_capita` — transaciona muito proporcionalmente à riqueza. |
 | `gap_bancario_completo` | `1 − min-max(winsorize(presenca_bancaria_combinada))`, com presença = `agencias_por_100k_hab + correspondentes_ponderados_por_100k_hab` (recalibrado em 2026-09: a forma hiperbólica original `1/(presença+1)` saturava em cidades pequenas lotérica-dense e zerava o IPB delas) — pilar D já em formato inverso. |
 | `score_turismo` | Heurística ∈ [0,1]: 0,5·(Pix ≥ p90) + 0,3·(PIB ≤ mediana) + 0,2·(estrato pequena). Aplica desconto de 0–15% no `score_b`. |
+| `empregos_formais` | Pessoal ocupado total (CEMPRE/SIDRA 9528, ano 2024), seção Total. **Exclui MEIs**. |
+| `unidades_locais` | Unidades locais (estabelecimentos) no município, seção Total (CEMPRE 2024). |
+| `empregos_formais_por_1000_hab` | `empregos_formais / populacao_total × 1000` — **entra no pilar A da V3** (média com PIB pc e rendimento), desde 2026-09. Captura formalização que o PIB per capita sub-declara (folha de pagamento = gancho de conta-salário/consignado/PJ). |
+| `unidades_locais_por_1000_hab` | `unidades_locais / populacao_total × 1000` — feature de análise (densidade empresarial). |
+| `unidades_alojamento_alimentacao_por_1000_hab` | Unidades de alojamento e alimentação por 1.000 hab — **validador objetivo de turismo** (acompanha a tabela, não entra na fórmula). |
 
 ### 3.3 `analytics_ipb_comparacao` (visão larga)
 

@@ -48,9 +48,9 @@ Esta base de código entrega o **Índice de Potencial Bancário (IPB)**.
 - **Etapa 2 (EDA + Índice): comparação das 3 abordagens CONCLUÍDA e PUBLICADA.** As 3 versões do IPB estão em produção na camada `analytics_` do BigQuery:
   - `analytics_ipb_v1_classico` — fórmula original, pesos iguais;
   - `analytics_ipb_v2_recalibrado` — pesos diferenciados + `tensao_digital_bancaria`;
-  - `analytics_ipb_v3_presenca_completa` — correspondentes por tipo + flag de turismo suave (ex-"Abordagem 2");
+  - `analytics_ipb_v3_presenca_completa` — correspondentes por tipo + flag de turismo suave + `empregos_formais_por_1000_hab` (CEMPRE) no pilar A (ex-"Abordagem 2");
   - `analytics_ipb_comparacao` — visão larga das 3 versões lado a lado.
-- Pipeline do índice: `src/analytics/ipb.py` (fórmulas, com testes unitários) + `scripts/07_publica_ipb_bigquery.py` (lê trusted + correspondentes do BQ e publica). Integridade das tabelas: `tests/data_quality/test_analytics_ipb.py`. A `trusted_municipios` **não** carrega colunas de índice — IPB é produto da camada analytics.
+- Pipeline do índice: `src/analytics/ipb.py` (fórmulas, com testes unitários) + `scripts/07_publica_ipb_bigquery.py` (lê trusted + correspondentes + CEMPRE do BQ e publica). Integridade das tabelas: `tests/data_quality/test_analytics_ipb.py`. A `trusted_municipios` **não** carrega colunas de índice — IPB é produto da camada analytics.
 
 **ESCOPO DA SESSÃO (próximos passos):**
 - Validação de negócio dos Top 100 e escolha da versão oficial do IPB.
@@ -238,12 +238,12 @@ A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* e d
 - **Estban**: Apenas ~2.900 municípios possuem agências. Os outros devem receber imputação zero para `quantidade_agencias`, `volume_depositos`, etc.
 - **PIB**: A coluna `va_servicos` teve o mapeamento corrigido no ingestor `ibge_pib_municipios.py`; validar se agora vem preenchida no trusted.
 - **IDHM**: Mantido como variável histórica (2010) via Ipeadata. O indicador principal de capital humano passa a ser a **escolaridade (% ensino médio completo)** do Censo 2022 (SIDRA Tabela 10061).
-- **CEMPRE (IBGE, 2024)**: coletado em `raw_ibge_cempre` (unidades locais e pessoal ocupado por município e seção CNAE, via SIDRA 9528) — dimensão PJ/empresarial do potencial bancário. MEIs excluídos pela fonte; ainda não integrado ao índice (análise de relevância incremental em curso, ver `DISCUSSAO_IPB_CHAPEU_NEGOCIO.md`).
+- **CEMPRE (IBGE, 2024)**: coletado em `raw_ibge_cempre` (unidades locais e pessoal ocupado por município e seção CNAE, via SIDRA 9528) — dimensão PJ/empresarial do potencial bancário. **Integrado à V3 desde 2026-09**: `empregos_formais_por_1000_hab` entra no pilar A (agregado por `agregar_cempre` no script 07); `unidades_alojamento_alimentacao_por_1000_hab` acompanha a tabela como validador objetivo de turismo, sem entrar na fórmula. MEIs excluídos pela fonte (limitação declarada).
 - **Correspondentes (BCB/OData, posição 30/08/2026)**: cobre 5.571 municípios — inclui **Boa Esperança do Norte/MT (5101837), município extinto**, que não está no Censo 2022. O pipeline (`agregar_correspondentes_por_tipo`) usa left join a partir da trusted e o caso é coberto por teste de integridade (`tests/data_quality/test_analytics_ipb.py`).
 - **Estrato populacional e região**: derivados no pipeline (`derive_estrato`/`derive_regiao`), não existem como colunas na trusted. Faixas oficiais: pequena <50k, média 50–500k, grande >500k (decisão do projeto, Relatório EDA 5.1).
 - **Analytics publicadas**: `analytics_ipb_v1_classico`, `analytics_ipb_v2_recalibrado`, `analytics_ipb_v3_presenca_completa` e `analytics_ipb_comparacao` (5.570 linhas cada, integridade testada). Nomes oficiais: V1 Clássico, V2 Recalibrado, V3 Presença Bancária Completa (ex-Abordagem 2).
 
-> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix 2023/2024, Anatel/Estban 2026, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
+> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix 2023/2024, Anatel/Estban 2026, Correspondentes 30/08/2026, CEMPRE 2024, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
 
 > **Base dos Dados**: reservada para validação cruzada futura, não como fonte primária do pipeline.
 
@@ -267,4 +267,4 @@ A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* e d
 - Proibido em qualquer hipótese: `rm -rf` fora de `data/`, `git push`, `git reset --hard`, `git clean`, expor conteúdo de `.env` ou credenciais.
 ---
 
-*Última atualização: 3 versões do IPB publicadas na camada `analytics_` (V1 Clássico, V2 Recalibrado, V3 Presença Bancária Completa), com ingestor oficial de correspondentes bancários (BCB/OData) e testes de integridade — v5.*
+*Última atualização: V3 enriquecida com empregos formais do CEMPRE no pilar A (agregado `agregar_cempre`, analytics republicadas), ingestor oficial de correspondentes bancários (BCB/OData) e testes de integridade — v6.*
