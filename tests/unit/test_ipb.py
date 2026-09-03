@@ -34,13 +34,14 @@ def _fixture_base() -> pd.DataFrame:
 
 
 def _fixture_completo() -> pd.DataFrame:
-    """Fixture enriquecida com estrato e correspondentes para V3."""
+    """Fixture enriquecida com estrato, correspondentes e CEMPRE para V3."""
     df = _fixture_base()
     df["estrato_populacional"] = ipb.derive_estrato(df["populacao_total"])
     df["quantidade_correspondentes_posto"] = [0, 1, 2, 0, 3, 1, 0, 5]
     df["quantidade_correspondentes_filial"] = [0, 0, 1, 2, 0, 1, 0, 1]
     df["quantidade_correspondentes_sede"] = [0, 0, 0, 1, 0, 0, 1, 0]
     df["quantidade_correspondentes_agencia"] = [1, 0, 0, 0, 2, 0, 0, 1]
+    df["empregos_formais_por_1000_hab"] = np.linspace(50.0, 600.0, len(df))
     return df
 
 
@@ -218,6 +219,110 @@ def test_agregar_correspondentes_exige_colunas_obrigatorias():
 
 
 # ---------------------------------------------------------------------------
+# agregar_cempre
+# ---------------------------------------------------------------------------
+
+
+def _fixture_cempre_raw() -> pd.DataFrame:
+    """Mini-raw do CEMPRE em formato longo (municipio x variavel x secao)."""
+    linhas = [
+        # id, variavel, secao, valor
+        ("0000001", "unidades_locais", "total", 100.0),
+        ("0000001", "pessoal_ocupado_total", "total", 500.0),
+        ("0000001", "unidades_locais", "alojamento_alimentacao", 8.0),
+        ("0000001", "unidades_locais", "comercio", 40.0),  # secao fora do recorte
+        ("0000002", "unidades_locais", "total", 60.0),
+        ("0000002", "pessoal_ocupado_total", "total", 240.0),
+    ]
+    return pd.DataFrame(
+        linhas,
+        columns=["id_municipio", "variavel", "cnae_secao", "valor"],
+    )
+
+
+def test_agregar_cempre_pivotou_secoes_e_calculou_taxas():
+    raw = _fixture_cempre_raw()
+    enriquecido = pd.DataFrame(
+        {
+            "id_municipio": ["0000001", "0000002", "0000003"],
+            "populacao_total": [10_000, 20_000, 5_000],
+        }
+    )
+
+    resultado = ipb.agregar_cempre(raw, enriquecido)
+
+    linha1 = resultado[resultado["id_municipio"] == "0000001"].iloc[0]
+    assert linha1["empregos_formais"] == 500.0
+    assert linha1["unidades_locais"] == 100.0
+    assert linha1["unidades_alojamento_alimentacao"] == 8.0
+    assert linha1["empregos_formais_por_1000_hab"] == pytest.approx(50.0)
+    assert linha1["unidades_locais_por_1000_hab"] == pytest.approx(10.0)
+    assert linha1["unidades_alojamento_alimentacao_por_1000_hab"] == pytest.approx(0.8)
+
+    linha2 = resultado[resultado["id_municipio"] == "0000002"].iloc[0]
+    assert linha2["empregos_formais_por_1000_hab"] == pytest.approx(12.0)
+
+
+def test_agregar_cempre_municipio_sem_registro_recebe_zero():
+    raw = _fixture_cempre_raw()
+    enriquecido = pd.DataFrame(
+        {"id_municipio": ["0000009"], "populacao_total": [50_000]}
+    )
+
+    resultado = ipb.agregar_cempre(raw, enriquecido)
+
+    linha = resultado.iloc[0]
+    assert linha["empregos_formais"] == 0.0
+    assert linha["unidades_locais"] == 0.0
+    assert linha["unidades_alojamento_alimentacao"] == 0.0
+    assert linha["empregos_formais_por_1000_hab"] == pytest.approx(0.0)
+
+
+def test_agregar_cempre_usa_apenas_ano_mais_recente():
+    raw = _fixture_cempre_raw().copy()
+    raw["ano"] = "2023"
+    raw_2024 = _fixture_cempre_raw().copy()
+    raw_2024["ano"] = "2024"
+    raw_2024["valor"] = raw_2024["valor"] * 2  # dobra os valores em 2024
+    enriquecido = pd.DataFrame(
+        {"id_municipio": ["0000001"], "populacao_total": [10_000]}
+    )
+
+    resultado = ipb.agregar_cempre(pd.concat([raw, raw_2024]), enriquecido)
+
+    assert resultado.iloc[0]["empregos_formais"] == 1000.0  # so o ano 2024
+
+
+def test_agregar_cempre_exige_colunas_obrigatorias():
+    with pytest.raises(ValueError, match="variavel"):
+        ipb.agregar_cempre(
+            pd.DataFrame({"id_municipio": ["1"], "valor": [1.0]}),
+            pd.DataFrame({"id_municipio": ["1"], "populacao_total": [100]}),
+        )
+
+
+def test_v3_pilar_a_inclui_empregos_formais():
+    """Cidade com empregos formais altos e PIB pc mediano deve ganhar A_v3
+    em relacao a uma cidade de PIB pc semelhante com poucos empregos."""
+    df = _fixture_completo().copy()
+    df.loc[df.index[0], "pib_per_capita"] = df.loc[df.index[1], "pib_per_capita"]
+    df.loc[df.index[0], "rendimento_domiciliar_per_capita"] = df.loc[
+        df.index[1], "rendimento_domiciliar_per_capita"
+    ]
+    df.loc[df.index[0], "empregos_formais_por_1000_hab"] = df[
+        "empregos_formais_por_1000_hab"
+    ].max()
+    df.loc[df.index[1], "empregos_formais_por_1000_hab"] = df[
+        "empregos_formais_por_1000_hab"
+    ].min()
+
+    resultado = ipb.computar_ipb_v3_presenca_completa(df)
+
+    assert resultado.loc[df.index[0], "A_v3"] > resultado.loc[df.index[1], "A_v3"]
+    assert "empregos_formais_por_1000_hab_norm" in resultado.columns
+
+
+# ---------------------------------------------------------------------------
 # calculo das versoes
 # ---------------------------------------------------------------------------
 
@@ -299,6 +404,7 @@ def _fixture_turismo_extremo() -> pd.DataFrame:
             "escolaridade_ensino_medio_pct": np.linspace(15.0, 40.0, n),
             "populacao_18_35_pct": np.linspace(22.0, 33.0, n),
             "populacao_total": np.linspace(100_000, 1_000_000, n),
+            "empregos_formais_por_1000_hab": np.linspace(80.0, 500.0, n),
             "quantidade_correspondentes_posto": [1] * n,
             "quantidade_correspondentes_filial": [0] * n,
             "quantidade_correspondentes_sede": [0] * n,
@@ -368,6 +474,7 @@ def test_v3_gap_linear_nao_saturo_com_presenca_moderada():
             # Populacao grande: correspondentes somam ~0 na taxa por 100k,
             # deixando a presenca combinada igual a agencias_por_100k_hab.
             "populacao_total": np.full(n, 2_000_000),
+            "empregos_formais_por_1000_hab": np.linspace(80.0, 500.0, n),
             "quantidade_correspondentes_posto": [0] * n,
             "quantidade_correspondentes_filial": [0] * n,
             "quantidade_correspondentes_sede": [0] * n,
@@ -421,7 +528,14 @@ def test_v3_regressao_contra_implementacao_de_referencia():
     gap = 1 - normalizar(winsorizar(presenca))
 
     a_ = normalizar(winsorizar(d["pib_per_capita"]))
-    a_ = pd.concat([a_, normalizar(winsorizar(d["rendimento_domiciliar_per_capita"]))], axis=1).mean(axis=1)
+    a_ = pd.concat(
+        [
+            a_,
+            normalizar(winsorizar(d["rendimento_domiciliar_per_capita"])),
+            normalizar(winsorizar(d["empregos_formais_por_1000_hab"])),
+        ],
+        axis=1,
+    ).mean(axis=1)
     b_ = pd.concat(
         [
             normalizar(winsorizar(d["pix_per_capita_12m"])),

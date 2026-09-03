@@ -49,6 +49,11 @@ COLUNAS_V3_EXTRAS = {
     "penetracao_digital_relativa",
     "gap_bancario_completo",
     "score_turismo",
+    "empregos_formais",
+    "unidades_locais",
+    "empregos_formais_por_1000_hab",
+    "unidades_locais_por_1000_hab",
+    "unidades_alojamento_alimentacao_por_1000_hab",
 }
 CODIGO_MUNICIPIO_EXTINTO = "5101837"  # Boa Esperança do Norte/MT (extinto)
 
@@ -147,6 +152,21 @@ def test_v3_features_documentadas(tabelas):
     # agencias). Antes da recalibracao o gap hiperbolico era estritamente > 0.
     assert (df["gap_bancario_completo"] >= 0).all(), "V3: gap_bancario_completo deve ser >= 0"
     assert (df["gap_bancario_completo"] <= 1).all(), "V3: gap_bancario_completo deve ser <= 1"
+
+
+def test_v3_features_cempre_sanity(tabelas):
+    """Features do CEMPRE na V3: cobertura total, nao-negatividade e
+    coerencia com o sanity check do ingestor (São Paulo e Brasil)."""
+    df = tabelas["v3"]
+    assert df["empregos_formais"].notna().all(), "V3: nulos em empregos_formais"
+    assert (df["empregos_formais"] > 0).all(), "V3: CEMPRE cobre todos os 5.570 municipios"
+    assert (df["empregos_formais_por_1000_hab"] > 0).all()
+    assert (df["unidades_locais_por_1000_hab"] > 0).all()
+    assert (df["unidades_alojamento_alimentacao_por_1000_hab"] >= 0).all()
+    # Sao Paulo (3550308): maior mercado formal do pais — ~6,8M empregos.
+    sp = df[df["id_municipio"].astype(str).str.zfill(7) == "3550308"]
+    assert len(sp) == 1
+    assert sp.iloc[0]["empregos_formais"] > 5_000_000
 
 
 def test_municipio_extinto_fora_das_analytics(tabelas):

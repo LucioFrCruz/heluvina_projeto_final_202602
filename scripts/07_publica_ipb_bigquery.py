@@ -1,15 +1,17 @@
 """
 Publica as tres versoes do Indice de Potencial Bancario (IPB) no BigQuery.
 
-Le a base mestra `trusted_municipios` e os correspondentes bancarios
-(`raw_bcb_correspondentes`) direto do BigQuery, calcula as versoes V1
-(Classico), V2 (Recalibrado) e V3 (Presenca Bancaria Completa) via
-`src/analytics/ipb.py` e sobe quatro tabelas no dataset `ipb_staging`
-(prefixo `analytics_`, carga WRITE_TRUNCATE).
+Le a base mestra `trusted_municipios`, os correspondentes bancarios
+(`raw_bcb_correspondentes`) e o CEMPRE (`raw_ibge_cempre`, dimensao PJ)
+direto do BigQuery, calcula as versoes V1 (Classico), V2 (Recalibrado) e
+V3 (Presenca Bancaria Completa) via `src/analytics/ipb.py` e sobe quatro
+tabelas no dataset `ipb_staging` (prefixo `analytics_`, carga
+WRITE_TRUNCATE).
 
 Inputs (BigQuery, dataset ipb_staging):
     - trusted_municipios
     - raw_bcb_correspondentes
+    - raw_ibge_cempre
 
 Outputs (BigQuery, dataset ipb_staging):
     - analytics_ipb_v1_classico
@@ -35,6 +37,7 @@ from src.analytics.ipb import (
     COL_IPB_V2,
     COL_IPB_V3,
     adicionar_ranks,
+    agregar_cempre,
     agregar_correspondentes_por_tipo,
     computar_ipb_v1_classico,
     computar_ipb_v2_recalibrado,
@@ -50,6 +53,7 @@ from src.config import (
     TABLE_ANALYTICS_IPB_V2,
     TABLE_ANALYTICS_IPB_V3,
     TABLE_RAW_BCB_CORRESPONDENTES,
+    TABLE_RAW_IBGE_CEMPRE,
     TABLE_TRUSTED_MUNICIPIOS,
 )
 from src.utils.bigquery import read_table_to_dataframe, upload_dataframe_to_raw
@@ -160,6 +164,23 @@ def main() -> None:
         sorted(extras),
     )
 
+    logger.info("Lendo %s do BigQuery...", TABLE_RAW_IBGE_CEMPRE)
+    df_cempre = read_table_to_dataframe(TABLE_RAW_IBGE_CEMPRE)
+    df_cempre["id_municipio"] = df_cempre["id_municipio"].astype(str).str.zfill(7)
+    logger.info(
+        "CEMPRE: %d linhas, %d municipios distintos, anos: %s",
+        len(df_cempre),
+        df_cempre["id_municipio"].nunique(),
+        sorted(df_cempre["ano"].astype(str).unique()),
+    )
+    df = agregar_cempre(df_cempre, df)
+    logger.info(
+        "Empregos formais agregados: min=%.1f, mediana=%.1f, max=%.1f por 1000 hab",
+        df["empregos_formais_por_1000_hab"].min(),
+        df["empregos_formais_por_1000_hab"].median(),
+        df["empregos_formais_por_1000_hab"].max(),
+    )
+
     logger.info("Calculando IPB V1 Classico...")
     df = computar_ipb_v1_classico(df)
     logger.info("Calculando IPB V2 Recalibrado...")
@@ -191,6 +212,11 @@ def main() -> None:
         "penetracao_digital_relativa",
         "gap_bancario_completo",
         "score_turismo",
+        "empregos_formais",
+        "unidades_locais",
+        "empregos_formais_por_1000_hab",
+        "unidades_locais_por_1000_hab",
+        "unidades_alojamento_alimentacao_por_1000_hab",
     ]:
         df_v3[col] = df[col]
     tabelas[TABLE_ANALYTICS_IPB_V3] = df_v3

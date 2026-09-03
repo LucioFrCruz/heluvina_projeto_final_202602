@@ -6,8 +6,9 @@ Versoes:
     - V2 = IPB Recalibrado (ex-"Recalibrado Rapido"): pesos 0.5/0.75/0.75/1.5/1.0
       e feature `tensao_digital_bancaria`.
     - V3 = IPB Presenca Bancaria Completa (ex-"Abordagem 2"): correspondentes
-      por tipo, `penetracao_digital_relativa`, `gap_bancario_completo` e flag
-      de turismo com desconto maximo de 15% no pilar B.
+      por tipo, `penetracao_digital_relativa`, `gap_bancario_completo`, flag
+      de turismo com desconto maximo de 15% no pilar B e `empregos_formais_
+      por_1000_hab` (CEMPRE/IBGE) no pilar A.
 
 Esta logica e uma refatoracao de `scripts/06_comparacao_tres_abordagens_ipb.py`
 (fonte original das formulas, validadas e publicadas em
@@ -198,6 +199,88 @@ def agregar_correspondentes_por_tipo(
     return df
 
 
+# Secoes CNAE do CEMPRE usadas no enriquecimento da base.
+SECOES_CEMPRE = ("total", "alojamento_alimentacao")
+
+
+def agregar_cempre(df_raw: pd.DataFrame, df_enriquecido: pd.DataFrame) -> pd.DataFrame:
+    """
+    Agrega o CEMPRE (IBGE) por municipio e junta no DF enriquecido.
+
+    O raw vem em formato longo (municipio x variavel x secao CNAE, um ano
+    por arquivo). A funcao pivotou as combinacoes de interesse em colunas
+    largas e calcula as taxas por 1.000 habitantes:
+
+    - `empregos_formais` = pessoal_ocupado_total, secao "total"
+    - `unidades_locais` = unidades_locais, secao "total"
+    - `unidades_alojamento_alimentacao` = unidades_locais, secao
+      "alojamento_alimentacao" (validador objetivo de turismo, usado como
+      feature de analise — NAO entra na formula do IPB)
+    - `empregos_formais_por_1000_hab`, `unidades_locais_por_1000_hab` e
+      `unidades_alojamento_alimentacao_por_1000_hab`
+
+    Se houver mais de um ano no raw, apenas o ano mais recente e usado.
+
+    Args:
+        df_raw: Dados brutos do CEMPRE (SIDRA 9528), com as colunas
+            `id_municipio`, `variavel` (valores "unidades_locais" e
+            "pessoal_ocupado_total"), `cnae_secao` e `valor`. Coluna `ano`
+            opcional; quando presente, filtra o maior ano.
+        df_enriquecido: Base municipal ja enriquecida. Pre-requisitos:
+            colunas `id_municipio` e `populacao_total`.
+
+    Returns:
+        `df_enriquecido` enriquecido com as colunas do CEMPRE. Municipios
+        sem registro no CEMPRE recebem 0 (merge externo, `how="left"`).
+    """
+    faltantes = {"id_municipio", "variavel", "cnae_secao", "valor"} - set(df_raw.columns)
+    if faltantes:
+        raise ValueError(f"df_raw sem as colunas obrigatorias: {sorted(faltantes)}")
+    if "populacao_total" not in df_enriquecido.columns:
+        raise ValueError(
+            "df_enriquecido precisa da coluna 'populacao_total' para as taxas"
+        )
+
+    df_raw = df_raw.copy()
+    if "ano" in df_raw.columns:
+        df_raw = df_raw[df_raw["ano"].astype(str) == df_raw["ano"].astype(str).max()]
+
+    alvo = df_raw[
+        (df_raw["variavel"].isin(["unidades_locais", "pessoal_ocupado_total"]))
+        & (df_raw["cnae_secao"].isin(SECOES_CEMPRE))
+    ]
+    largo = alvo.pivot_table(
+        index="id_municipio",
+        columns=["variavel", "cnae_secao"],
+        values="valor",
+        aggfunc="sum",
+    )
+
+    renomeacao = {
+        ("pessoal_ocupado_total", "total"): "empregos_formais",
+        ("unidades_locais", "total"): "unidades_locais",
+        ("unidades_locais", "alojamento_alimentacao"): "unidades_alojamento_alimentacao",
+    }
+    cemp_agg = pd.DataFrame(index=largo.index)
+    for chave, nome in renomeacao.items():
+        cemp_agg[nome] = largo[chave] if chave in largo.columns else 0.0
+    cemp_agg = cemp_agg.fillna(0).reset_index()
+
+    df = df_enriquecido.merge(cemp_agg, on="id_municipio", how="left")
+    for col in renomeacao.values():
+        df[col] = df[col].fillna(0)
+    df["empregos_formais_por_1000_hab"] = (
+        df["empregos_formais"] / df["populacao_total"]
+    ) * 1_000
+    df["unidades_locais_por_1000_hab"] = (
+        df["unidades_locais"] / df["populacao_total"]
+    ) * 1_000
+    df["unidades_alojamento_alimentacao_por_1000_hab"] = (
+        df["unidades_alojamento_alimentacao"] / df["populacao_total"]
+    ) * 1_000
+    return df
+
+
 def computar_ipb_v1_classico(df: pd.DataFrame) -> pd.DataFrame:
     """
     V1 = IPB Classico (ex-"IPB Atual"): 5 pilares com pesos iguais.
@@ -308,10 +391,21 @@ def computar_ipb_v3_presenca_completa(df: pd.DataFrame) -> pd.DataFrame:
     ~119 municipios zerava. Flag de turismo suave (score continuo [0, 1],
     desconto maximo de 15% no pilar B). Pesos exportados em `PESOS_V3`.
 
+    ENRIQUECIMENTO CEMPRE (2026-09): o pilar A inclui
+    `empregos_formais_por_1000_hab` (CEMPRE/SIDRA 9528, pessoal ocupado
+    total) junto de PIB pc e rendimento. Racional: folha de pagamento formal
+    e o gancho produtivo nº 1 de banco/fintech (conta-salario, consignado,
+    PJ) e captura formalizacao que o PIB per capita sub-declara — capitais
+    como São Luís e Belém têm massa salarial bancarizável com PIB pc
+    mediano. Validacao prévia (experimento V5a) mostrou movimento cirurgico
+    e explicavel: 10 trocas no Top 100, todas capitais/polos formais
+    entrando e dormitórios de baixa formalização saindo.
+
     Pre-requisitos alem das variaveis base: colunas
     `quantidade_correspondentes_{posto,filial,sede,agencia}` (municipios sem
     correspondente recebem 0 via `agregar_correspondentes_por_tipo`),
-    `populacao_total` e `estrato_populacional` (ver `derive_estrato`).
+    `empregos_formais_por_1000_hab` (via `agregar_cempre`), `populacao_total`
+    e `estrato_populacional` (ver `derive_estrato`).
 
     A cobertura 4G/5G nao foi integrada nesta rodada por dificuldade de
     acesso aos dados agregados por municipio; mantemos banda larga fixa
@@ -371,7 +465,7 @@ def computar_ipb_v3_presenca_completa(df: pd.DataFrame) -> pd.DataFrame:
     df["penetracao_digital_relativa"] = df["penetracao_digital_relativa"].replace([np.inf, -np.inf], np.nan)
     df["penetracao_digital_relativa"] = df["penetracao_digital_relativa"].fillna(0)
 
-    vars_a = ["pib_per_capita", "rendimento_domiciliar_per_capita"]
+    vars_a = ["pib_per_capita", "rendimento_domiciliar_per_capita", "empregos_formais_por_1000_hab"]
     vars_b = ["pix_per_capita_12m", "tensao_digital_bancaria", "penetracao_digital_relativa"]
     vars_c = ["banda_larga_fixa_por_100_hab"]
     vars_d: list[str] = []  # gap_bancario_completo ja vem normalizado [0, 1]
@@ -502,7 +596,7 @@ Três versões do índice foram calculadas a partir da mesma base `trusted_munic
 |---|---|
 | **IPB Clássico (V1)** | Fórmula original: 5 pilares com pesos iguais. Premia cidades ricas, conectadas e com demanda digital, mas pune pouco cidades já bancarizadas (Pilar D usa 3 variáveis redundantes). |
 | **IPB Recalibrado (V2)** | Ajuste rápido anti-viés: pesos diferenciados, Pilar D reduzido a apenas `agencias_por_100k_hab`, Pilar E sem `populacao_urbana_pct` e inclusão de `tensao_digital_bancaria` (Pix / agências). Diminui a influência da renda pura. |
-| **IPB Presença Bancária Completa (V3, ex-Abordagem 2)** | Redesenho do Pilar D: agências bancárias estão em queda, então o índice passa a considerar **correspondentes bancários do BCB por tipo** (posto, filial, sede, agência) com pesos diferentes. Adiciona `penetracao_digital_relativa` (Pix / PIB) e `gap_bancario_completo`. Inclui ainda uma **flag de turismo suave** (score contínuo, desconto máximo de 15% no pilar digital) para não privilegiar cidades pequenas com fluxo turístico. |
+| **IPB Presença Bancária Completa (V3, ex-Abordagem 2)** | Redesenho do Pilar D: agências bancárias estão em queda, então o índice passa a considerar **correspondentes bancários do BCB por tipo** (posto, filial, sede, agência) com pesos diferentes. Adiciona `penetracao_digital_relativa` (Pix / PIB) e `gap_bancario_completo`. Pilar A enriquecido com **empregos formais por 1.000 hab** (CEMPRE/IBGE), capturando formalização que o PIB per capita sub-declara. Inclui ainda uma **flag de turismo suave** (score contínuo, desconto máximo de 15% no pilar digital) para não privilegiar cidades pequenas com fluxo turístico. |
 
 ### Estatísticas gerais
 
@@ -541,12 +635,13 @@ Mesma estrutura de 5 pilares, mas com **pesos diferenciados**:
 
 ### 2.3 IPB Presença Bancária Completa (V3, ex-Abordagem 2)
 
-Redesenho mais profundo, principalmente no Pilar D:
+Redesenho mais profundo:
+- **Pilar A enriquecido com empregos formais** (CEMPRE/IBGE, ano 2024): além de PIB per capita e rendimento domiciliar, o pilar inclui `empregos_formais_por_1000_hab` (pessoal ocupado com carteira assinada). Racional: folha de pagamento formal é o gancho produtivo nº 1 de banco/fintech (conta-salário, crédito consignado, PJ), e a variável captura formalização que o PIB per capita sub-declara — capitais como São Luís e Belém têm massa salarial bancarizável com PIB pc mediano. Movimento validado: 10 trocas no Top 100, todas capitais/polos formais entrando e dormitórios de baixa formalização saindo.
 - **Agências sozinhas não refletem mais a realidade**: o número de agências bancárias vem caindo no Brasil. O BCB registra 216 mil **correspondentes** (lotéricas, caixas eletrônicos, correspondentes bancários). O índice passa a considerar a **presença bancária completa** = agências + correspondentes.
 - **Correspondentes ponderados por tipo**: postos (peso 1.0), filiais (0.7), sedes (0.4) e agências (1.0). Postos são pontos mais simples; filiais/sedes têm capacidade maior.
 - **Gap bancário completo (linear)** = 1 − min-max(winsorize(presença combinada)), com presença = agências + correspondentes ponderados por 100k. A forma hiperbólica original (`1 / (presença + 1)`) saturava em cidades pequenas com muitas lotéricas e zerava o IPB delas; o gap linear preserva a ordenação sem o efeito colapso.
 - **Penetração digital relativa** = Pix per capita / PIB per capita. Premia cidades que transacionam muito proporcionalmente à sua riqueza.
-- **Flag de turismo suave**: score contínuo baseado em Pix alto + PIB baixo + cidade pequena. Aplica desconto máximo de 15% no pilar digital para evitar que cidades turísticas (Arraial do Cabo, Búzios) disparem só por fluxo de visitantes.
+- **Flag de turismo suave**: score contínuo baseado em Pix alto + PIB baixo + cidade pequena. Aplica desconto máximo de 15% no pilar digital para evitar que cidades turísticas (Arraial do Cabo, Búzios) disparem só por fluxo de visitantes. Como validador objetivo de turismo, a tabela acompanha `unidades_alojamento_alimentacao_por_1000_hab` (CEMPRE), sem entrar na fórmula.
 - **Rankings separados por estrato**: pequena, média e grande.
 
 **Efeito**: quebra o viés para cidades ricas já bancarizadas e passa a destacar municípios com alta demanda digital e baixa estrutura bancária física.
@@ -701,8 +796,13 @@ O Top 10 da V3 ainda traz cidades pequenas como Engenheiro Coelho-SP, Arraial do
 A V3 concentra grande parte do Top 100 no Sudeste. Isso não é necessariamente ruim (é a região mais populosa), mas precisa ser analisado: são cidades-dormitório da metrópole? São cidades turísticas? São polos regionais reais?
 
 ### 8.3 Grandes cidades no ranking da V3
-
-Entraram no Top 100: Rio de Janeiro, São Paulo, Brasília, Manaus, Salvador. Isso é positivo porque mostra que o índice não exclui grandes cidades automaticamente. Mas também levanta a questão: essas cidades realmente são oportunidades de expansão bancária digital ou já estão saturadas?
+"""
+    grandes_top100 = df[
+        (df["estrato_populacional"] == "grande") & (df["rank_v3"] <= 100)
+    ].nsmallest(100, "rank_v3")
+    nomes_grandes = ", ".join(grandes_top100["nome_municipio"].tolist())
+    md += f"""
+Entraram no Top 100 (estratos grandes): {nomes_grandes}. Isso é positivo porque mostra que o índice não exclui grandes cidades automaticamente. Mas também levanta a questão: essas cidades realmente são oportunidades de expansão bancária digital ou já estão saturadas?
 
 ### 8.4 Correspondentes bancários como proxy de acesso
 
@@ -714,16 +814,21 @@ O BCB classifica correspondentes em sede, filial, posto e agência. A ponderaç�
 
 ### Limitações desta análise
 - A cobertura 4G/5G não foi integrada nesta rodada por dificuldade de acesso a dados agregados por município. A banda larga fixa continua como proxy;
-- **Empates em IPB = 0**: por construção (normalização min-max + média geométrica), os municípios nos extremos de qualquer pilar recebem score 0 e o IPB zera. Isso ocorre nas três versões na mesma magnitude (V1: ~120, V2: ~126, V3: ~124 municípios). Na V3, 56 deles são o percentil de maior presença bancária combinada — uma afirmação defensável ("sem gap"), não um artefato de escala;
+"""
+    zeros_v1 = int((df[COL_IPB_V1] == 0).sum())
+    zeros_v2 = int((df[COL_IPB_V2] == 0).sum())
+    zeros_v3 = int((df[COL_IPB_V3] == 0).sum())
+    md += f"""- **Empates em IPB = 0**: por construção (normalização min-max + média geométrica), os municípios nos extremos de qualquer pilar recebem score 0 e o IPB zera. Isso ocorre nas três versões na mesma magnitude (V1: ~{zeros_v1}, V2: ~{zeros_v2}, V3: ~{zeros_v3} municípios). Na V3, a maioria deles é o percentil de maior presença bancária combinada — uma afirmação defensável ("sem gap"), não um artefato de escala;
+- **CEMPRE exclui MEIs** (critério da pesquisa): a taxa de empregos formais sub-declara o mercado de micro-PJ exatamente nas cidades pequenas, onde o segmento nativo-digital mais cresce;
 - Não houve validação externa com dados reais de expansão bancária;
-- A flag de turismo é uma heurística (Pix alto + PIB baixo + cidade pequena). Sem dados de visitação, é um ajuste pragmático;
+- A flag de turismo é uma heurística (Pix alto + PIB baixo + cidade pequena). Sem dados de visitação, é um ajuste pragmático — mitigada pelo validador objetivo `unidades_alojamento_alimentacao_por_1000_hab` (CEMPRE), que acompanha a tabela sem entrar na fórmula;
 - Variáveis per capita ainda favorecem cidades pequenas com eventos especiais (turismo, comércio de fronteira).
 
 ### Próximos passos recomendados
 1. Validar os Top 100 da V3 com conhecimento de negócio;
 2. Publicar rankings oficiais separados por estrato populacional;
 3. Coletar cobertura 4G/5G (painel STEL/Anatel) para enriquecer o Pilar C;
-4. Coletar CNPJ/MEI e Caged para a Abordagem 3 (modelo residual);
+4. Enriquecer o CEMPRE com CNPJ/MEI e Caged (o CEMPRE exclui MEIs — justamente o segmento nativo-digital — e não mede saldos de vagas);
 5. Refinar a flag de turismo com dados reais de visitação/turismo (Embratur, MTur) se disponíveis.
 
 ---
