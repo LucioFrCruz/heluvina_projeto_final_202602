@@ -63,6 +63,7 @@ Estamos desenvolvendo o projeto em etapas ágeis. Acompanhe nosso progresso:
   - Implementação do Data Lake (BigQuery + GCS).
   - Coleta automatizada de APIs (Pix, IBGE, Correspondentes BCB) e Data Lake centralizado para arquivos manuais (Estban, Anatel).
   - Tabela consolidadora `trusted_municipios`.
+  - Git Tag gerado [v0.1.0-etapa1](https://github.com/LucioFrCruz/heluvina_projeto_final_202602/releases/tag/v0.1.0-etapa1)
 
 - [x] **Etapa 2: Análise Exploratória (EDA) e Índice** (EDA concluída) 📍 **<-- ESTAMOS AQUI**
   - Tratamento de outliers e dados faltantes, correlações entre os pilares.
