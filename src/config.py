@@ -19,6 +19,7 @@ PROCESSED_DATA_DIR = DATA_DIR / "processed"
 # Tabelas
 TABLE_RAW_IBGE_LOCALIDADES = "raw_ibge_localidades"
 TABLE_RAW_SIDRA_CENSO_2022 = "raw_sidra_censo_2022"
+TABLE_RAW_IBGE_CEMPRE = "raw_ibge_cempre"
 TABLE_RAW_PIB_MUNICIPIOS = "raw_pib_municipios"
 TABLE_RAW_BCB_PIX = "raw_bcb_pix_transacoes"
 TABLE_RAW_BCB_ESTBAN = "raw_bcb_estban"
