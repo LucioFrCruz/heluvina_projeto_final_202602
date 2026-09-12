@@ -51,10 +51,12 @@ Esta base de código entrega o **Índice de Potencial Bancário (IPB)**.
   - `analytics_ipb_v3_presenca_completa` — correspondentes por tipo + flag de turismo suave + `empregos_formais_por_1000_hab` (CEMPRE) no pilar A (ex-"Abordagem 2");
   - `analytics_ipb_comparacao` — visão larga das 3 versões lado a lado.
 - Pipeline do índice: `src/analytics/ipb.py` (fórmulas, com testes unitários) + `scripts/07_publica_ipb_bigquery.py` (lê trusted + correspondentes + CEMPRE do BQ e publica). Integridade das tabelas: `tests/data_quality/test_analytics_ipb.py`. A `trusted_municipios` **não** carrega colunas de índice — IPB é produto da camada analytics.
+- **Etapa 3 (Modelagem/ML): IMPLEMENTADA e PUBLICADA (2026-09-12).** Sem rótulo de verdade no projeto — modelos usam alvo proxy (declarado). Módulos testáveis em `src/analytics/` (`modelagem.py` com as constantes oficiais de features, `clustering.py`, `classificacao.py`, `regressao.py`, `anomalias.py`) + 3 notebooks executados em `notebooks/01_modelagem/`. Publicação: `scripts/08_publica_clusters_bigquery.py` → **`analytics_ipb_clusters`** (5.570 linhas: identidade, clusters K-Means/GMM com K=6, probabilidades, arquetipo, potencial latente, anomalias; integridade em `tests/data_quality/test_analytics_clusters.py`). Relatório com todos os números: `docs/Relatorio_Modelagem_Etapa3.md`. Decisões e correções metodológicas registradas: transformação `log1p` nas 14 colunas de cauda longa; classificação de presença usa só as 13 exógenas (`FEATURES_SEM_PRESENCA` — variáveis de presença vazam o alvo); alvo tem-correspondente degenerado (100% dos municípios têm correspondente).
 
 **ESCOPO DA SESSÃO (próximos passos):**
 - Validação de negócio dos Top 100 e escolha da versão oficial do IPB.
-- Clusterização/ML (Etapa 3) e enriquecimentos (4G/5G, CNPJ/Caged, dados de visitação para a flag de turismo).
+- Iteração da Etapa 3 com o grupo: validar nomes dos arquétipos, K=5 vs 6, leitura dos resíduos e do Spearman.
+- Enriquecimentos (4G/5G, CNPJ/Caged, dados de visitação para a flag de turismo).
 - Manter a EDA sincronizada com as tabelas `analytics_ipb_*` (notebook 05 lê do BigQuery).
 
 ---
@@ -249,12 +251,12 @@ A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* e d
 
 ---
 
-## 10. Evolução Futura (Etapa 3 - Não focar agora)
+## 10. Evolução Futura (pós-Etapa 3)
 
-- O cálculo do índice já foi realizado em 3 versões comparadas (seção 1). Resta:
+- O cálculo do índice já foi realizado em 3 versões comparadas (seção 1) e a modelagem da Etapa 3 está implementada e publicada. Resta:
   - **Validação de negócio** dos Top 100 e escolha da versão oficial do IPB;
-  - **Sensibilidade/ajuste fino** de pesos e da flag de turismo;
-  - **ML para clusterização** (arquétipos de municípios) e possível modelo residual;
+  - **Iteração da Etapa 3 com o grupo**: nomes dos arquétipos (sugestões por regra sobre os dados), K=5 vs 6, leitura dos resíduos da classificação e do Spearman potencial-latente × IPB (0,449);
+  - **Fase 2 da Etapa 3** (registrada no relatório): validação espacial por região, PCA como validação do índice, Agglomerative/dendrograma, `idhm` como feature opcional, discussão de pesos do IPB à luz da importância (banda larga + correspondentes + Pix concentram 0,64+0,29+0,17 da queda de R²);
   - **Enriquecimentos**: cobertura 4G/5G (pilar C), CNPJ/MEI + Caged, dados de visitação (Embratur/MTur) para a flag de turismo.
 
 ---
