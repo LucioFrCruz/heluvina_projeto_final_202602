@@ -151,7 +151,7 @@ def explicar_ipb(
         raise ValueError(f"colunas ausentes no dataset: {sorted(faltantes)}")
 
     X_tr, X_te, y_tr, y_te = dividir_treino_teste(
-        df, col_ipb, estratificar=False, seed=seed
+        df, col_ipb, estratificar=False, seed=seed, features=features
     )
     X_tr_pad, X_te_pad, _ = padronizar(X_tr, X_te)
     matriz = treinar_regressores(X_tr_pad, y_tr, X_te_pad, y_te)
@@ -209,8 +209,11 @@ def estimar_potencial_latente(
     faltantes = set(features + [col_alvo, col_flag]) - set(df.columns)
     if faltantes:
         raise ValueError(f"colunas ausentes no dataset: {sorted(faltantes)}")
-    if set(pd.unique(df[col_flag])) != {0, 1}:
+    valores_flag = set(pd.unique(df[col_flag]))
+    if not valores_flag.issubset({0, 1}):
         raise ValueError(f"{col_flag} precisa ser binaria (0/1)")
+    if valores_flag != {0, 1}:
+        raise ValueError("precisa haver municipios com e sem agencia")
 
     com = df[df[col_flag] == 1]
     sem = df[df[col_flag] == 0]
@@ -224,6 +227,7 @@ def estimar_potencial_latente(
         test_size=test_size,
         seed=seed,
         estratificar=False,
+        features=features,
     )
     X_tr_pad, X_te_pad, scaler = padronizar(X_tr, X_te)
 

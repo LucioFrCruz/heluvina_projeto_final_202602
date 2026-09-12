@@ -188,6 +188,7 @@ def dividir_treino_teste(
     test_size: float = 0.2,
     seed: int = SEED,
     estratificar: bool = True,
+    features: list[str] | None = None,
 ):
     """
     Separa treino/teste (holdout) para um alvo do dataset.
@@ -205,10 +206,12 @@ def dividir_treino_teste(
         seed: Seed do sorteio (reprodutibilidade).
         estratificar: Se True (padrao), split estratificado por classe.
             Use False para alvos continuos (regressao).
+        features: Colunas de X (default `FEATURES_MODELO`). Quem chama
+            com subconjunto (ex.: potencial latente, sem presenca)
+            DEVE passar as mesmas colunas usadas na inferencia.
 
     Returns:
-        Tupla (X_treino, X_teste, y_treino, y_teste), com X nas
-        `FEATURES_MODELO`.
+        Tupla (X_treino, X_teste, y_treino, y_teste).
     """
     if alvo not in df.columns:
         raise ValueError(f"alvo nao encontrado no dataset: {alvo}")
@@ -218,7 +221,7 @@ def dividir_treino_teste(
     if estratificar and y.nunique() < 2:
         raise ValueError(f"alvo precisa ter ao menos 2 classes: {alvo}")
 
-    X = df[FEATURES_MODELO]
+    X = df[features or FEATURES_MODELO]
     return train_test_split(
         X,
         y,
