@@ -236,3 +236,88 @@ def matriz_confusao(y_te: pd.Series, prob, limiar: float = 0.5) -> pd.DataFrame:
         index=["obs_negativo", "obs_positivo"],
         columns=["prev_negativo", "prev_positivo"],
     )
+
+
+# ------------------------------------------------------- multiclasse
+# Classificador de arquetipos: o rotulo e o proprio cluster (K-Means),
+# entao o modelo e 100% baseado em dados. Serve para (1) explicar quais
+# variaveis definem cada arquetipo, (2) classificar municipio novo sem
+# refazer o cluster e (3) medir a solidez dos grupos (F1 macro alto =
+# arquetipos bem separados; baixo = grupos se misturam, e o relatorio
+# diz isso com numero).
+
+MODELOS_MULTICLASSE = {
+    "random_forest": RandomForestClassifier(
+        n_estimators=300, class_weight="balanced", random_state=SEED, n_jobs=-1
+    ),
+    "logistica": LogisticRegression(
+        max_iter=1000, class_weight="balanced", random_state=SEED
+    ),
+}
+
+COLUNAS_MATRIZ_MULTICLASSE = ["modelo", "f1_macro", "acuracia", "tempo_seg"]
+
+
+def treinar_multiclasse(
+    X_tr: pd.DataFrame,
+    y_tr: pd.Series,
+    X_te: pd.DataFrame,
+    y_te: pd.Series,
+    modelos: dict | None = None,
+) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
+    """
+    Treina classificadores multi-classe para o rotulo de arquetipo.
+
+    `class_weight="balanced"` compensa os tamanhos designais dos
+    clusters (grupo gigante de cidades pequenas nao deve engolir os
+    demais no aprendizado).
+
+    Args:
+        X_tr, y_tr: Treino (features padronizadas + rotulo do cluster).
+        X_te, y_te: Teste (a prova).
+        modelos: Dict {nome: estimador}; default `MODELOS_MULTICLASSE`.
+
+    Returns:
+        (matriz, confusao). `matriz` tem `COLUNAS_MATRIZ_MULTICLASSE`
+        (F1 macro — a media do F1 entre classes, que pune classe esquecida);
+        `confusao` e um dict {modelo: DataFrame n_classes x n_classes}
+        com counts legiveis para o grafico.
+    """
+    if list(X_tr.columns) != list(X_te.columns):
+        raise ValueError("X_treino e X_teste com colunas diferentes")
+    if len(X_tr) != len(y_tr) or len(X_te) != len(y_te):
+        raise ValueError("X e y com tamanhos diferentes")
+    y_tr = pd.Series(y_tr)
+    y_te = pd.Series(y_te)
+    classes = sorted(pd.unique(y_tr))
+    if len(classes) < 2:
+        raise ValueError("rotulo de arquetipo precisa ter ao menos 2 classes")
+
+    modelos = modelos or MODELOS_MULTICLASSE
+    linhas, confusao = [], {}
+    for nome, modelo in modelos.items():
+        t0 = time.perf_counter()
+        modelo.fit(X_tr, y_tr)
+        tempo = time.perf_counter() - t0
+
+        pred = modelo.predict(X_te)
+        linhas.append(
+            {
+                "modelo": nome,
+                "f1_macro": f1_score(y_te, pred, average="macro", zero_division=0),
+                "acuracia": accuracy_score(y_te, pred),
+                "tempo_seg": round(tempo, 3),
+            }
+        )
+        cm = confusion_matrix(y_te, pred, labels=classes)
+        confusao[nome] = pd.DataFrame(
+            cm, index=[f"obs_{c}" for c in classes], columns=[f"prev_{c}" for c in classes]
+        )
+
+    matriz = (
+        pd.DataFrame(linhas, columns=COLUNAS_MATRIZ_MULTICLASSE)
+        .sort_values("f1_macro", ascending=False)
+        .reset_index(drop=True)
+    )
+    logger.info("Classificador de arquetipos: %d modelos avaliados", len(matriz))
+    return matriz, confusao

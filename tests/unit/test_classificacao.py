@@ -149,3 +149,42 @@ def test_matriz_confusao_2x2_legivel():
     assert list(cm.index) == ["obs_negativo", "obs_positivo"]
     assert list(cm.columns) == ["prev_negativo", "prev_positivo"]
     assert cm.to_numpy().sum() == 50
+
+
+# ------------------------------------------------------- multiclasse
+
+
+def _dados_multiclasse(n=300, seed=1):
+    from sklearn.datasets import make_classification
+
+    X, y = make_classification(
+        n_samples=n,
+        n_features=6,
+        n_informative=4,
+        n_classes=3,
+        n_redundant=0,
+        random_state=seed,
+    )
+    return pd.DataFrame(X, columns=FEATURES), pd.Series(y, name="cluster_kmeans")
+
+
+def test_multiclasse_retorna_f1_macro_e_confusao_por_modelo():
+    X, y = _dados_multiclasse()
+
+    matriz, confusao = clf.treinar_multiclasse(X.iloc[:200], y.iloc[:200], X.iloc[200:], y.iloc[200:])
+
+    assert list(matriz.columns) == clf.COLUNAS_MATRIZ_MULTICLASSE
+    assert set(matriz["modelo"]) == {"random_forest", "logistica"}
+    assert (matriz["f1_macro"] > 0.5).all()  # sinal real no brinquedo
+    # Uma matriz de confusao 3x3 legivel por modelo.
+    assert set(confusao.keys()) == {"random_forest", "logistica"}
+    assert confusao["random_forest"].shape == (3, 3)
+    assert confusao["random_forest"].to_numpy().sum() == 100
+
+
+def test_multiclasse_rejeita_rotulo_unico():
+    X, y = _dados_multiclasse()
+    y_unico = pd.Series([0] * len(y))
+
+    with pytest.raises(ValueError, match="ao menos 2 classes"):
+        clf.treinar_multiclasse(X.iloc[:200], y_unico.iloc[:200], X.iloc[200:], y_unico.iloc[200:])
