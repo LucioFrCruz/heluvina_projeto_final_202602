@@ -31,10 +31,24 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from src.analytics.modelagem import (
     FEATURES_MODELO,
+    FEATURES_PRESENCA,
+    FEATURES_SEM_PRESENCA,
     SEED,
     dividir_treino_teste,
     padronizar,
 )
+
+# Reexport das constantes de features (API publica do modulo de regressao:
+# o potencial latente e seus testes usam as mesmas definicoes do dataset).
+__all__ = [
+    "COLUNAS_MATRIZ_REGRESSAO",
+    "MODELOS_REGRESSAO",
+    "FEATURES_PRESENCA",
+    "FEATURES_SEM_PRESENCA",
+    "treinar_regressores",
+    "explicar_ipb",
+    "estimar_potencial_latente",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -48,23 +62,6 @@ MODELOS_REGRESSAO = {
         n_estimators=300, random_state=SEED, n_jobs=-1
     ),
 }
-
-# Variaveis de presenca bancaria: no potencial latente elas NAO podem
-# ser preditoras (o municipio sem agencia nao tem o que medir — e seria
-# vazamento do proprio alvo).
-FEATURES_PRESENCA = [
-    "quantidade_agencias",
-    "agencias_por_100k_hab",
-    "quantidade_correspondentes",
-    "correspondentes_por_100k_hab",
-    "depositos_per_capita",
-    "credito_per_capita",
-]
-
-# Socioeconomicas + digitais puro: o que sobra quando tira a presenca.
-FEATURES_SEM_PRESENCA = [
-    f for f in FEATURES_MODELO if f not in FEATURES_PRESENCA
-]
 
 
 def treinar_regressores(

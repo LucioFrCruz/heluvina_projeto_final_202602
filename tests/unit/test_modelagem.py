@@ -139,6 +139,17 @@ def test_montar_nao_leva_colunas_do_indice_como_feature():
     assert "ipb" in df.columns and "rank" in df.columns  # so referencia
 
 
+def test_features_sem_presenca_excluem_variaveis_que_vazam_o_alvo():
+    # Variaveis de presenca medem a estrutura instalada — consequencia do
+    # alvo, nao caracteristica exogena (vazamento: ROC-AUC 1.0 nos
+    # notebooks). A classificacao de presenca so usa as exogenas.
+    assert set(mod.FEATURES_PRESENCA) | set(mod.FEATURES_SEM_PRESENCA) == set(
+        mod.FEATURES_MODELO
+    )
+    assert set(mod.FEATURES_PRESENCA).isdisjoint(mod.FEATURES_SEM_PRESENCA)
+    assert len(mod.FEATURES_SEM_PRESENCA) == 13  # 19 - 6 de presenca
+
+
 # ------------------------------------------------------------- holdout
 
 

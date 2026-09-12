@@ -78,6 +78,27 @@ FEATURES_MODELO = [
 # Alvos proxy (rotulos substitutos — declarado no relatorio da etapa).
 ALVOS = ["flag_tem_agencia", "flag_tem_correspondente"]
 
+# Variaveis de PRESENCA bancaria: medem a estrutura instalada (agencias,
+# correspondentes, depositos, credito). Sao consequencia do alvo de
+# presenca, nao caracteristicas exoganas: com elas como preditora, o
+# classificador de "tem agencia" le a resposta em vez de aprender o
+# perfil (vazamento detectado nos notebooks: ROC-AUC 1.0 para todos os
+# modelos). Por isso a classificacao de presenca e o potencial latente
+# usam so `FEATURES_SEM_PRESENCA` (13 socioeconomicas + digitais).
+FEATURES_PRESENCA = [
+    "quantidade_agencias",
+    "agencias_por_100k_hab",
+    "quantidade_correspondentes",
+    "correspondentes_por_100k_hab",
+    "depositos_per_capita",
+    "credito_per_capita",
+]
+
+# Socioeconomicas + digitais puro: o que sobra quando tira a presenca.
+FEATURES_SEM_PRESENCA = [
+    f for f in FEATURES_MODELO if f not in FEATURES_PRESENCA
+]
+
 # Referencia do indice para cruzamento (nao sao feature).
 COLUNAS_REFERENCIA_IPB = ["ipb", "rank"]
 
