@@ -41,6 +41,7 @@ COLUNAS_AVALIACAO_K = [
     "silhouette_gmm",
     "davies_bouldin_kmeans",
     "calinski_harabasz_kmeans",
+    "inercia_wss_kmeans",
     "bic_gmm",
     "tempo_seg_kmeans",
     "tempo_seg_gmm",
@@ -124,6 +125,10 @@ def avaliar_k(
                 "calinski_harabasz_kmeans": calinski_harabasz_score(
                     X_pad, labels_km
                 ),
+                # Inercia (WSS): custo que o K-Means minimiza — a metrica
+                # do "elbow method" (cotovelo). Menor e sempre decrescente;
+                # o "joelho" e onde a queda desacelera.
+                "inercia_wss_kmeans": km.inertia_,
                 "bic_gmm": gmm.bic(X_pad),
                 "tempo_seg_kmeans": round(t_km, 3),
                 "tempo_seg_gmm": round(t_gmm, 3),

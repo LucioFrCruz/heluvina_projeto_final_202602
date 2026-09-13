@@ -26,9 +26,11 @@ A pergunta do projeto: *quais municípios brasileiros apresentam a melhor relaç
 
 **Pergunta que o IPB não responde:** não "quem tem mais potencial", mas *que tipos de municípios existem* e qual a jogada típica de cada tipo.
 
-**Escolha do K:** tabela de métricas para K = 3…10 (silhouette, Davies-Bouldin, Calinski-Harabasz, BIC do GMM) + legibilidade de negócio. **K = 6** decidido com: silhouette 0,200 (K=3 tem 0,252, mas colapsa a narrativa em "porte da cidade" — o cluster viraria sinônimo de estrato populacional); clusters de 653 a 1.278 municípios, sem degeneração; BIC do GMM em queda. **K = 5 é a alternativa de iteração** registrada (troca-se uma constante e reexecutam-se os 3 notebooks).
+**Escolha do K:** tabela de métricas para K = 3…10 (silhouette, Davies-Bouldin, Calinski-Harabasz, **inércia/WSS — o elbow method**) + legibilidade de negócio. **K = 6** decidido com: silhouette 0,200 (K=3 tem 0,252, mas colapsa a narrativa em "porte da cidade" — o cluster viraria sinônimo de estrato populacional); **o elbow confirma de forma independente** — a queda da inércia despenca de ~5,6 mil (K=4→5) para ~2 mil (K=5→6), o joelho clássico; clusters de 653 a 1.278 municípios, sem degeneração; BIC do GMM em queda. **K = 5 é a alternativa de iteração** registrada (troca-se uma constante e reexecutam-se os 3 notebooks).
 
 ![Efeito do log1p na clusterização — silhouette por K, com e sem transformação. Sem o log, `populacao_total` domina e capitais viram micró-grupos; com o log, a estrutura de 6 grupos equilibrados aparece.](assets/figures/01_silhouette_log_vs_bruto.png)
+
+![Elbow method: a inércia (WSS) por K, com o joelho entre K=5 e K=6 — a queda desacelera de ~5,6 mil para ~2 mil, confirmando a escolha de forma independente da silhouette.](assets/figures/01_elbow_inercia.png)
 
 **Perfil dos 6 arquétipos** (médias nos valores reais; nomes sugeridos por regra sobre os dados com desambiguação de pares repetidos — validação do grupo pendente; documentação completa, com leitura de negócio de cada grupo, em **`docs/Arquetipos_Municipais.md`**; guia de conceitos em `referencias/ML_Guia_de_Conceitos.md`, material local do grupo fora do Git):
 
@@ -144,6 +146,7 @@ Perfil médio do grupo vs. média nacional: 5,0× mais agências, 2,1× alojamen
 - **Vintage misto** (Censo 2022, PIB 2023, Pix 2023/24, Estban/correspondentes 2026, CEMPRE 2024) — mesma limitação do índice.
 - **Classificação espacial não avaliada** (fase 2): municípios vizinhos se parecem; o holdout aleatório pode superestimar generalização.
 - **GMM secundário**: silhouette do GMM fica em ~0,10 — mantido como probabilidade de pertencimento, não como agrupador principal.
+- **Validação cruzada de algoritmo**: rodar o Agglomerative (Ward) com K=6 produz grupos bem diferentes do K-Means (ARI = 0,169) — os arquétipos são uma leitura legítima dos dados (a do K-Means, com elbow, silhouette e legibilidade convergindo), mas não a única possível.
 - **Nomes dos arquétipos são sugestões** por regra sobre os dados — validação do grupo pendente (decisão aberta nº 2 da discussão).
 
 ## 10. Fase 2 (registrado, sem compromisso)

@@ -34,6 +34,10 @@ def test_avaliar_k_retorna_contrato_para_cada_k():
     # BIC so tem sentido comparando K entre si (menor melhor) — o sinal
     # absoluto depende dos dados, entao aqui so checamos ser finito.
     assert np.isfinite(resultado["bic_gmm"]).all()
+    # Inercia (WSS) e sempre positiva e decrescente com K (propriedade
+    # matematica do K-Means): e a metrica do elbow method.
+    assert (resultado["inercia_wss_kmeans"] > 0).all()
+    assert resultado["inercia_wss_kmeans"].is_monotonic_decreasing
     assert (resultado["tempo_seg_kmeans"] >= 0).all()
 
 
