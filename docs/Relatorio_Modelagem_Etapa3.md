@@ -51,9 +51,9 @@ A pergunta do projeto: *quais municípios brasileiros apresentam a melhor relaç
 
 ![Histograma da probabilidade de pertencimento ao arquétipo (GMM): a maioria dos municípios é típica do seu grupo; a cauda esquerda são os "mestiços" na fronteira entre dois perfis.](assets/figures/01_prob_pertencimento_gmm.png)
 
-**Solidez dos grupos (classificador multi-classe, §4.3):** prever o arquétipo **só pelas 13 exógenas** (sem olhar a estrutura bancária) dá **F1 macro = 0,826 (RF)** e 0,825 (Logística) — os arquétipos são determinados pelo perfil da cidade, não pela presença instalada, e dá para classificar município novo sem dados bancários. (Nomes repetidos dos rascunhos iniciais — dois "Turismo", dois "Sem rede" — foram desambiguados automaticamente: ver `docs/Arquetipos_Municipais.md` §1.)
+**Solidez dos grupos (classificador multi-classe):** prever o arquétipo **só pelas 13 exógenas** dá **F1 macro = 0,826 (RF)**. A matriz de confusão conta onde os grupos se parecem: "Turismo - sem banco" tropeça 26% em "Intermediário - empresarial" (cidades turísticas ricas têm perfil empresarial), e "Intermediário - tradicional" confunde 18% com "Sem rede - renda baixa" — a mesma fronteira que o GMM apontou nos mestiços:
 
-![Matriz de confusão do classificador de arquétipos (RF, teste): diagonal forte = os 6 grupos se reconhecem só pelo perfil exógeno.](assets/figures/02_matriz_confusao_arquetipos.png)
+![Matriz de confusão do classificador de arquétipos (RF, teste): diagonal = acertos; fora dela, quais arquétipos se parecem entre si.](assets/figures/02_matriz_confusao_arquetipos.png)
 
 ## 4. Classificação — presença bancária (alvo proxy `flag_tem_agencia`, ~52/48)
 
@@ -70,7 +70,13 @@ A pergunta do projeto: *quais municípios brasileiros apresentam a melhor relaç
 | KNN (k=15, distance) | 0,909 | 0,923 | 0,842 | 0,824 | 0,861 | 0,831 | 0,03 s |
 | Árvore (prof. 4) | 0,909 | 0,911 | 0,833 | 0,846 | 0,820 | 0,828 | 0,18 s |
 
-Leitura: RF e Logística empatam no topo (a linearidade do problema favorece a Logística — cujos coeficientes são narráveis ponto a ponto); KNN fica atrás, confirmando a avaliação da discussão (§6); a Árvore entrega regras legíveis. Matriz de confusão do RF: 475 VN, 56 FP, 88 FN, 495 VP.
+Leitura: RF e Logística empatam no topo (a linearidade do problema favorece a Logística — cujos coeficientes são narráveis ponto a ponto); KNN fica atrás, confirmando a avaliação da discussão (§6); a Árvore entrega regras legíveis.
+
+![Matriz de confusão do RF no teste (alvo: tem agência). Quadrantes escuros = acertos; os 88 falsos negativos (direita de baixo para cima: cidades COM agência previstas como sem) alimentam a lista de oportunidade.](assets/figures/02_matriz_confusao_agencia.png)
+
+**O que explica a presença (e o que NÃO é a importância do IPB):** aqui a pergunta é o que explica a *presença observada* — e o achado é contundente: `populacao_total` domina sozinha (queda de 0,288 na ROC-AUC ao embaralhar) e as outras 12 exógenas juntas somam 0,046 — **agência física é modelo de escala: banco coloca onde tem gente**. É o oposto do IPB (onde banda larga domina com 0,635), porque o índice busca oportunidade em taxas per capita, não presença. Ressalva: variáveis correlacionadas dividem importância na permutação, mas a dominância da população é esmagadora:
+
+![O que explica "tem agência" — top 8 das 13 exógenas por importância de permutação. População sozinha vale ~6× as outras 12 juntas.](assets/figures/02_importancia_agencia.png)
 
 ![Curvas ROC e Precision-Recall no teste (alvo: tem agência). Quanto mais afastada da linha pontilhada (ROC) e da linha da base (PR), melhor o modelo separa com/sem agência.](assets/figures/02_curvas_roc_pr_agencia.png)
 
