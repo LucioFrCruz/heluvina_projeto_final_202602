@@ -261,6 +261,17 @@ _REGRAS_NOME: list[tuple[str, str, str, float]] = [
     ),
 ]
 
+# Desambiguacao de nomes repetidos (sempre dados): quando dois ou mais
+# clusters recebem o mesmo nome, uma variavel discriminadora separa o
+# grupo — os de valor acima ganham um sufixo, os de baixo outro. Sem
+# isso, nomes iguais impedem a leitura ("qual dos dois Turismo?").
+_DESAMBIGUACAO: dict[str, tuple[str, str, str]] = {
+    # nome base: (variavel discriminadora, sufixo acima, sufixo abaixo)
+    "Turismo": ("agencias_por_100k_hab", "com rede", "sem banco"),
+    "Sem rede bancaria": ("pib_per_capita", "renda alta", "renda baixa"),
+    "Perfil intermediario": ("pix_pj_pct", "empresarial", "tradicional"),
+}
+
 
 def sugerir_nomes_perfis(perfis: pd.DataFrame) -> dict[int, str]:
     """
@@ -310,4 +321,34 @@ def sugerir_nomes_perfis(perfis: pd.DataFrame) -> dict[int, str]:
                 nome = rotulo
                 break
         nomes[int(cluster)] = nome
+
+    # Desambiguacao: nomes repetidos ganham sufixo discriminador (dados).
+    por_nome: dict[str, list[int]] = {}
+    for cluster, nome in nomes.items():
+        por_nome.setdefault(nome, []).append(cluster)
+    for nome, grupo_clusters in por_nome.items():
+        if len(grupo_clusters) < 2:
+            continue
+        regra = _DESAMBIGUACAO.get(nome)
+        coluna = f"{regra[0]}_media" if regra else None
+        if regra is None or coluna not in perfis.columns:
+            # Sem discriminador conhecido: numero do grupo mantem unicidade.
+            for c in grupo_clusters:
+                nomes[c] = f"{nome} (grupo {c})"
+            continue
+        ordenado = sorted(
+            grupo_clusters, key=lambda c: perfis.loc[c, coluna]
+        )
+        meio = len(ordenado) // 2
+        for c in ordenado[:meio]:  # menores valores do discriminador
+            nomes[c] = f"{nome} - {regra[2]}"
+        for c in ordenado[meio:]:  # maiores valores
+            nomes[c] = f"{nome} - {regra[1]}"
+
+    # Garantia final: nomes unicos por construcao.
+    vistos: set[str] = set()
+    for c in sorted(nomes):
+        if nomes[c] in vistos:
+            nomes[c] = f"{nomes[c]} (grupo {c})"
+        vistos.add(nomes[c])
     return nomes

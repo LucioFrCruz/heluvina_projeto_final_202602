@@ -139,3 +139,33 @@ def test_sugerir_nomes_detecta_regras_pelos_dados():
 def test_sugerir_nomes_rejeita_perfil_sem_colunas():
     with pytest.raises(ValueError, match="obrigatorias"):
         clu.sugerir_nomes_perfis(pd.DataFrame({"n_municipios": [10]}))
+
+
+def _perfis_com_repeticao():
+    """6 clusters formando pares de nomes repetidos (Turismo, Sem rede,
+    Intermediario) — cenário que exige a desambiguação pelos dados."""
+    return pd.DataFrame(
+        {
+            "n_municipios": [100] * 6,
+            "unidades_alojamento_alimentacao_por_1000_hab_media": [90.0, 1.0, 1.0, 90.0, 1.0, 1.0],
+            "pix_pj_pct_media": [1.0, 1.0, 0.9, 1.0, 1.0, 1.1],
+            "empregos_formais_por_1000_hab_media": [1.0] * 6,
+            "agencias_por_100k_hab_media": [10.0, 0.001, 1.0, 0.5, 0.002, 5.0],
+            "correspondentes_por_100k_hab_media": [1.0] * 6,
+            "pib_per_capita_media": [1.0, 10.0, 50.0, 1.0, 1.0, 1.0],
+        },
+        index=[0, 1, 2, 3, 4, 5],
+    )
+
+
+def test_sugerir_nomes_desambigua_pares_repetidos_pelos_dados():
+    nomes = clu.sugerir_nomes_perfis(_perfis_com_repeticao())
+
+    # Nomes unicos por construcao e discriminadores corretos em cada par.
+    assert len(set(nomes.values())) == 6
+    assert nomes[0] == "Turismo - com rede"
+    assert nomes[3] == "Turismo - sem banco"
+    assert nomes[1] == "Sem rede bancaria - renda alta"
+    assert nomes[4] == "Sem rede bancaria - renda baixa"
+    assert nomes[2] == "Perfil intermediario - tradicional"
+    assert nomes[5] == "Perfil intermediario - empresarial"
