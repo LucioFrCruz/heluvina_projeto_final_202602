@@ -32,6 +32,10 @@ A pergunta do projeto: *quais municípios brasileiros apresentam a melhor relaç
 
 ![Elbow method: a inércia (WSS) por K, com o joelho entre K=5 e K=6 — a queda desacelera de ~5,6 mil para ~2 mil, confirmando a escolha de forma independente da silhouette.](assets/figures/01_elbow_inercia.png)
 
+**Validação cruzada de algoritmo** (notebook 01, seção 3.1): o hierárquico Agglomerative foi testado com os 3 linkages clássicos e discorda do K-Means em todos (ARI 0,169/0,067/0,002) — registrado como limitação na §9. E a projeção 2D ilustrativa dos grupos (notebook 01, seção 4.2):
+
+![Projeção 2D via PCA (ilustrativa): os 6 arquétipos ocupam regiões distintas do espaço, com os centroides em X vermelho. PC1+PC2 explicam ~64% da variância — a separação completa mora nas 19 dimensões.](assets/figures/01_scatter_pca_arquetipos.png)
+
 **Perfil dos 6 arquétipos** (médias nos valores reais; nomes sugeridos por regra sobre os dados com desambiguação de pares repetidos — validação do grupo pendente; documentação completa, com leitura de negócio de cada grupo, em **`docs/Arquetipos_Municipais.md`**; guia de conceitos em `referencias/ML_Guia_de_Conceitos.md`, material local do grupo fora do Git):
 
 | Cluster | Nome sugerido | n | Leitura de perfil |
