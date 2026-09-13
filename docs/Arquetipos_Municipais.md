@@ -2,7 +2,6 @@
 
 > **Data:** 2026-09-13 · **Método:** K-Means com K=6 sobre as 19 features da Etapa 3
 > **Código:** `src/analytics/clustering.py` (clusterização + regras de nome) · **Notebook:** `notebooks/01_modelagem/01_dataset_e_arquetipos.ipynb` (execução com figuras)
-> **Conceitos (o que é K, silhouette etc.):** guia de referência local do grupo em `referencias/ML_Guia_de_Conceitos.md` (fora do Git, pasta `referencias/`)
 > **Status:** nomes são **sugestão por regra sobre os dados** — validação do grupo **pendente** (este doc é a base pra decisão).
 
 ---
@@ -12,10 +11,10 @@
 Em **nada que tenha sido decidido na mão**. A cadeia é:
 
 1. **Dados:** as 19 variáveis aprovadas na discussão (renda, PIB, Pix, banda larga, agências, correspondentes, CEMPRE... — lista em `src/analytics/modelagem.py`, `FEATURES_MODELO`).
-2. **Transformação:** `log1p` nas 14 colunas de cauda longa + padronização (por quê: guia de conceitos §9 em `referencias/ML_Guia_de_Conceitos.md` — sem isso SP virava cluster sozinha).
+2. **Transformação:** `log1p` nas 14 colunas de cauda longa + padronização.
 3. **Agrupamento:** K-Means com K=6 (como o K foi escolhido: §3 abaixo). Nenhum rótulo humano entra aqui — o algoritmo só calcula distâncias entre as 5.570 cidades nas 19 dimensões.
 4. **Perfil:** para cada grupo, calculamos a média de cada variável (a "cidade média" do grupo). É essa tabela que aparece abaixo — **a narrativa nasce dela**.
-5. **Nome:** regra automática (`sugerir_nomes_perfis`) compara cada média ao **perfil nacional ponderado**: alojamento-alimentação muito acima → *Turismo*; Pix PJ acima → *Polo empresarial*; agências ~zero → *Sem rede bancária*... Se um nome repete, um **discriminador** separa o par (ex.: os dois "Turismo" viraram *Turismo - com rede* e *Turismo - sem banco*). Regras e discriminadores são dados, não opinião — mas o grupo pode (e deve) revisar os nomes finais.
+5. **Nome:** regra automática (`sugerir_nomes_perfis`) compara cada média ao **perfil nacional ponderado**: alojamento-alimentação muito acima → *Turismo*; Pix PJ acima → *Polo empresarial*; agências ~zero → *Sem rede bancária*... Se um nome repete, um **discriminador** separa o par (ex.: os dois "Turismo" viraram *Turismo - com rede* e *Turismo - sem banco*). Regras e discriminadores são baseadas em dados.
 
 **Solidez dos grupos (número):** dá para reconhecer o arquétipo de uma cidade olhando **só** as 13 variáveis socioeconômicas + digitais (sem nada de banco): F1 macro = **0,826** (`notebooks/01_modelagem/02_classificacao_presenca.ipynb`, seção 3). Ou seja: o arquétipo é uma propriedade da cidade, não um acidente da rede bancária instalada.
 
@@ -52,7 +51,7 @@ Tabela de métricas (notebook 01, seção 3 — detalhe de cada métrica no guia
 | **6** | 0,200 | −20.591 | **Adotado**: perde 0,05 de silhouette e ganha 6 histórias distintas; clusters equilibrados (653–1.278) |
 | 8 | 0,171 | −24.013 | Fragmenta: grupos começam a se dividir sem ganhar legibilidade |
 
-**Recomendação (pra não ficar só "opção sua"):** manter **K=6**. Argumentos: (1) a diferença de silhouette entre 5 e 6 é pequena e nenhuma das duas é "excelente" — o que decide é o que a banca consegue ouvir; (2) com 6, cada grupo tem uma jogada de negócio diferente (tabela acima), com 3 seriam só "grande/média/pequena"; (3) a solidez está medida: F1 macro 0,826 — os grupos não são artefato. Se na apresentação 6 parecer muito, K=5 é o plano B registrado (troca de uma constante e reexecuta os 3 notebooks; ~5 minutos). Detalhe de cada métrica no guia de conceitos (`referencias/ML_Guia_de_Conceitos.md`).
+**Recomendação (pra não ficar só "opção sua"):** manter **K=6**. Argumentos: (1) a diferença de silhouette entre 5 e 6 é pequena e nenhuma das duas é "excelente" — o que decide é o que a banca consegue ouvir; (2) com 6, cada grupo tem uma jogada de negócio diferente (tabela acima), com 3 seriam só "grande/média/pequena"; (3) a solidez está medida: F1 macro 0,826 — os grupos não são artefato. Se na apresentação 6 parecer muito, K=5 é o plano B registrado (troca de uma constante e reexecuta os 3 notebooks; ~5 minutos).
 
 **Como opinar sobre os nomes:** olhe a tabela da §2 e pergunte "eu conto essa cidade em uma frase pra alguém de fora?". Sugestões de renomeação são bem-vindas — basta editar `K_ESCOLHIDO`/nomes no notebook 01 (ou trocar a regra em `sugerir_nomes_perfis`) e reexecutar. Nomes melhores que os atuais, baseados nos dados da tabela: *Turismo urbano atendido*, *Interior de baixa renda*, *Polo empresarial do interior*, *Cidade média comum*, *Destino turístico rico sem banco*, *Pequena rica de fronteira agro*.
 
