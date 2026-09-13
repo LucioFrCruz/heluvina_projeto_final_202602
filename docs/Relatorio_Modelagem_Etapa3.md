@@ -30,16 +30,16 @@ A pergunta do projeto: *quais municípios brasileiros apresentam a melhor relaç
 
 ![Efeito do log1p na clusterização — silhouette por K, com e sem transformação. Sem o log, `populacao_total` domina e capitais viram micró-grupos; com o log, a estrutura de 6 grupos equilibrados aparece.](assets/figures/01_silhouette_log_vs_bruto.png)
 
-**Perfil dos 6 arquétipos** (médias nos valores reais; nomes são sugestão por regra sobre os dados — pendente de validação do grupo):
+**Perfil dos 6 arquétipos** (médias nos valores reais; nomes sugeridos por regra sobre os dados com desambiguação de pares repetidos — validação do grupo pendente; documentação completa, com leitura de negócio de cada grupo, em **`docs/Arquetipos_Municipais.md`**; guia de conceitos em `referencias/ML_Guia_de_Conceitos.md`, material local do grupo fora do Git):
 
 | Cluster | Nome sugerido | n | Leitura de perfil |
 |---|---|---|---|
-| 0 | Turismo | 740 | Cidades médias/grandes com alojamento-alimentação ~8× a média e rede bancária presente |
-| 1 | Sem rede bancária | 1.278 | Interior pequeno (~10 mil hab), baixa renda e formalização, **100% sem agência** |
-| 2 | Perfil intermediário | 1.248 | PIB pc alto, Pix PJ alto, sem agência raro |
-| 3 | Perfil intermediário | 919 | Cidades médias (~34 mil hab), renda mediana |
-| 4 | Turismo | 653 | **Cidade pequena (~6 mil hab) e rica (PIB pc 61k), sem agência** — o "Búzios" do grupo |
-| 5 | Sem rede bancária | 732 | Cidade muito pequena (~4 mil hab), 99% sem agência |
+| 0 | Turismo - com rede | 740 | Destinos turísticos grandes/populosos, ricos, alojamento ~8× a média, **já com agências** |
+| 1 | Sem rede bancária - renda baixa | 1.278 | Interior pobre (~10 mil hab), baixa formalização, **100% sem agência** |
+| 2 | Perfil intermediário - empresarial | 1.248 | PIB pc alto, Pix PJ 42%, empregos formais altos, agências presentes |
+| 3 | Perfil intermediário - tradicional | 919 | Cidades médias (~34 mil hab), renda mediana |
+| 4 | **Turismo - sem banco** | 653 | **O achado do projeto:** destinos turísticos pequenos (~6 mil hab) e ricos (PIB pc 61k), **100% sem agência** |
+| 5 | Sem rede bancária - renda alta | 732 | Cidades muito pequenas (~4 mil hab), renda acima da média, 99% sem agência |
 
 **Boxplot do IPB por cluster** — onde cada arquétipo mora no índice:
 
@@ -47,7 +47,7 @@ A pergunta do projeto: *quais municípios brasileiros apresentam a melhor relaç
 
 ![Ranking dos arquétipos por IPB médio — os 6 grupos ordenados, de quem pontua mais alto a quem pontua mais baixo.](assets/figures/01_ranking_ipb_arquetipos.png)
 
-**Solidez dos grupos (classificador multi-classe, §4.3):** prever o arquétipo **só pelas 13 exógenas** (sem olhar a estrutura bancária) dá **F1 macro = 0,826 (RF)** e 0,825 (Logística) — os arquétipos são determinados pelo perfil da cidade, não pela presença instalada, e dá para classificar município novo sem dados bancários.
+**Solidez dos grupos (classificador multi-classe, §4.3):** prever o arquétipo **só pelas 13 exógenas** (sem olhar a estrutura bancária) dá **F1 macro = 0,826 (RF)** e 0,825 (Logística) — os arquétipos são determinados pelo perfil da cidade, não pela presença instalada, e dá para classificar município novo sem dados bancários. (Nomes repetidos dos rascunhos iniciais — dois "Turismo", dois "Sem rede" — foram desambiguados automaticamente: ver `docs/Arquetipos_Municipais.md` §1.)
 
 ![Matriz de confusão do classificador de arquétipos (RF, teste): diagonal forte = os 6 grupos se reconhecem só pelo perfil exógeno.](assets/figures/02_matriz_confusao_arquetipos.png)
 
