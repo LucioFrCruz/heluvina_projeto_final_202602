@@ -47,6 +47,10 @@ A pergunta do projeto: *quais municípios brasileiros apresentam a melhor relaç
 
 ![Ranking dos arquétipos por IPB médio — os 6 grupos ordenados, de quem pontua mais alto a quem pontua mais baixo.](assets/figures/01_ranking_ipb_arquetipos.png)
 
+**Quão "típico" cada município é (GMM em ação):** além do grupo, o GMM entrega a **probabilidade de pertencimento** — quão confiante é a atribuição. 4.855 municípios são típicos (>90% de confiança), 705 predominantes e só 10 "mestiços" (<50%), todos cidades pequenas do interior do Nordeste na fronteira entre os perfis de baixa renda — candidatas a transição entre arquétipos (notebook 01, seção 4.1):
+
+![Histograma da probabilidade de pertencimento ao arquétipo (GMM): a maioria dos municípios é típica do seu grupo; a cauda esquerda são os "mestiços" na fronteira entre dois perfis.](assets/figures/01_prob_pertencimento_gmm.png)
+
 **Solidez dos grupos (classificador multi-classe, §4.3):** prever o arquétipo **só pelas 13 exógenas** (sem olhar a estrutura bancária) dá **F1 macro = 0,826 (RF)** e 0,825 (Logística) — os arquétipos são determinados pelo perfil da cidade, não pela presença instalada, e dá para classificar município novo sem dados bancários. (Nomes repetidos dos rascunhos iniciais — dois "Turismo", dois "Sem rede" — foram desambiguados automaticamente: ver `docs/Arquetipos_Municipais.md` §1.)
 
 ![Matriz de confusão do classificador de arquétipos (RF, teste): diagonal forte = os 6 grupos se reconhecem só pelo perfil exógeno.](assets/figures/02_matriz_confusao_arquetipos.png)

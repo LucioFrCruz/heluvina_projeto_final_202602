@@ -18,6 +18,8 @@ Em **nada que tenha sido decidido na mão**. A cadeia é:
 
 **Solidez dos grupos (número):** dá para reconhecer o arquétipo de uma cidade olhando **só** as 13 variáveis socioeconômicas + digitais (sem nada de banco): F1 macro = **0,826** (`notebooks/01_modelagem/02_classificacao_presenca.ipynb`, seção 3). Ou seja: o arquétipo é uma propriedade da cidade, não um acidente da rede bancária instalada.
 
+**Quão "típico" cada município é (GMM):** o GMM acompanha o K-Means e entrega a **probabilidade de pertencimento** de cada cidade ao seu grupo (`prob_max_gmm`). Resultado (notebook 01, seção 4.1): 4.855 municípios típicos (>90% de confiança), 705 predominantes e só 10 "mestiços" (<50%) — todos cidades pequenas do interior do Nordeste na fronteira entre os perfis de baixa renda, candidatas a transição entre arquétipos.
+
 ## 2. Tabela de perfis (valores reais, não log)
 
 Média de cada variável dentro do grupo (fonte: notebook 01, seção 4):
