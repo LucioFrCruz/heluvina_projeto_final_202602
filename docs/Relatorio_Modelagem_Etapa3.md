@@ -146,7 +146,7 @@ Perfil médio do grupo vs. média nacional: 5,0× mais agências, 2,1× alojamen
 - **Vintage misto** (Censo 2022, PIB 2023, Pix 2023/24, Estban/correspondentes 2026, CEMPRE 2024) — mesma limitação do índice.
 - **Classificação espacial não avaliada** (fase 2): municípios vizinhos se parecem; o holdout aleatório pode superestimar generalização.
 - **GMM secundário**: silhouette do GMM fica em ~0,10 — mantido como probabilidade de pertencimento, não como agrupador principal.
-- **Validação cruzada de algoritmo**: rodar o Agglomerative (Ward) com K=6 produz grupos bem diferentes do K-Means (ARI = 0,169) — os arquétipos são uma leitura legítima dos dados (a do K-Means, com elbow, silhouette e legibilidade convergindo), mas não a única possível.
+- **Validação cruzada de algoritmo**: o Agglomerative hierárquico foi testado com os 3 linkages principais (ward, complete, average) em K=6 e discorda do K-Means em todos (ARI = 0,169 / 0,067 / 0,002 — os dois últimos degeneram em um grupo gigante + microgrupos, comportamento clássico de "chaining" em dados contínuos em escala). Como não há rótulo de verdade, cada algoritmo é uma lente diferente; os arquétipos são uma leitura defensável (elbow + silhouette convergindo, F1 macro 0,826, narrativa acionável), não a única possível.
 - **Nomes dos arquétipos são sugestões** por regra sobre os dados — validação do grupo pendente (decisão aberta nº 2 da discussão).
 
 ## 10. Fase 2 (registrado, sem compromisso)
