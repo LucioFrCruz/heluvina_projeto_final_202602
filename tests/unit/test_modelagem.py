@@ -150,6 +150,20 @@ def test_features_sem_presenca_excluem_variaveis_que_vazam_o_alvo():
     assert len(mod.FEATURES_SEM_PRESENCA) == 13  # 19 - 6 de presenca
 
 
+def test_cols_log_sao_nao_percentuais_e_reversiveis():
+    # log1p so em variavel de cauda longa (nao-percentual); percentuais
+    # ficam de fora. E a transformacao e reversivel (expm1) para quando
+    # os valores reais sao necessarios (perfis/nomes dos arquetipos).
+    import numpy as np
+
+    assert len(mod.COLS_LOG) == 14
+    assert set(mod.COLS_LOG) <= set(mod.FEATURES_MODELO)
+    percentuais = [c for c in mod.FEATURES_MODELO if c.endswith("_pct")]
+    assert set(percentuais).isdisjoint(mod.COLS_LOG)  # log so em nao-percentuais
+    valores = np.array([0.0, 1.0, 100.0, 10_000.0])
+    assert np.allclose(np.expm1(np.log1p(valores)), valores)
+
+
 # ------------------------------------------------------------- holdout
 
 

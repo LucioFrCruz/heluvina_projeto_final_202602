@@ -99,6 +99,29 @@ FEATURES_SEM_PRESENCA = [
     f for f in FEATURES_MODELO if f not in FEATURES_PRESENCA
 ]
 
+# Variaveis nao-percentuais de cauda longa (populacao, renda, PIB, Pix,
+# empregos, presenca) que recebem `log1p` ANTES da padronizacao nos
+# modelos. `modelagem.parquet` e gravado JA com o log aplicado; quem
+# precisar dos valores reais (ex.: perfis e nomes dos arquetipos) reverte
+# com `np.expm1` nestas colunas. Percentuais (0-100 ou 0-1) NUNCA entram
+# aqui — log em percentual distorce a escala.
+COLS_LOG = [
+    "populacao_total",
+    "rendimento_domiciliar_per_capita",
+    "pib_per_capita",
+    "pix_per_capita_12m",
+    "pix_ticket_medio",
+    "empregos_formais_por_1000_hab",
+    "unidades_locais_por_1000_hab",
+    "unidades_alojamento_alimentacao_por_1000_hab",
+    "quantidade_agencias",
+    "agencias_por_100k_hab",
+    "quantidade_correspondentes",
+    "correspondentes_por_100k_hab",
+    "depositos_per_capita",
+    "credito_per_capita",
+]
+
 # Referencia do indice para cruzamento (nao sao feature).
 COLUNAS_REFERENCIA_IPB = ["ipb", "rank"]
 
