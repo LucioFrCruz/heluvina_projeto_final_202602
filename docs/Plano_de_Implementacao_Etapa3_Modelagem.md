@@ -7,6 +7,8 @@
 > **Escopo**: Implementar a Etapa 3 (modelagem) conforme o escopo travado em `referencias/DISCUSSAO_MODELOS_ETAPA3.md` (v2): clusterização (K-Means + GMM), classificação de presença bancária (Regressão Logística + Random Forest, com KNN/Árvore como teste), classificador de arquétipos, regressão (explicar IPB + potencial latente), Isolation Forest e publicação da tabela `analytics_ipb_clusters`.
 
 > **Fora de escopo (decidido)**: PCA, Agglomerative/dendrograma, DBSCAN, validação espacial por região, análise prescritiva. Ficam registrados como fase 2 na discussão.
+>
+> **Nota de execução (2026-09-14):** PCA foi usado APENAS como projeção 2D ilustrativa (figura do relatório), não como entregável; Agglomerative (3 linkages) foi executado como validação nos notebooks 01/03 e relatado em `docs/Relatorio_Modelagem_Etapa3.md` como limitação (ARI baixo); DBSCAN de fato não executado.
 
 ---
 
@@ -241,6 +243,8 @@ seguindo o padrão do 07 (lê parquet local consolidado, valida, sobe com `uploa
 | `score_anomalia`, `flag_anomalia_top30` | anomalias |
 | `ipb`, `rank` | referência V3 para cruzamento (não são feature) |
 | `_extracted_at` | auditoria (padrão AGENTS.md) |
+
+> **Nota de publicação (2026-09-14):** publicada SEM `prob_tem_correspondente_rf` — o alvo `flag_tem_correspondente` se mostrou degenerado (100% dos municípios têm correspondente) e saiu da matriz; ver Relatório da Etapa 3 §7.
 
 ### 4.8 Relatório
 

@@ -81,7 +81,7 @@ def query_bq(sql: str) -> pd.DataFrame:
 
 ## 3. Organização dos notebooks
 
-A EDA será dividida em **5 notebooks** na pasta `notebooks/00_exploracao/`. Cada notebook tem um objetivo claro, conjunto de análises, gráficos e entregáveis.
+A EDA será dividida em **6 notebooks** na pasta `notebooks/00_exploracao/`. Cada notebook tem um objetivo claro, conjunto de análises, gráficos e entregáveis.
 
 ### 3.0 Estrutura de pastas
 
