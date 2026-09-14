@@ -88,7 +88,11 @@ heluvina_projeto_final_202602/
 │   ├── Guia_de_Analise_Exploratoria.md / Plano_de_Implementacao_EDA.md  # planejamento Etapa 2
 │   ├── Relatorio_Modelagem_Etapa3.md # resultados da Etapa 3 (clusters, classificação, anomalias)
 │   ├── Arquetipos_Municipais.md      # perfis dos 6 arquétipos
-│   └── Plano_de_Implementacao_Etapa3_Modelagem.md
+│   ├── Plano_de_Implementacao_Etapa3_Modelagem.md
+│   ├── Plano_de_Implementacao_Apresentacao_Final.md  # plano do site/deck da apresentação de 17/09
+│   ├── index.html / mapa.html / apresentacao.html / apendice.html  # site estático (GitHub Pages, branch feature/apresentacao)
+│   ├── assets/                    # libs vendorizadas (reveal, d3, plotly, topojson, qrcodejs), malha IBGE 2022, figuras, JS do mapa
+│   └── data/municipios.json       # export derivado (script 09) consumido pelo site
 ├── src/
 │   ├── __init__.py
 │   ├── config.py                # centraliza paths, nomes de tabelas, dataset, bucket GCS
@@ -123,7 +127,10 @@ heluvina_projeto_final_202602/
 │       └── anomalias.py         # Isolation Forest
 ├── scripts/
 │   ├── 07_publica_ipb_bigquery.py      # publica analytics_ipb_* (V1/V2/V3 + comparação)
-│   └── 08_publica_clusters_bigquery.py # publica analytics_ipb_clusters (Etapa 3)
+│   ├── 08_publica_clusters_bigquery.py # publica analytics_ipb_clusters (Etapa 3)
+│   ├── 09_exporta_dados_site.py        # exporta docs/data/municipios.json (só parquet local, sem BigQuery)
+│   ├── 10_gera_figuras_apresentacao.py # figuras estáticas (matplotlib) da rodada 1 do deck
+│   └── 11_gera_figuras_interativas.py  # figuras interativas (plotly → JSON) do deck atual
 ├── data/
 │   ├── raw/                     # dumps locais temporários (não commitados)
 │   └── processed/               # resultados intermediários (não commitados)
@@ -301,6 +308,7 @@ A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* e d
   - **Iteração da Etapa 3 com o grupo**: **K=6 confirmado (2026-09-14)**; falta validar os nomes dos arquétipos (sugestões por regra sobre os dados), a leitura dos resíduos da classificação e do Spearman potencial-latente × IPB (0,449);
   - **Fase 2 da Etapa 3** (registrada no relatório): validação espacial por região, PCA como validação do índice, Agglomerative/dendrograma, `idhm` como feature opcional, discussão de pesos do IPB à luz da importância (banda larga + correspondentes + Pix concentram 0,64+0,29+0,17 da queda de R²);
   - **Enriquecimentos**: cobertura 4G/5G (pilar C), CNPJ/MEI + Caged, dados de visitação (Embratur/MTur) para a flag de turismo.
+- **Site da apresentação final (17/09)**: deck HTML interativo (reveal.js), mapa coroplético municipal (D3 + malha IBGE 2022) e apêndice de backup, tudo em `docs/` na branch `feature/apresentacao` e servido via GitHub Pages; dados exportados por `scripts/09` e figuras por `scripts/11`. Plano em `docs/Plano_de_Implementacao_Apresentacao_Final.md`.
 
 ---
 
