@@ -2,9 +2,11 @@
 
 > **Projeto**: Índice de Potencial Bancário (IPB)  
 > **Etapa**: 2 — Análise Exploratória e Limpeza  
-> **Base**: `trusted_municipios` (5.570 municípios) + tabelas `analytics_ipb_*` (3 versões do índice publicadas)  
+> **Base**: `trusted_municipios` (5.570 municípios) + tabelas `analytics_ipb_*` (3 versões do índice publicadas em 4 tabelas: V1, V2, V3 + visão de comparação)  
 > **Período de referência**: Censo 2022, PIB 2023, CEMPRE 2024, Pix ago/2025–ago/2026, Anatel/Estban 2026, Correspondentes BCB 30/08/2026, IDHM 2010  
 > **Gerado em**: 2026-09-03
+
+> **Nota (2026-09-14)**: este relatório cobre a Etapa 2 (EDA + índice). A Etapa 3 (modelagem: 6 arquétipos, classificação, potencial latente, anomalias) está publicada em `analytics_ipb_clusters` — ver `docs/Relatorio_Modelagem_Etapa3.md` e `docs/Arquetipos_Municipais.md`.
 
 ---
 
@@ -349,7 +351,7 @@ As features do CEMPRE (`empregos_formais`, `unidades_locais`, `empregos_formais_
 
 1. **Validar os Top 100 da V3 com conhecimento de negócio** e decidir a versão oficial do índice.
 2. **Decidir a classificação por estrato** com base na análise de sensibilidade (seção 8.3): manter as faixas atuais ou adotar tercis.
-3. **Explorar clusterização (opcional)**: aplicar K-Means nos pilares para criar arquétipos de municípios.
+3. **Explorar clusterização (opcional) — EXECUTADA na Etapa 3**: K-Means/GMM com K=6 criaram os 6 arquétipos de municípios — ver `docs/Relatorio_Modelagem_Etapa3.md` e `docs/Arquetipos_Municipais.md`.
 4. **Construir visualizações executivas**: mapas, quadrantes e fichas de municípios.
 5. **Definir ondas de expansão**: Top 50, Top 100, etc.
 6. **Enriquecimentos futuros**: cobertura 4G/5G (pilar C), CNPJ/MEI e Caged (modelo residual / Abordagem 3), dados de visitação para refinar a flag de turismo.

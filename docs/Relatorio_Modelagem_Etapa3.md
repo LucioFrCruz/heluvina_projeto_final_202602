@@ -45,7 +45,7 @@ A pergunta do projeto: *quais municípios brasileiros apresentam a melhor relaç
 | 1 | Sem rede bancária - renda baixa | 1.278 | Interior pobre (~10 mil hab), baixa formalização, **100% sem agência** |
 | 2 | Perfil intermediário - empresarial | 1.248 | PIB pc alto, Pix PJ 42%, empregos formais altos, agências presentes |
 | 3 | Perfil intermediário - tradicional | 919 | Cidades médias (~34 mil hab), renda mediana |
-| 4 | **Turismo - sem banco** | 653 | **O achado do projeto:** destinos turísticos pequenos (~6 mil hab) e ricos (PIB pc 61k), **100% sem agência** |
+| 4 | **Turismo - sem banco** | 653 | **O achado do projeto:** destinos turísticos pequenos (~6 mil hab) e ricos (PIB pc R$ 60,7 mil (60.688)), **100% sem agência** |
 | 5 | Sem rede bancária - renda alta | 732 | Cidades muito pequenas (~4 mil hab), renda acima da média, 99% sem agência |
 
 **Boxplot do IPB por cluster** — onde cada arquétipo mora no índice:
@@ -79,7 +79,7 @@ A pergunta do projeto: *quais municípios brasileiros apresentam a melhor relaç
 
 Leitura: RF e Logística empatam no topo (a linearidade do problema favorece a Logística — cujos coeficientes são narráveis ponto a ponto); KNN fica atrás, confirmando a avaliação da discussão (§6); a Árvore entrega regras legíveis.
 
-![Matriz de confusão do RF no teste (alvo: tem agência). Quadrantes escuros = acertos; os 88 falsos negativos (direita de baixo para cima: cidades COM agência previstas como sem) alimentam a lista de oportunidade.](assets/figures/02_matriz_confusao_agencia.png)
+![Matriz de confusão do RF no teste (alvo: tem agência). Quadrantes escuros = acertos; os 88 **falsos negativos estritos** (cidades COM agência previstas como sem) estão fora da diagonal — leitura de onde o modelo subestima a presença.](assets/figures/02_matriz_confusao_agencia.png)
 
 **O que explica a presença (e o que NÃO é a importância do IPB):** aqui a pergunta é o que explica a *presença observada* — e o achado é contundente: `populacao_total` domina sozinha (queda de 0,288 na ROC-AUC ao embaralhar) e as outras 12 de perfil juntas somam 0,046 — **agência física é modelo de escala: banco coloca onde tem gente**. É o oposto do IPB (onde banda larga domina com 0,635), porque o índice busca oportunidade em taxas per capita, não presença. Ressalva: variáveis correlacionadas dividem importância na permutação, mas a dominância da população é esmagadora:
 
@@ -87,9 +87,7 @@ Leitura: RF e Logística empatam no topo (a linearidade do problema favorece a L
 
 ![Curvas ROC e Precision-Recall no teste (alvo: tem agência). Quanto mais afastada da linha pontilhada (ROC) e da linha da base (PR), melhor o modelo separa com/sem agência.](assets/figures/02_curvas_roc_pr_agencia.png)
 
-![Matriz de confusão do RF no teste — a importância por permutação mostra o que o modelo usou para decidir.](assets/figures/02_importancia_agencia.png)
-
-**Resíduos — o produto de negócio:** 56 municípios com probabilidade ≥ 0,5 de "tem agência" **mas sem agência** (perfil de bancarizado não atendido). O topo da lista valida o IPB de forma gritante: **Bombinhas-SC — rank 1 do IPB V3 — com prob 0,94**, seguida de Colniza-MT (0,97), Balneário Rincão-SC, Itapeva-MG, Taguaí-SP.
+**Resíduos — o produto de negócio:** 56 municípios com probabilidade ≥ 0,5 de "tem agência" **mas sem agência** — as **oportunidades** (sem agência, prob. prevista alta; tecnicamente **falsos positivos para o alvo** `flag_tem_agencia`, chamados aqui de lista de oportunidade). Os 88 da matriz de confusão e estes 56 são **cortes diferentes do mesmo modelo**: os 88 são contados no holdout de teste com o corte rígido da matriz (falsos negativos estritos), enquanto os 56 listam os sem-agência com prob. ≥ 0,5 — por isso os números não se somam. O topo da lista valida o IPB de forma gritante: **Bombinhas-SC — rank 1 do IPB V3 — com prob 0,94**, seguida de Colniza-MT (0,97), Balneário Rincão-SC, Itapeva-MG, Taguaí-SP.
 
 ![Probabilidade prevista de ter agência × rank do IPB V3 (escala log). Vermelho = municípios com perfil de bancarizado SEM agência — os resíduos são a lista de oportunidade, e o rank 1 do IPB (Bombinhas) está entre eles.](assets/figures/02_residuos_rank.png)
 
@@ -126,7 +124,7 @@ Os municípios mais atípicos do Brasil bancário para leitura humana (figura e 
 
 Perfil médio do grupo vs. média nacional: 5,0× mais agências, 2,1× alojamento-alimentação/1000, ~1,9× crédito e banda larga, 1,55× escolaridade. Leitura: o detector aponta para os dois lados da anomalia — os super-bancarizados atípicos e os casos especiais (Noronha, Águas de São Pedro). Coerente com a discussão de negócio, que já usava F. de Noronha como exemplo de perfil atípico.
 
-![Top 15 municípios mais atípicos do Brasil bancário (Isolation Forest) — quanto maior o score, mais o perfil foge do restante do país.](assets/figures/03_anomalias_top15.png)
+![Top 15 municípios mais atípicos do Brasil bancário (Isolation Forest) — quanto maior o score, mais o perfil foge do restante do país. *Nota: a figura ilustra o Top 15; a tabela completa e a flag `flag_anomalia_top30` cobrem os 30 maiores.*](assets/figures/03_anomalias_top15.png)
 
 ## 7. Correções metodológicas registradas (a execução com dados reais pegou o que os brinquedos não pegam)
 
@@ -139,7 +137,7 @@ Perfil médio do grupo vs. média nacional: 5,0× mais agências, 2,1× alojamen
 | Modelo | Pergunta respondida | Resposta em uma frase |
 |---|---|---|
 | Clusterização (K=6) | Que tipos de municípios existem? | 6 arquétipos com jogadas distintas, do "turismo pequeno rico sem banco" ao "interior pobre sem rede" |
-| Classificação (RF/Log) | Onde o mercado já se revelou? | Presença explicada pelo perfil (ROC-AUC 0,94); os 56 falsos negativos são oportunidades não atendidas |
+| Classificação (RF/Log) | Onde o mercado já se revelou? | Presença explicada pelo perfil (ROC-AUC 0,94); os 56 com perfil de bancarizado sem agência são as oportunidades não atendidas |
 | Classificador de arquétipos | Os grupos são sólidos? | F1 macro 0,83 só com perfil da cidade — arquétipo é perfil da cidade, não acidente de rede |
 | Regressão explicativa | O que pesa no IPB? | Banda larga + correspondentes + Pix concentram a importância (insumo de fase 2) |
 | Potencial latente | Quanto renderia se tivesse banco? | IPB alinhado moderadamente (Spearman 0,45); divergências são mapa de investigação |

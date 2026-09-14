@@ -39,7 +39,7 @@ Leituras de negócio de cada grupo:
 - **Sem rede bancária - renda baixa (1.278):** o interior pobre — ~10 mil hab, baixa renda e formalização, **100% sem agência** (o maior grupo do país). Correspondentes existem (143/100k). *Jogada típica: só digital/correspondente, ticket baixo.*
 - **Intermediário - empresarial (1.248):** cidades pequenas com **PIB pc alto, Pix PJ 42% e empregos formais altos** — atividade empresarial forte. Agências presentes (15/100k). *Jogada típica: conta PJ, folha, consignado.*
 - **Intermediário - tradicional (919):** cidades médias de renda mediana, perfil "comum do interior". *Jogada típica: varejo padrão.*
-- **Turismo - sem banco (653):** **o achado do projeto** — destinos turísticos **pequenos** (~6 mil hab) e **ricos** (PIB pc 61k), 100% sem agência, correspondência alta (163/100k). Bombinhas está aqui (e é o rank 1 do IPB V3). *Jogada típica: oportunidade clara de primeiro banco físico.*
+- **Turismo - sem banco (653):** **o achado do projeto** — destinos turísticos **pequenos** (~6 mil hab) e **ricos** (PIB pc R$ 60,7 mil), 100% sem agência, correspondência alta (163/100k). Bombinhas está aqui (e é o rank 1 do IPB V3). *Jogada típica: oportunidade clara de primeiro banco físico.*
 - **Sem rede bancária - renda alta (732):** cidades **muito pequenas** (~4 mil hab) com renda acima da média, 99% sem agência, correspondência altíssima (175/100k). *Jogada típica: digital com correspondente de apoio.*
 
 ## 3. Como o K foi escolhido (e como opinar)

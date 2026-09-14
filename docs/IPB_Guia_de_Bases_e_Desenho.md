@@ -97,7 +97,7 @@ Cada variável é normalizada em 0–1 (min-max, com winsorização no 1% extrem
 |---|---|---|
 | **Volume Pix per capita** | BCB/Olinda | NÚCLEO |
 | **Banda larga fixa por 100 hab.** | Anatel | NÚCLEO |
-| % domicílios com internet | IBGE/SIDRA Tabela 7307 | NÚCLEO/ALTERNATIVA — API instável para `N6[all]`; usa-se `banda_larga_fixa_por_100_hab` como proxy. |
+| % domicílios com internet | IBGE/SIDRA Tabela 7307 | NÚCLEO/ALTERNATIVA — API indisponível (HTTP 500 para `N6[all]` desde ago/2026); usa-se `banda_larga_fixa_por_100_hab` como proxy. |
 | Banda larga móvel | Anatel | Fora do escopo |
 
 ### Pilar D — Gap Bancário (invertido)
@@ -126,6 +126,8 @@ Não há variável-alvo para previsão — e não precisa. O ML serve para estru
 2. **K-Means** sobre os pilares → agrupa municípios em **arquétipos de expansão** (ex.: "cidades médias conectadas e desatendidas" vs. "polos maduros saturados").
 
 O mapa de clusters **é** o "Mapa do Potencial Bancário" do título.
+
+> **Nota (2026-09-14)**: desenho **IMPLEMENTADO** na Etapa 3 — K-Means/GMM com K=6, sem rótulo de verdade (alvos proxy); resultados em `docs/Relatorio_Modelagem_Etapa3.md` e tabela `analytics_ipb_clusters`.
 
 ---
 
