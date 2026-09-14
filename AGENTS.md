@@ -245,7 +245,7 @@ A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* e d
 - **Estrato populacional e região**: derivados no pipeline (`derive_estrato`/`derive_regiao`), não existem como colunas na trusted. Faixas oficiais: pequena <50k, média 50–500k, grande >500k (decisão do projeto, Relatório EDA 5.1).
 - **Analytics publicadas**: `analytics_ipb_v1_classico`, `analytics_ipb_v2_recalibrado`, `analytics_ipb_v3_presenca_completa` e `analytics_ipb_comparacao` (5.570 linhas cada, integridade testada). Nomes oficiais: V1 Clássico, V2 Recalibrado, V3 Presença Bancária Completa (ex-Abordagem 2).
 
-> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix 2023/2024, Anatel/Estban 2026, Correspondentes 30/08/2026, CEMPRE 2024, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
+> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix ago/2025–ago/2026, Anatel/Estban 2026, Correspondentes 30/08/2026, CEMPRE 2024, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
 
 > **Base dos Dados**: reservada para validação cruzada futura, não como fonte primária do pipeline.
 

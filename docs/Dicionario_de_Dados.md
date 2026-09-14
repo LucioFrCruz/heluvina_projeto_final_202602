@@ -35,7 +35,7 @@ A tabela `trusted_municipios` é o produto final da Etapa 1. Ela contém a chave
 | `idhm` | FLOAT | Índice | Ipeadata (PNUD/Atlas 2010) | Índice de Desenvolvimento Humano Municipal do Censo 2010. Mantido como variável histórica; o indicador principal do pilar E é a escolaridade 2022. |
 | `_extracted_at` | TIMESTAMP | Timestamp| Pipeline | Carimbo de tempo do momento da consolidação. |
 
-> **Disclaimer sobre vintage dos dados**: o `trusted_municipios` combina diferentes anos de referência por indisponibilidade de dados municipais atualizados. **Censo 2022** (população, renda, escolaridade, urbanização); **PIB IBGE** (último ano disponível, 2023); **Pix** (últimos 12 meses disponíveis, atualmente 2023/2024); **Anatel** (último mês disponível, 2026); **Estban** (último mês disponível, 2026); **IDHM** (Censo 2010). Esse mix de vintages é uma limitação declarada do projeto e será tratado como viés/assumpção na EDA e na apresentação final.
+> **Disclaimer sobre vintage dos dados**: o `trusted_municipios` combina diferentes anos de referência por indisponibilidade de dados municipais atualizados. **Censo 2022** (população, renda, escolaridade, urbanização); **PIB IBGE** (último ano disponível, 2023); **Pix** (últimos 12 meses disponíveis, ago/2025–ago/2026); **Anatel** (último mês disponível, 2026); **Estban** (último mês disponível, 2026); **IDHM** (Censo 2010). Esse mix de vintages é uma limitação declarada do projeto e será tratado como viés/assumpção na EDA e na apresentação final.
 
 ---
 

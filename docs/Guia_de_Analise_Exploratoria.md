@@ -568,7 +568,7 @@ Para cada variável numérica, calcular:
 
 ## 10. Riscos e cuidados metodológicos
 
-1. **Vintage misto de dados**: Censo 2022 + PIB 2023 + Pix 2023/2024 + Anatel/Estban 2026 + IDHM 2010. Sempre declarar isso nas análises e na apresentação final.
+1. **Vintage misto de dados**: Censo 2022 + PIB 2023 + Pix ago/2025–ago/2026 + Anatel/Estban 2026 + IDHM 2010. Sempre declarar isso nas análises e na apresentação final.
 2. **Efeito polo regional**: municípios próximos a grandes cidades podem parecer desatendidos porque recursos financeiros fluem para o polo. Tratar como insight, não defeito.
 3. **Correlação ≠ causalidade**: evitar afirmações do tipo "banda larga causa maior uso de Pix" sem validação estatística.
 4. **Outliers dom inantes**: São Paulo, Rio de Janeiro e Brasília podem distorcer médias e rankings. Usar medianas, winsorização e análise por estrato.

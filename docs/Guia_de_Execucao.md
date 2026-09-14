@@ -76,7 +76,7 @@ poetry run python scripts/07_publica_ipb_bigquery.py
 
 Após a execução, os dados estarão no dataset `ipb_staging`. Abaixo estão as consultas recomendadas para homologar os dados com a sua equipe.
 
-> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix 2023/2024, Anatel/Estban 2026, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
+> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix ago/2025–ago/2026, Anatel/Estban 2026, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
 
 ### 4.1. Visão Completa (Camada Trusted)
 *Os 10 municípios com maior volume transacionado no Pix (e seus PIBs).*
