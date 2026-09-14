@@ -32,13 +32,22 @@
   .reveal section img { border: 0; box-shadow: none; margin: 0; background: transparent; }
 
   .kicker { color: var(--suave); font-size: .56em; letter-spacing: .08em; text-transform: uppercase; }
+  .secao-tag {
+    display: inline-block; color: var(--suave); font-size: .5em; letter-spacing: .06em;
+    text-transform: uppercase; border: 1px solid var(--borda); border-radius: 999px;
+    background: #fff; padding: .3em .9em; margin-bottom: .7em;
+  }
   .capa { text-align: center; }
   .capa h1 { font-size: 2em; margin: .25em 0 .5em; }
   .capa .pergunta { font-size: .9em; color: var(--acento); font-weight: 600; margin-top: 1.3em; }
   .integrantes { color: var(--suave); font-size: .58em; margin-top: 2em; }
 
-  .numero-gigante { font-size: 3.8em; color: var(--acento); font-weight: 700; line-height: 1; margin: .1em 0 0; }
-  .numero-legenda { color: var(--suave); font-size: .68em; margin: .15em 0 .8em; }
+  .faixa-stats { display: flex; gap: 14px; margin: .2em 0 .7em; }
+  .faixa-stat {
+    flex: 1; border: 1px solid var(--borda); border-radius: 10px; background: #fff;
+    padding: 12px 14px; font-size: .52em; color: var(--suave); line-height: 1.3;
+  }
+  .faixa-stat .valor { display: block; font-size: 2.3em; color: var(--acento); font-weight: 700; line-height: 1.1; margin-bottom: .1em; }
   .fecho { color: var(--acento); font-weight: 600; font-size: .78em; margin-top: .7em; }
   .pergunta-cheia { font-size: 1.5em; color: var(--acento); font-weight: 650; line-height: 1.35; margin-top: 1.3em; }
   .gancho { color: var(--acento); font-weight: 650; font-size: .82em; margin: 0 0 .5em; }
@@ -66,28 +75,26 @@
   }
   .pipe-seta { color: var(--acento); font-weight: 700; }
 
-  /* cards da preparação */
-  .prep-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: .3em; }
-  .prep-card { border: 1px solid var(--borda); border-radius: 10px; background: #fff; padding: 14px; }
-  .prep-num {
+  /* cards genéricos (preparação e versões) */
+  .cards3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: .3em; }
+  .card3 { border: 1px solid var(--borda); border-radius: 10px; background: #fff; padding: 14px; }
+  .card3 .num {
     display: inline-block; background: var(--acento); color: #fff; border-radius: 6px;
     width: 1.5em; height: 1.5em; line-height: 1.5em; text-align: center; font-weight: 700; font-size: .7em;
   }
-  .prep-card h3 { margin-top: .4em; }
-  .prep-card p { font-size: .56em; color: var(--suave); line-height: 1.45; }
+  .card3 .tag-versao { display: inline-block; font-size: .62em; font-weight: 700; color: var(--acento); }
+  .card3 h3 { margin-top: .4em; }
+  .card3 p { font-size: .56em; color: var(--suave); line-height: 1.45; margin: .35em 0 0; }
 
   /* pilares */
   .pilares { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: .2em 0 .6em; }
   .pilar { border: 1px solid var(--borda); border-radius: 10px; padding: 11px 9px; background: #fff; }
   .pilar .letra { display: inline-block; background: var(--acento); color: #fff; border-radius: 6px; width: 1.5em; height: 1.5em; line-height: 1.5em; text-align: center; font-weight: 700; margin-bottom: .3em; }
   .pilar .nome { font-size: .54em; font-weight: 600; display: block; line-height: 1.25; }
-  .pilar .comp { font-size: .48em; color: var(--suave); display: block; margin-top: .3em; line-height: 1.35; }
-  .pilar .peso { font-size: .48em; color: var(--acento); display: block; margin-top: .3em; font-weight: 600; }
+  .pilar .comp { font-size: .47em; color: var(--suave); display: block; margin-top: .3em; line-height: 1.35; }
+  .pilar .ancora { font-size: .47em; color: var(--texto); display: block; margin-top: .35em; line-height: 1.3; border-top: 1px dashed var(--borda); padding-top: .35em; }
+  .pilar .peso { font-size: .47em; color: var(--acento); display: block; margin-top: .3em; font-weight: 600; }
   .formula { text-align: center; background: #eef4f6; border-radius: 8px; padding: .4em .8em; font-size: .7em; color: var(--acento); font-weight: 600; margin-top: .35em; }
-
-  table.mini { width: 100%; border-collapse: collapse; font-size: .54em; }
-  table.mini th, table.mini td { border-bottom: 1px solid var(--borda); padding: .38em .5em; text-align: left; vertical-align: top; }
-  table.mini th { color: var(--acento); font-weight: 650; }
 
   /* figuras interativas */
   .duas-figuras { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
@@ -128,13 +135,15 @@
   .class-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; align-items: start; }
   .class-lado p { font-size: .6em; color: var(--suave); line-height: 1.45; }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: .15em 0 .5em; }
-  .stats-col { grid-template-columns: repeat(3, 1fr); }
   .stat { border: 1px solid var(--borda); border-radius: 10px; background: #fff; padding: 10px 12px; font-size: .48em; color: var(--suave); line-height: 1.3; }
   .stat .valor { display: block; font-size: 2.2em; color: var(--acento); font-weight: 700; line-height: 1.1; margin-bottom: .15em; }
 
   /* resultados */
   .resultados-grid { display: grid; grid-template-columns: 1fr 1.25fr; gap: 14px; align-items: start; margin-top: .2em; }
-  .fig-top15 { width: 100%; border: 1px solid var(--borda); border-radius: 8px; background: #fff; }
+  .takeaway {
+    margin-top: .6em; border-left: 4px solid var(--acento); background: #fff;
+    border-radius: 0 8px 8px 0; padding: .55em .8em; font-size: .62em; line-height: 1.4;
+  }
 
   /* limitações */
   .lim-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: .3em; }
@@ -180,16 +189,19 @@
 <!-- ==================== 2. O PROBLEMA (~40s) ==================== -->
 <section>
   <h2>O problema</h2>
-  <p class="numero-gigante">2.656</p>
-  <p class="numero-legenda">cidades sem nenhuma agência bancária registrada no Estban</p>
-  <p>Banco e fintech escolhem onde investir entre 5.570 cidades. Não existe ranking público
-  que una potencial econômico, adoção digital e concorrência.</p>
-  <p class="fecho">Hoje essa escolha é feeling.</p>
+  <div class="faixa-stats">
+    <div class="faixa-stat"><span class="valor">2.656</span>cidades sem nenhuma agência bancária</div>
+    <div class="faixa-stat"><span class="valor">47,7%</span>do Brasil</div>
+    <div class="faixa-stat"><span class="valor">19,8 mi</span>de pessoas moram nelas</div>
+  </div>
+  <p>Quem decide onde abrir agência, colocar correspondente ou dar crédito olha para o
+  país inteiro e aposta no escuro.</p>
+  <p class="fecho">Na prática, quem decide tem conta em São Paulo.</p>
   <aside class="notes">
-    [O problema — 40s] Quase metade das cidades do país não tem uma agência sequer: 2.656,
-    47,7% do Brasil. Quem decide onde abrir agência, colocar correspondente ou investir em
-    crédito olha para 5.570 municípios sem nenhum ranking público que junte os três eixos.
-    Na prática, a decisão é no achismo.
+    [O problema — 40s] Quase metade das cidades do país não tem banco: 2.656, onde moram
+    quase vinte milhões de pessoas. Quem decide onde investir olha pra isso no escuro,
+    sem nenhum ranking público que junte potencial, digital e concorrência. Na prática,
+    quem decide tem conta em São Paulo.
   </aside>
 </section>
 
@@ -229,86 +241,91 @@
       <span class="pipe-camada">analytics_ · IPB V1/V2/V3</span>
     </div>
   </div>
-  <p class="fecho">Tudo público. Dá pra refazer do zero.</p>
+  <p class="fecho">Cada etapa vira tabela no BigQuery (dataset ipb_staging). Dá pra
+  auditar tudo.</p>
   <aside class="notes">
-    [Os dados — 40s] Nove fontes, todas públicas. Seis entram por API direto, a gente
-    coleta na hora. Três são manuais: o arquivo sobe uma vez pro bucket e o pipeline puxa
-    de lá pra sempre. Tudo desce pro lake no BigQuery em três camadas: cru, limpo e a
-    camada analytics, que é onde mora o IPB. E o ponto que a gente enfatiza: tudo
-    público, qualquer um refaz do zero.
+    [Os dados — 40s] Nove fontes, todas públicas. Seis entram por API, a gente coleta na
+    hora. Três são manuais: o arquivo sobe uma vez pro bucket e o pipeline puxa de lá pra
+    sempre. Cada etapa vira tabela no BigQuery, no dataset ipb_staging, em três camadas:
+    cru, limpo e analytics, onde mora o IPB. Dá pra auditar cada número do início ao fim.
   </aside>
 </section>
 
 <!-- ==================== 5. PREPARAÇÃO (~50s) ==================== -->
 <section>
   <h2>Preparação: o que a gente aprendeu</h2>
-  <div class="prep-cards">
-    <div class="prep-card">
-      <span class="prep-num">1</span>
-      <h3>A primeira versão</h3>
-      <p>Censo, PIB, Pix, Estban, Anatel e IDHM. Pix com janela curta, sem correspondentes
+  <div class="cards3">
+    <div class="card3">
+      <span class="num">1</span>
+      <h3>O que existia no começo</h3>
+      <p>Censo, PIB, Pix, Estban, Anatel e IDHM. Pix de poucos meses, sem correspondentes
       e sem CEMPRE no índice.</p>
     </div>
-    <div class="prep-card">
-      <span class="prep-num">2</span>
-      <h3>O erro que a gente mesmo achou</h3>
-      <p>A curva hiperbólica do gap zerou 119 cidades lotérica-densas. A gente testou a
-      sensibilidade, trocou para gap linear, e as versões convergiram.</p>
+    <div class="card3">
+      <span class="num">2</span>
+      <h3>O erro que a gente achou</h3>
+      <p>A primeira fórmula zerou 119 cidades pequenas cheias de lotérica. Era a fórmula
+      que estava errada, não as cidades. Trocamos para gap linear e as versões
+      convergiram.</p>
     </div>
-    <div class="prep-card">
-      <span class="prep-num">3</span>
-      <h3>O que tratamos</h3>
-      <p>Zero declarado nas 2.656 cidades sem agência, min-max com winsorize, taxas por
-      100 mil hab, estratos, log1p e correspondentes agregados por tipo.</p>
+    <div class="card3">
+      <span class="num">3</span>
+      <h3>O que a gente tratou</h3>
+      <p>Zero assumido nas 2.656 cidades sem agência. Min-max com winsorize, taxas por
+      100 mil hab, estratos, log1p, correspondentes agregados por tipo.</p>
     </div>
   </div>
-  <p class="fecho">A gente só confiou na fórmula depois de testá-la.</p>
+  <p class="fecho">A gente quebrou a fórmula antes de confiar nela.</p>
   <aside class="notes">
     [Preparação — 50s] Três aprendizados. O primeiro é de base: ela nasceu pequena, com
     seis fontes e Pix de janela curta; correspondentes entrou na Etapa 2 e o CEMPRE, em
     setembro. O segundo é o erro que a gente mesmo achou: a curva hiperbólica do gap
     explodia o denominador em cidade com muita lotérica e zerava o IPB de 119 cidades
-    pequenas, artefato puro. Testamos, trocamos para gap linear, e as três versões
-    convergiram. O terceiro é o tratamento: zero declarado nas 2.656 sem agência,
-    normalização com winsorize, taxas por 100 mil. A lição é uma só: a gente só confiou
-    na fórmula depois de testá-la.
+    pequenas. Era a fórmula que estava errada, não as cidades. Trocamos para gap linear e
+    as três versões convergiram. O terceiro é o tratamento: zero assumido nas 2.656 sem
+    agência, normalização com winsorize, taxas por 100 mil. A gente quebrou a fórmula
+    antes de confiar nela.
   </aside>
 </section>
 
-<!-- ==================== 6. ESPELHO I — ESCOLARIDADE (~45s) ==================== -->
+<!-- ==================== 6. O QUE OS DADOS CONTAM I — ESCOLARIDADE (~45s) ==================== -->
 <section>
-  <h2>Os dados no espelho I · escolaridade</h2>
+  <h2>O que os dados contam I · escolaridade</h2>
   <p class="gancho">Na cidade média do país, só 4 em cada 10 adultos concluíram o
   ensino médio.</p>
   <div class="duas-figuras">
     <div id="fig-esc-hist" class="fig-interativa" data-fig="assets/data/fig_espelho_escolaridade_hist.json"></div>
-    <div id="fig-esc-extremos" class="fig-interativa" data-fig="assets/data/fig_espelho_escolaridade_extremos.json"></div>
+    <div id="fig-esc-regiao" class="fig-interativa" data-fig="assets/data/fig_espelho_escolaridade_regiao.json"></div>
   </div>
+  <p class="leitura-slide">Ponderando pela população, a média sobe para 52%. As grandes
+  cidades são mais escolarizadas, e elas puxam a conta pra cima.</p>
   <aside class="notes">
-    [Espelho I — 45s] Primeiro espelho, escolaridade. A média entre os 5.570 municípios
-    é 39,5%: só quatro em cada dez adultos com ensino médio completo na cidade média do
-    país. A fila tem duas pontas: São Caetano do Sul passa de 78% e Venha-Ver, no Rio
-    Grande do Norte, fica em 13,6%. Um detalhe que vira pergunta de banca: ponderando
-    pela população, a média sobe pra 52%. As grandes cidades são mais escolarizadas, e
-    banco segue população.
+    [Escolaridade — 45s] O que os dados contam. Primeiro, escolaridade. A cidade média do
+    país tem só quatro em cada dez adultos com ensino médio completo: 39,5% entre os
+    5.570 municípios. Ponderando pela população sobe pra 52%, porque as grandes cidades
+    são mais escolarizadas. E o corte regional mostra o Nordeste embaixo, 33,9%, contra
+    44,4% no Sudeste. Banco segue população escolarizada.
   </aside>
 </section>
 
-<!-- ==================== 7. ESPELHO II — DINAMISMO (~40s) ==================== -->
+<!-- ==================== 7. O QUE OS DADOS CONTAM II — DINHEIRO (~40s) ==================== -->
 <section>
-  <h2>Os dados no espelho II · dinamismo financeiro</h2>
+  <h2>O que os dados contam II · dinheiro em movimento</h2>
   <div class="duas-figuras">
     <div id="fig-pix-top15" class="fig-interativa" data-fig="assets/data/fig_espelho_pix_top15.json"></div>
-    <div id="fig-pix-agencias" class="fig-interativa" data-fig="assets/data/fig_espelho_pix_agencias.json"></div>
+    <div id="fig-pix-uf" class="fig-interativa" data-fig="assets/data/fig_pix_por_uf.json"></div>
   </div>
-  <p class="leitura-slide">Pacaraima lidera com R$ 516 mil per capita, efeito do comércio
-  de fronteira. E Pix alto não anda junto de agência: as duas redes são paralelas.</p>
+  <p class="leitura-slide">O agro do Centro-Oeste e o comércio de fronteira do Norte movem
+  mais Pix por habitante que as metrópoles do Sudeste. Dinheiro que circula fora do
+  radar do PIB.</p>
   <aside class="notes">
-    [Espelho II — 40s] Segundo espelho, dinheiro em movimento. As quinze maiores taxas de
-    Pix per capita do país são cidades pequenas de agro e fronteira. Pacaraima, em
-    Roraima, lidera com meio milhão de reais per capita, efeito do comércio de fronteira.
-    E o gráfico da direita virou tese do projeto: Pix alto não anda junto de agência. Onde
-    uma é rara, a rede de correspondentes cresce. São duas redes paralelas.
+    [Dinheiro — 40s] Segundo, dinheiro em movimento. As quinze maiores taxas de Pix per
+    capita do país são cidades pequenas de agro e fronteira: Pacaraima lidera com meio
+    milhão de reais per capita, efeito do comércio de fronteira. E o mapa por estado
+    mostra o Centro-Oeste e o Norte lá em cima, com mediana acima de sessenta mil reais
+    por habitante no Mato Grosso, Goiás e Mato Grosso do Sul. É o agro e a fronteira
+    circulando dinheiro que o PIB sub-declara. Série temporal do Pix ficou pra fase dois,
+    a janela é curta demais.
   </aside>
 </section>
 
@@ -316,50 +333,61 @@
 <section>
   <h2>A solução: 5 pilares e uma média geométrica</h2>
   <div class="pilares">
-    <div class="pilar"><span class="letra">A</span><span class="nome">Capacidade de consumo</span><span class="comp">PIB per capita, rendimento domiciliar, empregos formais</span><span class="peso">peso 15%</span></div>
-    <div class="pilar"><span class="letra">B</span><span class="nome">Dinamismo financeiro</span><span class="comp">Pix per capita nos últimos 12 meses</span><span class="peso">peso 20%</span></div>
-    <div class="pilar"><span class="letra">C</span><span class="nome">Adoção digital</span><span class="comp">Banda larga fixa por 100 habitantes</span><span class="peso">peso 15%</span></div>
-    <div class="pilar"><span class="letra">D</span><span class="nome">Gap bancário</span><span class="comp">Agências e correspondentes por tipo, invertido</span><span class="peso">peso 30%</span></div>
-    <div class="pilar"><span class="letra">E</span><span class="nome">Perfil demográfico</span><span class="comp">Escolaridade e população de 18 a 35 anos</span><span class="peso">peso 20%</span></div>
+    <div class="pilar"><span class="letra">A</span><span class="nome">Capacidade de consumo</span><span class="comp">PIB per capita, rendimento, empregos formais</span><span class="ancora">CEMPRE 2024 entra aqui</span><span class="peso">peso 15%</span></div>
+    <div class="pilar"><span class="letra">B</span><span class="nome">Dinamismo financeiro</span><span class="comp">Pix per capita nos últimos 12 meses</span><span class="ancora">R$ 13,8 trilhões movimentados</span><span class="peso">peso 20%</span></div>
+    <div class="pilar"><span class="letra">C</span><span class="nome">Adoção digital</span><span class="comp">Banda larga fixa por 100 habitantes</span><span class="ancora">o proxy do acesso digital</span><span class="peso">peso 15%</span></div>
+    <div class="pilar"><span class="letra">D</span><span class="nome">Gap bancário</span><span class="comp">Agências e correspondentes por tipo, invertido</span><span class="ancora">as 2.656 cidades sem agência moram aqui</span><span class="peso">peso 30%</span></div>
+    <div class="pilar"><span class="letra">E</span><span class="nome">Perfil demográfico</span><span class="comp">Escolaridade e população de 18 a 35 anos</span><span class="ancora">39,5% com ensino médio completo</span><span class="peso">peso 20%</span></div>
   </div>
   <p class="formula">IPB = (A<sup>0,15</sup> × B<sup>0,20</sup> × C<sup>0,15</sup> × D<sup>0,30</sup> × E<sup>0,20</sup>) × 100</p>
   <p class="fecho">Pilar zerado zera o índice. Quem não tem nada em nenhuma dimensão não
   entra no ranking à força.</p>
   <aside class="notes">
     [A solução — 50s] A solução é um índice de cinco pilares. Cada variável é winsorizada
-    e normalizada entre zero e um. O IPB é a média geométrica ponderada, vezes cem. Por
-    que geométrica: se qualquer pilar zera, o índice zera. Cidade sem nada em uma
-    dimensão não compensa com excesso em outra. Por isso existem 119 cidades com IPB
-    zero: é propriedade do método, não bug. E o pilar D pesa o dobro porque a pergunta do
-    projeto é de concorrência.
+    e normalizada entre zero e um. O IPB é a média geométrica ponderada, vezes cem. Os
+    números de âncora: treze trilhões e oitocentos bilhões de Pix em doze meses no pilar
+    B; as duas mil seiscentas e cinquenta e seis cidades sem agência no pilar D; os trinta
+    e nove vírgula cinco por cento de escolaridade no pilar E. E a regra que manda em
+    tudo: se qualquer pilar zera, o índice zera. Por isso existem 119 cidades com IPB
+    zero. É propriedade do método, não bug.
   </aside>
 </section>
 
 <!-- ==================== 9. TRÊS VERSÕES (~45s) ==================== -->
 <section>
-  <h2>Três versões, uma decisão</h2>
-  <table class="mini">
-    <tr><th></th><th>V1 Clássico</th><th>V2 Recalibrado</th><th>V3 Presença completa</th></tr>
-    <tr><td>O que testa</td><td>Fórmula original, pesos iguais</td><td>Dobrar o voto do gap bancário</td><td>Rede completa e empregos formais</td></tr>
-    <tr><td>Pilar D efetivo</td><td>20%</td><td>33%</td><td>30%</td></tr>
-    <tr><td>O gap mede</td><td>Agências, depósitos e crédito</td><td>Só agências</td><td>Agências e correspondentes por tipo</td></tr>
-  </table>
-  <p style="font-size:.64em; margin-top:.6em">As três concordam em mais de 80% das
-  posições. Spearman de 0,840 entre V1 e V3.</p>
-  <p class="fecho">A V3 é a oficial: o eixo concorrência é a identidade do projeto, e ela
-  é a única que mede a rede completa, não só agências.</p>
+  <h2>Três versões do índice</h2>
+  <div class="cards3">
+    <div class="card3">
+      <span class="tag-versao">V1 · Clássico</span>
+      <h3>A fórmula original</h3>
+      <p>Pesos iguais nos cinco pilares. Ranqueou riqueza e chamou de potencial.</p>
+    </div>
+    <div class="card3">
+      <span class="tag-versao">V2 · Recalibrado</span>
+      <h3>O ajuste rápido</h3>
+      <p>Dobrou o peso do gap bancário pra tirar o viês da renda.</p>
+    </div>
+    <div class="card3">
+      <span class="tag-versao">V3 · Presença completa</span>
+      <h3>A oficial</h3>
+      <p>Mede a rede inteira, não só agência, e soma os empregos formais.</p>
+    </div>
+  </div>
+  <p class="fecho">As três concordam em mais de 80% das posições (Spearman 0,840 entre
+  V1 e V3). A V3 é a oficial porque a pergunta do projeto é de concorrência.</p>
   <aside class="notes">
-    [Três versões — 45s] Foram três versões, não uma. A V1, pesos iguais. A V2 dobrou o
-    voto da concorrência. A V3 redesenhou o pilar D: agência sozinha não mede mais
-    acesso, então o índice mede a rede completa, com correspondentes por tipo, e ganhou
-    empregos formais do CEMPRE no pilar A. As três concordam em mais de 80% das posições.
-    A escolha da V3 não é pelo ranking, é pela pergunta: medir concorrência física é a
-    identidade do projeto.
+    [Três versões — 45s] Foram três versões, não uma. A V1, pesos iguais, ranqueou
+    riqueza e chamou de potencial. A V2 dobrou o peso da concorrência. A V3 redesenhou o
+    pilar D: agência sozinha não mede mais acesso, então mede a rede completa, com
+    correspondentes por tipo, e soma os empregos formais do CEMPRE. As três concordam em
+    mais de oitenta por cento das posições. A V3 é a oficial porque a pergunta do
+    projeto é de concorrência física.
   </aside>
 </section>
 
 <!-- ==================== 10. O MAPA (~45s) ==================== -->
 <section id="slide-mapa">
+  <span class="secao-tag">Além do índice: o que a gente experimentou com ML</span>
   <h2>O mapa</h2>
   <div class="mapa-toolbar" role="group" aria-label="Camadas do mapa">
     <button type="button" class="layer-btn active" data-layer="ipb">IPB V3</button>
@@ -370,7 +398,7 @@
   <div id="legend-slide" class="legend-slide" aria-hidden="true"></div>
   <p class="leituras">Leituras prontas: o potencial concentra no eixo sul-sudeste, no
   litoral turístico e nos dormitórios industriais. Ao vivo dá pra dar zoom, trocar para
-  arquétipos e clicar em qualquer cidade.</p>
+  arquétipos e passar o mouse em qualquer cidade.</p>
   <aside class="notes">
     [Mapa — 45s] O mapa aqui é o site funcionando dentro do próprio slide. Dá pra dar
     zoom com a roda, arrastar, trocar a camada pra arquétipos. Três leituras prontas: o
@@ -382,10 +410,11 @@
 
 <!-- ==================== 11. ARQUÉTIPOS (~45s) ==================== -->
 <section>
+  <span class="secao-tag">Além do índice: o que a gente experimentou com ML</span>
   <h2>Arquétipos: 6 tipos de cidade</h2>
   <div class="duas-figuras">
     <div id="fig-arq-barras" class="fig-interativa" data-fig="assets/data/fig_arquetipos_barras.json"></div>
-    <div id="fig-arq-radar" class="fig-interativa" data-fig="assets/data/fig_arquetipos_radar.json"></div>
+    <div id="fig-pca-arq" class="fig-interativa" data-fig="assets/data/fig_pca_arquetipos.json"></div>
   </div>
   <div class="arq-grid">
     <div class="arq"><span class="chip" style="background:#b07aa1"></span>Turismo - com rede <span class="n">(740)</span>: destinos grandes e ricos, já atendidos</div>
@@ -397,36 +426,41 @@
   </div>
   <aside class="notes">
     [Arquétipos — 45s] Na Etapa 3, o K-Means com K igual a 6 separou seis arquétipos, com
-    nome de negócio. Brinque com o dropdown do radar: cada grupo tem assinatura própria
-    nas variáveis. O achado do projeto é o turismo sem banco: 653 cidades pequenas e
-    ricas, cem por cento sem agência. Bombinhas, líder do IPB, mora nesse grupo. Na
-    outra ponta, o interior pobre sem rede é o maior grupo do país: 1.278 cidades. Cada
-    arquétipo tem uma jogada típica de produto.
+    nome de negócio. O gráfico da direita é o mapa de perfil: os dois componentes
+    principais sobre as dezenove variáveis, que resumem 63% da variância, e cada grupo
+    ocupa um território próprio. O achado do projeto é o turismo sem banco: 653 cidades
+    pequenas e ricas, cem por cento sem agência. Bombinhas, líder do IPB, mora aí. Na
+    outra ponta, o interior pobre sem rede é o maior grupo do país: 1.278 cidades.
   </aside>
 </section>
 
 <!-- ==================== 12. O QUE TENTAMOS (~35s) ==================== -->
 <section>
+  <span class="secao-tag">Além do índice: o que a gente experimentou com ML</span>
   <h2>O que a gente tentou: prever presença bancária</h2>
   <div class="class-grid">
     <div id="fig-roc" class="fig-interativa" data-fig="assets/data/fig_classificacao_roc.json"></div>
     <div class="class-lado">
-      <div class="stats stats-col">
+      <div class="stats">
         <div class="stat"><span class="valor">0,94</span>ROC-AUC no teste (n = 1.114)</div>
         <div class="stat"><span class="valor">0,95</span>PR-AUC</div>
         <div class="stat"><span class="valor">0,87</span>F1</div>
       </div>
-      <p>Presença é prevível: banco coloca agência onde tem gente. O produto útil são os
-      desvios, as 56 cidades com cara de bancarizada e zero agência.</p>
-      <p class="fecho">Sem rótulo de verdade, o modelo cruza com o IPB. Não o substitui.</p>
+      <p>A pergunta: dá pra prever presença bancária olhando só o contexto da cidade?
+      Dá. Presença é prevível, porque banco coloca agência onde tem gente.</p>
+      <p>O produto útil são os desvios: as 56 cidades com cara de bancarizada e zero
+      agência.</p>
+      <p class="fecho">Foi experimentação honesta, com alvo proxy. Sem rótulo de
+      verdade, o modelo cruza com o IPB. Não o substitui.</p>
     </div>
   </div>
   <aside class="notes">
-    [O que tentamos — 35s] A curva é de um modelo que separa bem quem tem agência: AUC
-    zero vírgula noventa e quatro no teste. Mas a pergunta que ele responde é a do proxy.
-    O produto útil são os desvios: 56 cidades com cara de bancarizada e nenhuma agência,
-    e Bombinhas, líder do IPB, está entre elas. Sem rótulo de verdade no mundo, isso é
-    hipótese gerada, não verdade revelada.
+    [O que tentamos — 35s] A pergunta era: dá pra prever presença bancária olhando só o
+    contexto da cidade? A curva mostra que dá: AUC zero vírgula noventa e quatro no
+    teste. Mas é alvo proxy, declarado. E a resposta em si é óbvia: banco coloca agência
+    onde tem gente. O produto útil são os desvios, as cinquenta e seis cidades com cara
+    de bancarizada e nenhuma agência. Sem rótulo de verdade no mundo, isso é hipótese
+    gerada, não verdade revelada.
   </aside>
 </section>
 
@@ -439,20 +473,23 @@
     <div class="stat"><span class="valor">32</span>Cidades do Top 100 que trocam se o pilar D sair. Mesmo com Spearman de 0,894.</div>
   </div>
   <div class="resultados-grid">
-    <img class="fig-top15" src="assets/img/fig_top15_ipb.png" alt="Barras horizontais do Top 15 do IPB V3">
+    <div id="fig-top15" class="fig-interativa" data-fig="assets/data/fig_top15_ipb.json"></div>
     <div id="fig-ipb-arq" class="fig-interativa" data-fig="assets/data/fig_resultados_ipb_arquetipos.json"></div>
   </div>
-  <p class="leitura-slide">Onde cada arquétipo mora no índice: turismo pontua alto,
-  interior sem rede fica embaixo, e o achado mora no meio disso.</p>
+  <p class="takeaway">Pra quem vai usar: o topo do ranking junta as três coisas de uma
+  vez, dinheiro circulando, cidade digitalizada e pouco banco físico. É isso que separa
+  oportunidade de aparência.</p>
   <aside class="notes">
     [Resultados — 65s] O slide principal. O Top 30 do IPB tem PIB per capita mediano de
     93 mil reais, contra 30 mil da mediana nacional. Participação de PJ no Pix de 0,57,
     contra 0,19 nas 30 piores. O Top 15 mistura litoral turístico, renda alta de entorno
-    e capitais planejadas. O gráfico novo da direita mostra onde cada arquétipo mora no
-    índice: turismo pontua alto, interior sem rede fica embaixo. E pra medir o peso da
-    concorrência: tiramos o pilar D e rodamos de novo. O ranking geral mal mexe, Spearman
-    de 0,894. Mas 32 das 100 cidades do topo trocam. O pilar D não reescreve o ranking:
-    ele dá identidade ao recorte.
+    e capitais planejadas. O gráfico da direita mostra onde cada arquétipo mora no
+    índice: turismo pontua alto, interior sem rede fica embaixo. E o que isso significa
+    pra quem vai usar: o topo junta as três coisas de uma vez, dinheiro circulando,
+    cidade digitalizada e pouco banco físico. Oportunidade de verdade, não aparência. E
+    pra medir o peso da concorrência: tiramos o pilar D e rodamos de novo. O ranking
+    geral mal mexe, Spearman de 0,894. Mas 32 das 100 cidades do topo trocam. O pilar D
+    não reescreve o ranking: ele dá identidade ao recorte.
   </aside>
 </section>
 
@@ -462,36 +499,41 @@
   <div class="lim-cards">
     <div class="lim-card">
       <span class="lim-num">01</span>
-      <p>Vintage misto: Censo 2022 a correspondentes de 2026.</p>
-      <p class="lim-mit">Declarado em tudo que o projeto publica.</p>
+      <p>Anos de referência misturados entre as fontes: Censo 2022 até correspondentes
+      de 2026.</p>
+      <p class="lim-mit">Declarado em cada entrega.</p>
     </div>
     <div class="lim-card">
       <span class="lim-num">02</span>
-      <p>Concorrência digital invisível: fintech não aparece em proxy físico.</p>
-      <p class="lim-mit">O Pix já mede a adoção instalada.</p>
+      <p>Concorrência digital quase impossível de pegar com dado público: só 2,2% dos
+      correspondentes são de banco digital.</p>
+      <p class="lim-mit">O Pix segue medindo adoção instalada.</p>
     </div>
     <div class="lim-card">
       <span class="lim-num">03</span>
-      <p>Alvo proxy: ninguém rotulou oportunidade real.</p>
+      <p>Não existe ground truth. O alvo é proxy, assumido e declarado.</p>
       <p class="lim-mit">Validações objetivas com CEMPRE e turismo.</p>
     </div>
     <div class="lim-card">
       <span class="lim-num">04</span>
-      <p>CEMPRE deixa o MEI de fora.</p>
-      <p class="lim-mit">CNPJ e Caged já estão na fila.</p>
+      <p>Faltou coletar: Anatel móvel 4G/5G, CNPJ/Caged, visitação e dados de
+      crédito.</p>
+      <p class="lim-mit">Tudo na fila de enriquecimento.</p>
     </div>
   </div>
   <div class="chips">
-    <span class="chip">Validar o Top 100 com negócio</span>
     <span class="chip">4G/5G no pilar C</span>
-    <span class="chip">CNPJ e MEI com Caged</span>
-    <span class="chip">Visitação pra fechar o turismo</span>
+    <span class="chip">CNPJ e Caged cobrem o MEI</span>
+    <span class="chip">Visitação (Embratur) fecha o turismo</span>
+    <span class="chip">Validar o Top 100 com negócio</span>
   </div>
   <aside class="notes">
-    [Limitações — 35s] Quatro limitações, cada uma com a mitigação do lado. Vintage
-    misto, declarado. Concorrência digital, que nenhuma proxy física enxerga. Alvo
-    proxy, segurado por validações objetivas. E o MEI fora do CEMPRE. E a faixa de baixo
-    são os próximos passos, um por chip.
+    [Limitações — 35s] Quatro limitações, cada uma com o caminho de saída do lado. Anos
+    de referência misturados, declarado. Concorrência digital, que o dado público quase
+    não enxerga: só dois vírgula dois por cento dos correspondentes são de banco
+    digital. Alvo proxy, segurado por validações objetivas. E as bases que faltaram
+    coletar, móvel, CNPJ, visitação, crédito. Os chips de baixo conectam cada limitação à
+    base que a resolve.
   </aside>
 </section>
 
@@ -541,16 +583,23 @@
 
   function renderizarFiguras(secao) {
     var alvos = secao.querySelectorAll('[data-fig]');
-    for (var i = 0; i < alvos.length; i++) {
-      var el = alvos[i];
-      if (figurasProntas[el.id]) { continue; }
+    Array.prototype.forEach.call(alvos, function (el) {
+      if (figurasProntas[el.id]) { return; }
       figurasProntas[el.id] = true;
       fetch(el.getAttribute('data-fig'))
-        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          if (!r.ok) { throw new Error(el.id + ' respondeu HTTP ' + r.status); }
+          return r.json();
+        })
         .then(function (fig) {
           Plotly.newPlot(el, fig.data, fig.layout, { responsive: true, displayModeBar: false });
+        })
+        .catch(function (err) {
+          console.error('[deck] figura falhou:', err);
+          el.textContent = 'Erro ao carregar figura (' + el.getAttribute('data-fig') + '): ' + err.message;
+          el.style.cssText = 'color:#b91c1c;font-size:14px;padding:12px;border:1px solid #b91c1c;border-radius:8px;';
         });
-    }
+    });
   }
 
   function iniciarMapa(secao) {

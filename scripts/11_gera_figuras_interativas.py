@@ -7,25 +7,32 @@ fetch + Plotly.newPlot com renderizacao preguicosa (o deck so renderiza o
 grafico quando o slide fica visivel, porque plotly em slide display:none
 mede 0x0).
 
-Figuras geradas:
+Figuras usadas no deck:
     1. fig_espelho_escolaridade_hist.json      — distribuicao da escolaridade
                                                  por municipio, com media nacional
-    2. fig_espelho_escolaridade_extremos.json  — top 10 e bottom 10 de escolaridade
+    2. fig_espelho_escolaridade_regiao.json    — box da escolaridade por regiao,
+                                                 com pontos da media
     3. fig_espelho_pix_top15.json              — top 15 de Pix per capita, tooltip rico
-    4. fig_espelho_pix_agencias.json           — dispersao Pix x agencias, cor =
-                                                 correspondentes (rede paralela)
+    4. fig_pix_por_uf.json                     — mediana de Pix per capita por UF,
+                                                 hover com maximo e municipio recordista
     5. fig_arquetipos_barras.json              — quantidade de municipios por arquetipo
-    6. fig_arquetipos_radar.json               — radar das medias padronizadas por
-                                                 arquetipo, com dropdown de selecao
+    6. fig_pca_arquetipos.json                 — dispersao PCA (2D) dos clusters com
+                                                 centroides
     7. fig_classificacao_roc.json              — curva ROC re-treinada do classificador
                                                  de presenca bancaria (teste)
     8. fig_resultados_ipb_arquetipos.json      — distribuicao do IPB V3 por arquetipo
+    9. fig_top15_ipb.json                      — Top 15 do IPB V3 (substitui o PNG)
+
+Figuras geradas para o apendice (docs/apendice.html), fora da fala:
+    - fig_rede_por_estrato.json                — agencias vs correspondentes por
+                                                 estrato (a rede paralela, secao A8)
+    - fig_espelho_escolaridade_extremos.json   — top 10 e bottom 10 de escolaridade
 
 Inputs (data/processed/):
     - trusted_municipios_eda.parquet (escolaridade, pix, agencias)
     - analytics_ipb_v3_presenca_completa.parquet (ipb V3, correspondentes, CEMPRE)
     - modelagem_resultados.parquet (arquetipo, cluster)
-    - modelagem.parquet (features e alvo da classificacao)
+    - modelagem.parquet (features e alvo da classificacao e do PCA)
 
 Outputs:
     - docs/assets/data/*.json (um por figura)
@@ -34,7 +41,7 @@ Nota metodologica: a media de escolaridade usada na linha do histograma e a
 media simples entre municipios (cada municipio pesa igual, coerente com o
 histograma e com o desenho do IPB). A media ponderada pela populacao sobe
 para ~52%, porque as grandes cidades sao mais escolarizadas; a diferenca e
-ela mesma um achado de equidade urbano/rural, citada nas notas do slide.
+ela mesma um achado de equidade urbano/rural, citado nas notas do slide.
 """
 
 from __future__ import annotations
@@ -46,11 +53,13 @@ from pathlib import Path
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as pio
+from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import auc, roc_curve
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
-from src.analytics.modelagem import FEATURES_SEM_PRESENCA
+from src.analytics.modelagem import FEATURES_MODELO, FEATURES_SEM_PRESENCA
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -77,25 +86,16 @@ ROTULO_ARQUETIPO = {
     "Turismo - sem banco": "Turismo - sem banco",
     "Sem rede bancaria - renda alta": "Sem rede bancária - renda alta",
 }
+CORES_ESTRATO = {
+    "pequena": "#4e79a7",
+    "media": "#f28e2b",
+    "grande": "#59a14f",
+}
 ROTULO_ESTRATO = {
     "pequena": "Pequena (<50 mil)",
     "media": "Média (50–500 mil)",
     "grande": "Grande (>500 mil)",
 }
-
-# Features do radar de arquetipos (chave -> rotulo curto pt-BR).
-FEATURES_RADAR = {
-    "pib_per_capita": "PIB pc",
-    "rendimento_domiciliar_per_capita": "Renda dom.",
-    "pix_per_capita_12m": "Pix pc",
-    "banda_larga_fixa_por_100_hab": "Banda larga",
-    "escolaridade_ensino_medio_pct": "Escolaridade",
-    "empregos_formais_por_1000_hab": "Empregos formais",
-    "unidades_alojamento_alimentacao_por_1000_hab": "Alojamento",
-    "agencias_por_100k_hab": "Agências",
-    "correspondentes_por_100k_hab": "Correspondentes",
-}
-
 CORES_REGIAO = {
     "Norte": "#59a14f",
     "Nordeste": "#e15759",
@@ -132,6 +132,7 @@ def carregar_base() -> pd.DataFrame:
             [
                 "id_municipio",
                 "ipb",
+                "rank",
                 "correspondentes_por_100k_hab",
                 "empregos_formais_por_1000_hab",
                 "unidades_alojamento_alimentacao_por_1000_hab",
@@ -187,13 +188,17 @@ def fig_escolaridade_hist(base: pd.DataFrame) -> Path:
         xaxis_title="% da população 18+ com ensino médio completo (Censo 2022)",
         yaxis_title="Nº de municípios",
         showlegend=False,
-        height=460,
+        height=470,
+        margin={"l": 60, "r": 30, "t": 75, "b": 55},
     )
     return gravar(fig, "fig_espelho_escolaridade_hist.json")
 
 
 def fig_escolaridade_extremos(base: pd.DataFrame) -> Path:
-    """Barras combinadas das 10 cidades mais altas e 10 mais baixas em escolaridade."""
+    """Barras combinadas das 10 cidades mais altas e 10 mais baixas em escolaridade.
+
+    Gerada para consulta no apêndice; fora do deck por falta de espaço.
+    """
     top = base.nlargest(10, "escolaridade_ensino_medio_pct")
     bottom = base.nsmallest(10, "escolaridade_ensino_medio_pct")
     comb = pd.concat([bottom, top])  # bottom primeiro: barras mais baixas embaixo
@@ -229,6 +234,49 @@ def fig_escolaridade_extremos(base: pd.DataFrame) -> Path:
     return gravar(fig, "fig_espelho_escolaridade_extremos.json")
 
 
+def fig_escolaridade_regiao(base: pd.DataFrame) -> Path:
+    """Box da escolaridade por regiao, com pontos da media e titulo interpretado."""
+    resumo = (
+        base.groupby("nome_regiao")["escolaridade_ensino_medio_pct"]
+        .agg(media="mean", mediana="median")
+        .sort_values("media", ascending=False)
+    )
+    logger.info("escolaridade por regiao (media): %s", resumo["media"].round(2).to_dict())
+    ordem = resumo.index.tolist()
+
+    fig = go.Figure()
+    for regiao in ordem:
+        fatia = base[base["nome_regiao"] == regiao]["escolaridade_ensino_medio_pct"]
+        fig.add_box(
+            y=fatia,
+            name=regiao,
+            marker_color=CORES_REGIAO[regiao],
+            boxmean=False,
+            boxpoints=False,
+            hovertemplate="%{y:.1f}%<extra></extra>".replace(".", ","),
+        )
+    fig.add_scatter(
+        x=ordem,
+        y=resumo["media"].round(2),
+        mode="markers",
+        marker=dict(symbol="diamond", size=11, color="#24303b"),
+        name="Média",
+        hovertemplate="Média %{x}: %{y:.1f}%<extra></extra>".replace(".", ","),
+    )
+    fig.update_layout(
+        **LAYOUT_BASE,
+        title=(
+            f"O Nordeste fica embaixo: {resumo.loc['Nordeste', 'media']:.1f}% com ensino médio, "
+            f"contra {resumo.loc['Sudeste', 'media']:.1f}% no Sudeste"
+        ).replace(".", ","),
+        yaxis_title="% da população 18+ com ensino médio completo",
+        showlegend=False,
+        height=470,
+        margin={"l": 60, "r": 30, "t": 75, "b": 55},
+    )
+    return gravar(fig, "fig_espelho_escolaridade_regiao.json")
+
+
 def fig_pix_top15(base: pd.DataFrame) -> Path:
     """Top 15 de Pix per capita com tooltip rico."""
     top = base.nlargest(15, "pix_per_capita_12m")
@@ -259,39 +307,111 @@ def fig_pix_top15(base: pd.DataFrame) -> Path:
     return gravar(fig, "fig_espelho_pix_top15.json")
 
 
-def fig_pix_agencias(base: pd.DataFrame) -> Path:
-    """Dispersão Pix x agências com cor por correspondentes (rede paralela)."""
+def fig_rede_por_estrato(base: pd.DataFrame) -> Path:
+    """Barras agrupadas: agencias vs correspondentes por 100 mil hab, por estrato."""
+    resumo = (
+        base.groupby("estrato_populacional")[["agencias_por_100k_hab", "correspondentes_por_100k_hab"]]
+        .median()
+        .reindex(["pequena", "media", "grande"])
+    )
+    logger.info("rede por estrato (mediana): %s", resumo.round(1).to_dict())
+    estratos = [ROTULO_ESTRATO[e] for e in resumo.index]
+
     fig = go.Figure()
-    fig.add_scatter(
-        x=base["agencias_por_100k_hab"] + 0.05,
-        y=base["pix_per_capita_12m"],
-        mode="markers",
-        marker=dict(
-            size=7,
-            color=base["correspondentes_por_100k_hab"],
-            colorscale="YlGnBu",
-            showscale=True,
-            colorbar=dict(title="Corresp.<br>/100 mil"),
-            opacity=0.65,
-        ),
-        text=base["nome_municipio"] + " (" + base["sigla_uf"] + ")",
-        customdata=base[["agencias_por_100k_hab", "correspondentes_por_100k_hab"]],
+    fig.add_bar(
+        x=estratos,
+        y=resumo["agencias_por_100k_hab"],
+        name="Agências /100 mil hab",
+        marker_color="#16637a",
+        hovertemplate="%{x}<br>Agências: %{y:.1f} /100 mil hab<extra></extra>".replace(".", ","),
+    )
+    fig.add_bar(
+        x=estratos,
+        y=resumo["correspondentes_por_100k_hab"],
+        name="Correspondentes /100 mil hab",
+        marker_color="#f28e2b",
+        hovertemplate="%{x}<br>Correspondentes: %{y:.0f} /100 mil hab<extra></extra>",
+    )
+    fig.update_layout(
+        **LAYOUT_BASE,
+        title=(
+            f"Na cidade pequena, a lotérica é o banco: {resumo.loc['pequena', 'agencias_por_100k_hab']:.0f} agência "
+            f"na mediana e {resumo.loc['pequena', 'correspondentes_por_100k_hab']:.0f} correspondentes por 100 mil hab"
+        ).replace(".", ","),
+        yaxis_title="Pontos por 100 mil hab (mediana)",
+        barmode="group",
+        height=470,
+        margin={"l": 60, "r": 30, "t": 75, "b": 55},
+        legend=dict(orientation="h", y=1.12, x=0),
+    )
+    return gravar(fig, "fig_rede_por_estrato.json")
+
+
+def fig_pix_por_uf(base: pd.DataFrame) -> Path:
+    """Mediana de Pix per capita por UF, com tooltip rico (maximo e recordista)."""
+    resumo = (
+        base.groupby(["sigla_uf", "nome_regiao"])["pix_per_capita_12m"]
+        .agg(mediana="median", maximo="max")
+        .reset_index()
+    )
+    recordistas = base.loc[base.groupby("sigla_uf")["pix_per_capita_12m"].idxmax(),
+                            ["sigla_uf", "nome_municipio"]]
+    resumo = resumo.merge(recordistas, on="sigla_uf", validate="one_to_one")
+    resumo = resumo.sort_values("mediana", ascending=True)  # barh: maior no topo
+
+    fig = go.Figure()
+    fig.add_bar(
+        y=resumo["sigla_uf"],
+        x=resumo["mediana"],
+        orientation="h",
+        marker_color=[CORES_REGIAO[r] for r in resumo["nome_regiao"]],
+        customdata=resumo[["maximo", "nome_municipio", "nome_regiao"]],
         hovertemplate=(
-            "%{text}<br>Pix per capita: R$ %{y:,.0f}"
-            "<br>Agências /100 mil: %{customdata[0]:.1f} · Correspondentes /100 mil: %{customdata[1]:.0f}"
-            "<extra></extra>"
+            "%{y}<br>Mediana: R$ %{x:,.0f}"
+            "<br>Máximo: R$ %{customdata[0]:,.0f} (%{customdata[1]})"
+            "<br>Região: %{customdata[2]}<extra></extra>"
         ).replace(",", "X").replace(".", ",").replace("X", "."),
     )
     fig.update_layout(
         **LAYOUT_BASE,
-        title="Pix alto não pede licença pra agência: onde uma é rara, a outra rede cresce",
-        xaxis_title="Agências por 100 mil hab (escala log)",
-        yaxis_title="Pix per capita, 12m (escala log)",
-        height=480,
+        title="O agro do Centro-Oeste e a fronteira do Norte movem mais Pix per capita que as metrópoles",
+        xaxis_title="Mediana de Pix per capita, 12 meses (R$)",
+        yaxis_title="",
+        showlegend=False,
+        height=560,
+        margin={"l": 55, "r": 30, "t": 70, "b": 55},
     )
-    fig.update_xaxes(type="log")
-    fig.update_yaxes(type="log")
-    return gravar(fig, "fig_espelho_pix_agencias.json")
+    return gravar(fig, "fig_pix_por_uf.json")
+
+
+def fig_top15_ipb(base: pd.DataFrame) -> Path:
+    """Top 15 do IPB V3 em barras interativas (substitui o PNG da rodada 1)."""
+    top = base.nsmallest(15, "rank").copy()
+    top["rotulo"] = top["nome_municipio"] + " (" + top["sigla_uf"] + ")"
+    fig = go.Figure()
+    fig.add_bar(
+        y=top["rotulo"],
+        x=top["ipb"],
+        orientation="h",
+        marker_color=[CORES_ESTRATO[e] for e in top["estrato_populacional"]],
+        customdata=top[["ipb", "arquetipo", "estrato_populacional"]],
+        hovertemplate=(
+            "%{y}<br>IPB V3: %{customdata[0]:.2f} · Arquétipo: %{customdata[1]}"
+            " · Estrato: %{customdata[2]}<extra></extra>"
+        ).replace(".", ","),
+    )
+    fig.update_layout(
+        **LAYOUT_BASE,
+        title="O Top 15 do IPB V3 mistura turismo, dormitórios ricos e capitais",
+        xaxis_title="IPB V3 (0–100)",
+        yaxis_title="",
+        showlegend=False,
+        height=560,
+        margin={"l": 190, "r": 30, "t": 70, "b": 55},
+    )
+    fig.update_yaxes(categoryorder="total ascending")
+    fig.update_xaxes(range=[0, 80])
+    return gravar(fig, "fig_top15_ipb.json")
 
 
 def fig_arquetipos_barras(base: pd.DataFrame) -> Path:
@@ -313,60 +433,77 @@ def fig_arquetipos_barras(base: pd.DataFrame) -> Path:
     )
     fig.update_layout(
         **LAYOUT_BASE,
-        title="O interior pobre sem rede é o maior arquétipo; o turismo rico sem banco é o achado",
+        title="O interior pobre sem rede é o maior grupo; o turismo rico sem banco é o achado",
         xaxis_title="",
         yaxis_title="Nº de municípios",
         showlegend=False,
-        height=440,
+        height=470,
+        margin={"l": 60, "r": 30, "t": 75, "b": 95},
     )
+    fig.update_xaxes(tickangle=-20)
     return gravar(fig, "fig_arquetipos_barras.json")
 
 
-def fig_arquetipos_radar(base: pd.DataFrame) -> Path:
-    """Radar das medias padronizadas por arquetipo, com dropdown de selecao."""
-    faltantes = [f for f in FEATURES_RADAR if f not in base.columns]
-    if faltantes:
-        raise ValueError(f"features ausentes na base: {faltantes}")
-    features = list(FEATURES_RADAR)
-    z = (base[features] - base[features].mean()) / base[features].std()
-    z["cluster_kmeans"] = base["cluster_kmeans"]
-    perfil = z.groupby("cluster_kmeans")[features].mean()
-    ordem = sorted(perfil.index)
-    arquetipos = base.groupby("cluster_kmeans")["arquetipo"].first().reindex(ordem)
+def fig_pca_arquetipos() -> Path:
+    """
+    Dispersao 2D dos clusters via PCA sobre as 19 features padronizadas.
 
-    theta = [FEATURES_RADAR[f] for f in features] + [FEATURES_RADAR[features[0]]]
+    As features de modelagem.parquet ja tem log1p aplicado; a padronizacao
+    (StandardScaler) acontece aqui, antes do PCA, como nos notebooks.
+    """
+    logger.info("Calculando PCA dos arquetipos...")
+    mod = pd.read_parquet(PROCESSED_DATA_DIR / "modelagem.parquet")
+    res = pd.read_parquet(PROCESSED_DATA_DIR / "modelagem_resultados.parquet")
+    mod["id_municipio"] = mod["id_municipio"].astype(str).str.zfill(7)
+    res["id_municipio"] = res["id_municipio"].astype(str).str.zfill(7)
+
+    X = StandardScaler().fit_transform(mod[FEATURES_MODELO])
+    pca = PCA(n_components=2)
+    comps = pca.fit_transform(X)
+    logger.info("variancia explicada PC1+PC2: %.1f%%", pca.explained_variance_ratio_.sum() * 100)
+
+    base = pd.DataFrame({
+        "id_municipio": mod["id_municipio"],
+        "nome_municipio": mod["nome_municipio"],
+        "pc1": comps[:, 0],
+        "pc2": comps[:, 1],
+    }).merge(res[["id_municipio", "cluster_kmeans", "arquetipo"]], on="id_municipio", validate="one_to_one")
+
     fig = go.Figure()
-    botoes = []
-    for i, cl in enumerate(ordem):
-        valores = perfil.loc[cl].tolist()
-        valores_fechados = valores + [valores[0]]
-        visiveis = [j == i for j in range(len(ordem))]
-        fig.add_scatterpolar(
-            r=valores_fechados,
-            theta=theta,
-            fill="toself",
-            fillcolor=hex_para_rgba(CORES_ARQUETIPOS[arquetipos[cl]], 0.18),
-            line_color=CORES_ARQUETIPOS[arquetipos[cl]],
-            name=ROTULO_ARQUETIPO[arquetipos[cl]],
-            visible=(i == 0),
-            hovertemplate="%{theta}: %{r:.1f} desvios<extra></extra>".replace(".", ","),
+    ordem = sorted(base["cluster_kmeans"].unique())
+    arquetipos = base.groupby("cluster_kmeans")["arquetipo"].first().reindex(ordem)
+    for cl in ordem:
+        fatia = base[base["cluster_kmeans"] == cl]
+        arq = arquetipos[cl]
+        fig.add_scatter(
+            x=fatia["pc1"],
+            y=fatia["pc2"],
+            mode="markers",
+            marker=dict(size=5, color=CORES_ARQUETIPOS[arq], opacity=0.55),
+            name=ROTULO_ARQUETIPO[arq],
+            customdata=fatia[["nome_municipio", "arquetipo"]],
+            hovertemplate="%{customdata[0]}<br>%{customdata[1]}<extra></extra>",
+            showlegend=False,
         )
-        botoes.append(
-            {
-                "label": ROTULO_ARQUETIPO[arquetipos[cl]],
-                "method": "update",
-                "args": [{"visible": visiveis}, {"title": f"Assinatura: {ROTULO_ARQUETIPO[arquetipos[cl]]}"}],
-            }
-        )
+    centroides = base.groupby("cluster_kmeans")[["pc1", "pc2"]].mean().reindex(ordem)
+    fig.add_scatter(
+        x=centroides["pc1"],
+        y=centroides["pc2"],
+        mode="markers",
+        marker=dict(symbol="x", size=15, color="#1f2937", line_width=3),
+        name="Centroide",
+        customdata=[ROTULO_ARQUETIPO[a] for a in arquetipos],
+        hovertemplate="Centroide: %{customdata[0]}<extra></extra>",
+    )
     fig.update_layout(
         **LAYOUT_BASE,
-        title=f"Assinatura: {ROTULO_ARQUETIPO[arquetipos[ordem[0]]]}",
-        updatemenus=[{"buttons": botoes, "direction": "down", "x": 1.0, "y": 1.12, "showactive": True}],
-        polar=dict(radialaxis=dict(visible=True, range=[-2.2, 2.2])),
-        height=480,
-        margin={"l": 60, "r": 80, "t": 80, "b": 55},
+        title="Cada arquétipo ocupa um território próprio no mapa de perfil das cidades",
+        xaxis_title="Componente principal 1",
+        yaxis_title="Componente principal 2",
+        height=470,
+        margin={"l": 60, "r": 30, "t": 75, "b": 55},
     )
-    return gravar(fig, "fig_arquetipos_radar.json")
+    return gravar(fig, "fig_pca_arquetipos.json")
 
 
 def fig_classificacao_roc() -> Path:
@@ -419,7 +556,9 @@ def fig_classificacao_roc() -> Path:
         title="O modelo separa bem quem tem agência. A pergunta que ele responde é a do proxy",
         xaxis_title="Taxa de falso positivo",
         yaxis_title="Taxa de verdadeiro positivo",
-        height=460,
+        height=470,
+        margin={"l": 70, "r": 25, "t": 80, "b": 62},
+        legend=dict(orientation="h", x=0.3, y=0.06),
     )
     return gravar(fig, "fig_classificacao_roc.json")
 
@@ -450,7 +589,7 @@ def fig_ipb_por_arquetipo(base: pd.DataFrame) -> Path:
         yaxis_title="IPB V3 (0–100)",
         showlegend=False,
         height=470,
-        margin={"l": 60, "r": 30, "t": 70, "b": 110},
+        margin={"l": 60, "r": 30, "t": 75, "b": 110},
     )
     fig.update_xaxes(tickangle=-18)
     return gravar(fig, "fig_resultados_ipb_arquetipos.json")
@@ -471,11 +610,14 @@ def main() -> None:
 
     caminhos = [
         fig_escolaridade_hist(base),
+        fig_escolaridade_regiao(base),
         fig_escolaridade_extremos(base),
         fig_pix_top15(base),
-        fig_pix_agencias(base),
+        fig_pix_por_uf(base),
+        fig_rede_por_estrato(base),
+        fig_top15_ipb(base),
         fig_arquetipos_barras(base),
-        fig_arquetipos_radar(base),
+        fig_pca_arquetipos(),
         fig_classificacao_roc(),
         fig_ipb_por_arquetipo(base),
     ]
