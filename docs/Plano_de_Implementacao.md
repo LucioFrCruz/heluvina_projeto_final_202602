@@ -2,6 +2,8 @@
 
 Este documento estabelece o **roteiro técnico passo a passo** para a implementação da Etapa 1 do Índice de Potencial Bancário (IPB).
 
+> **Nota de arquivamento (2026-09-14):** documento histórico do planejamento da Etapa 1 (ago/2026), mantido para registro. Nomes de campos, tabelas e testes podem divergir da implementação atual — a referência vigente é o AGENTS.md (§1 status, §2 estrutura, §9 decisões) e o `docs/Dicionario_de_Dados.md`.
+
 ---
 
 ## 1. Visão Geral e Pré-requisitos de Arquitetura

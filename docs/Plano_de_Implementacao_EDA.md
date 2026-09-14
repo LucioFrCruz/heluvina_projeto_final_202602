@@ -497,6 +497,8 @@ save_json(features_report, "features_engineering_report.json")
 
 **Inputs**: `data/processed/trusted_municipios_eda.parquet`
 
+> **Nota**: fonte primária é a tabela `trusted_municipios` no BigQuery; o notebook 00b gera este parquet como cache local idempotente (Diretriz 0.6 do AGENTS.md).
+
 **Outputs**:
 - Figuras: histogramas, boxplots, mapas das variáveis demográficas.
 - `data/processed/reports/perfil_demografico.json`
@@ -628,7 +630,7 @@ display(stats)
 #### Critérios de aceitação
 
 - [ ] Distribuições de renda e PIB plotadas.
-- [ ] Relação Pix × PIB analisada.
+- [ ] Relação Pix × PIB **avaliada e dispensada** como scatter dedicado em revisão de 2026-09 (o scatter planejado não continha informação; substituído pelo quadrante Pix per capita × rendimento domiciliar per capita, figura `02_quadrante_pix_renda.png`).
 - [ ] Série temporal do Pix gerada.
 
 ---
