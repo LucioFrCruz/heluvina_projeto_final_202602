@@ -40,3 +40,10 @@ htmlcov/
 *.swp
 *.swo
 .DS_Store
+
+# Site da apresentação (docs/ servido via GitHub Pages):
+# JSONs derivados versionados de propósito (exceção às regras data/ e *.json acima)
+!docs/data/
+!docs/data/*.json
+!docs/assets/data/
+!docs/assets/data/*.json
