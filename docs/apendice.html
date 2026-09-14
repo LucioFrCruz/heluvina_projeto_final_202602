@@ -193,8 +193,44 @@
   estáveis: São Paulo 18 → 15, Florianópolis 11 → 9, Campinas 44 → 48.</p>
 </section>
 
+<section class="apx" id="a8">
+  <h2>A8 · A rede paralela</h2>
+  <p class="sub">Fonte: trusted_municipios_eda.parquet + analytics_ipb_v3 (correspondentes por
+  100 mil hab). Figura interativa, passe o mouse nas barras.</p>
+  <div id="fig-rede-estrato" style="width:100%;"></div>
+  <p class="texto">Na cidade pequena, a lotérica é o banco: a mediana é <strong>zero
+  agências</strong> e <strong>131 correspondentes por 100 mil habitantes</strong>. Nas
+  cidades médias e grandes, 5,9 e 6,6 agências contra 99 correspondentes. As duas redes
+  não se movem juntas (Spearman de −0,09 entre agências e correspondentes por 100 mil
+  hab, Relatório EDA §7.3): correspondente cresce exatamente onde não há agência. É por
+  isso que o pilar D da V3 mede a presença combinada, não as agências sozinhas.</p>
+</section>
+
 <footer>IPB · Grupo 4 · Hands On Engenharia de Dados · apêndice fora da fala</footer>
 
 </main>
+
+<script src="assets/plotly/plotly.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  function montar(url, id) {
+    var el = document.getElementById(id);
+    fetch(url)
+      .then(function (r) {
+        if (!r.ok) { throw new Error(url + ' respondeu HTTP ' + r.status); }
+        return r.json();
+      })
+      .then(function (fig) {
+        Plotly.newPlot(el, fig.data, fig.layout, { responsive: true, displayModeBar: false });
+      })
+      .catch(function (err) {
+        console.error('[apendice]', err);
+        el.textContent = 'Erro ao carregar figura: ' + err.message;
+      });
+  }
+  montar('assets/data/fig_rede_por_estrato.json', 'fig-rede-estrato');
+})();
+</script>
 </body>
 </html>
