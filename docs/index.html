@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IPB — Índice de Potencial Bancário</title>
+<style>
+  :root {
+    --bg: #f3f5f7;
+    --card: #ffffff;
+    --borda: #e2e7ec;
+    --texto: #24303b;
+    --texto-suave: #5b6771;
+    --acento: #16637a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--texto);
+  }
+  .wrap { text-align: center; padding: 32px 16px; max-width: 860px; }
+  h1 { font-size: 1.7rem; margin: 0 0 6px; font-weight: 650; }
+  .sub { margin: 0 0 30px; color: var(--texto-suave); font-size: .95rem; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    background: var(--card);
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(15, 30, 45, .06);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color .15s, transform .15s;
+  }
+  a.card:hover { border-color: var(--acento); transform: translateY(-2px); }
+  .card-title { font-weight: 650; font-size: 1rem; }
+  .card-desc { color: var(--texto-suave); font-size: .82rem; line-height: 1.45; }
+  .card-cta { color: var(--acento); font-size: .82rem; font-weight: 600; }
+  .card.disabled { opacity: .55; cursor: not-allowed; }
+  .card-tag {
+    align-self: flex-start;
+    font-size: .68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--texto-suave);
+    background: #eceff2;
+    border-radius: 999px;
+    padding: 3px 9px;
+  }
+  .footer { margin-top: 30px; color: #7b8792; font-size: .78rem; }
+  .footer a { color: var(--acento); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>IPB — Índice de Potencial Bancário</h1>
+  <p class="sub">Apresentação final — Hands On Engenharia de Dados</p>
+  <div class="cards">
+    <a class="card" href="apresentacao.html">
+      <span class="card-title">Apresentação</span>
+      <span class="card-desc">Narrativa final do projeto: metodologia, resultados e recomendações.</span>
+      <span class="card-cta">Abrir →</span>
+    </a>
+    <a class="card" href="mapa.html">
+      <span class="card-title">Mapa</span>
+      <span class="card-desc">Mapa coroplético dos 5.570 municípios: IPB V3 e arquétipos, com zoom.</span>
+      <span class="card-cta">Abrir →</span>
+    </a>
+    <div class="card disabled" aria-disabled="true">
+      <span class="card-tag">em breve</span>
+      <span class="card-title">Explorar cidades</span>
+      <span class="card-desc">Busca e comparação de municípios por IPB, rank e arquétipo.</span>
+    </div>
+  </div>
+  <p class="footer">Fonte dos dados: IBGE · <a href="apendice.html">Material de apoio (apêndice)</a></p>
+</main>
+</body>
+</html>

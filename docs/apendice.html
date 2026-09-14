@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IPB — Apêndice · material de apoio</title>
+<style>
+  :root {
+    --acento: #16637a;
+    --texto: #24303b;
+    --suave: #5b6771;
+    --borda: #e2e7ec;
+    --bg: #f3f5f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--texto);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1020px; margin: 0 auto; padding: 34px 20px 50px; }
+  header.page { margin-bottom: 26px; }
+  header.page h1 { font-size: 1.6rem; margin: 0 0 4px; font-weight: 650; }
+  header.page p { margin: 0; color: var(--suave); font-size: .92rem; }
+  header.page a { color: var(--acento); text-decoration: none; font-size: .85rem; }
+  section.apx {
+    background: #fff;
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(15, 30, 45, .05);
+  }
+  section.apx h2 {
+    font-size: 1.08rem;
+    margin: 0 0 4px;
+    color: var(--acento);
+    font-weight: 650;
+  }
+  section.apx .sub { color: var(--suave); font-size: .82rem; margin: 0 0 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+  th, td { border-bottom: 1px solid var(--borda); padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { color: var(--acento); font-weight: 650; }
+  p.nota { font-size: .78rem; color: var(--suave); margin: 12px 0 0; }
+  p.texto { font-size: .88rem; margin: 10px 0 0; }
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  footer { color: #7b8792; font-size: .78rem; margin-top: 26px; text-align: center; }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+<header class="page">
+  <h1>IPB — Apêndice</h1>
+  <p>Material de apoio da apresentação. Backup para perguntas da banca, fora da fala.</p>
+  <a href="index.html">← voltar para a página inicial</a>
+</header>
+
+<section class="apx" id="a1">
+  <h2>A1 · Top 10 nas três versões</h2>
+  <p class="sub">Fonte: docs/Comparacao_Tres_Abordagens_IPB.md §3 (tabelas analytics_ipb_* publicadas).</p>
+  <table>
+    <tr><th>Rank</th><th>V1 Clássico</th><th>V2 Recalibrado</th><th>V3 Presença completa</th></tr>
+    <tr><td>1</td><td>Barueri (SP) · 82,5</td><td>Bombinhas (SC) · 83,9</td><td>Bombinhas (SC) · 73,3</td></tr>
+    <tr><td>2</td><td>Itapema (SC) · 82,2</td><td>Confins (MG) · 82,4</td><td>Nova Lima (MG) · 72,4</td></tr>
+    <tr><td>3</td><td>Balneário Camboriú (SC) · 81,8</td><td>Santa Rita do Trivelato (MT) · 81,7</td><td>Confins (MG) · 72,0</td></tr>
+    <tr><td>4</td><td>Paulínia (SP) · 80,9</td><td>Santa Carmem (MT) · 80,1</td><td>Balneário Camboriú (SC) · 71,0</td></tr>
+    <tr><td>5</td><td>Itajaí (SC) · 80,1</td><td>Alto Horizonte (GO) · 77,1</td><td>Eusébio (CE) · 70,7</td></tr>
+    <tr><td>6</td><td>Ilhabela (SP) · 79,9</td><td>Nova Mutum (MT) · 76,3</td><td>Itapema (SC) · 70,4</td></tr>
+    <tr><td>7</td><td>Nova Lima (MG) · 79,9</td><td>Balneário Camboriú (SC) · 75,8</td><td>Palmas (TO) · 70,3</td></tr>
+    <tr><td>8</td><td>Itupeva (SP) · 79,2</td><td>Itapema (SC) · 75,2</td><td>Santana de Parnaíba (SP) · 70,2</td></tr>
+    <tr><td>9</td><td>Santa Carmem (MT) · 78,9</td><td>Primavera do Leste (MT) · 74,7</td><td>Florianópolis (SC) · 68,9</td></tr>
+    <tr><td>10</td><td>Nova Mutum (MT) · 78,8</td><td>Itajaí (SC) · 74,7</td><td>Santa Rita do Trivelato (MT) · 68,7</td></tr>
+  </table>
+</section>
+
+<section class="apx" id="a2">
+  <h2>A2 · Ranking dentro de cada arquétipo</h2>
+  <p class="sub">Fonte: modelagem_resultados.parquet (K-Means K=6) cruzado com
+  analytics_ipb_v3_presenca_completa.parquet.</p>
+  <table>
+    <tr><th>Arquétipo</th><th>n</th><th>IPB médio</th><th>Top 3 no ranking geral</th></tr>
+    <tr><td>Turismo - com rede</td><td>740</td><td>51,2</td><td>Nova Lima (MG) #2 · Balneário Camboriú (SC) #4 · Eusébio (CE) #5</td></tr>
+    <tr><td>Sem rede bancária - renda baixa</td><td>1.278</td><td>28,6</td><td>Serra do Navio (AP) #481 · Raposos (MG) #517 · Pendências (RN) #570</td></tr>
+    <tr><td>Perfil intermediário - empresarial</td><td>1.248</td><td>37,3</td><td>Piratininga (SP) #109 · Tiradentes (MG) #140 · Arenápolis (MT) #180</td></tr>
+    <tr><td>Perfil intermediário - tradicional</td><td>919</td><td>32,6</td><td>Piraquara (PR) #369 · São José de Ribamar (MA) #392 · Cidade Ocidental (GO) #407</td></tr>
+    <tr><td>Turismo - sem banco</td><td>653</td><td>43,0</td><td>Bombinhas (SC) #1 · Confins (MG) #3 · Santa Rita do Trivelato (MT) #10</td></tr>
+    <tr><td>Sem rede bancária - renda alta</td><td>732</td><td>34,3</td><td>Senador Amaral (MG) #129 · Cacaulândia (RO) #226 · Caldazinha (GO) #399</td></tr>
+  </table>
+</section>
+
+<section class="apx" id="a3">
+  <h2>A3 · Por que K=6</h2>
+  <p class="sub">Fonte: docs/Relatorio_Modelagem_Etapa3.md §3 e docs/Arquetipos_Municipais.md §3.</p>
+  <table>
+    <tr><th>K</th><th>Silhouette</th><th>Leitura</th></tr>
+    <tr><td>3</td><td>0,252</td><td>Melhor número, mas os grupos viram porte da cidade. Empobrece a narrativa.</td></tr>
+    <tr><td>5</td><td>0,222</td><td>Alternativa válida, plano B registrado.</td></tr>
+    <tr><td>6</td><td>0,200</td><td>Adotado. Seis jogadas de negócio distintas, grupos equilibrados (653 a 1.278).</td></tr>
+    <tr><td>8</td><td>0,171</td><td>Fragmenta sem ganhar legibilidade.</td></tr>
+  </table>
+  <p class="texto">Três sinais convergindo: o cotovelo (a queda da inércia desacelera de
+  ~5,6 mil para ~2 mil entre K=5 e K=6), grupos equilibrados sem degeneração, e solidez
+  medida: um classificador reconhece o arquétipo só pelo perfil da cidade com F1 macro
+  de 0,826. Se na apresentação 6 parecer muito, K=5 é o plano B: troca de uma constante
+  e reexecutam-se os notebooks.</p>
+</section>
+
+<section class="apx" id="a4">
+  <h2>A4 · Métricas da Etapa 3</h2>
+  <p class="sub">Fonte: docs/Relatorio_Modelagem_Etapa3.md §4 e §5.</p>
+  <div class="duas">
+    <div>
+      <table>
+        <tr><th>Modelo (teste, n=1.114)</th><th>ROC-AUC</th><th>PR-AUC</th><th>F1</th></tr>
+        <tr><td>Random Forest tunado</td><td>0,939</td><td>0,951</td><td>0,873</td></tr>
+        <tr><td>Regressão Logística</td><td>0,938</td><td>0,950</td><td>0,869</td></tr>
+        <tr><td>KNN (k=15)</td><td>0,909</td><td>0,923</td><td>0,842</td></tr>
+        <tr><td>Árvore (prof. 4)</td><td>0,909</td><td>0,911</td><td>0,833</td></tr>
+      </table>
+    </div>
+    <div>
+      <table>
+        <tr><th>Variável</th><th>Queda de R² no IPB</th></tr>
+        <tr><td>Banda larga fixa /100 hab</td><td>0,635</td></tr>
+        <tr><td>Correspondentes /100 mil</td><td>0,285</td></tr>
+        <tr><td>Pix per capita</td><td>0,167</td></tr>
+        <tr><td>Escolaridade ensino médio</td><td>0,068</td></tr>
+        <tr><td>Agências /100 mil</td><td>0,059</td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="nota">Regressão explicativa: R² 0,938 e MAE de 1,9 ponto de IPB (acerto alto
+  por construção, as features entram na fórmula). Potencial latente: R² 0,475 no holdout
+  interno; Spearman de 0,449 com o IPB nas cidades sem agência. As métricas de
+  classificação usam somente as 13 variáveis de perfil, sem as de presença, para não
+  vazar o alvo.</p>
+</section>
+
+<section class="apx" id="a5">
+  <h2>A5 · Correspondentes: pesos por tipo e o que está em aberto</h2>
+  <p class="sub">Fonte: docs/Relatorio_EDA.md §6.1 e discussão do grupo (referencias/DISCUSSAO_IPB_CHAPEU_NEGOCIO.md §7).</p>
+  <table>
+    <tr><th>Tipo</th><th>Peso na presença</th><th>Participação nos vínculos</th></tr>
+    <tr><td>Posto (lotérica)</td><td>1,0</td><td>3,5%</td></tr>
+    <tr><td>Filial</td><td>0,7</td><td>15,4%</td></tr>
+    <tr><td>Sede</td><td>0,4</td><td>81,1%</td></tr>
+    <tr><td>Agência</td><td>1,0</td><td>fora do cadastro de correspondentes</td></tr>
+  </table>
+  <p class="texto">Em aberto: com 81% de sedes no cadastro, a pontuação fica dominada pelo
+  tipo mais administrativo, e o posto, que é o ponto que a população de baixa renda usa,
+  pesa só 7,4% da nota. Os pesos são uma primeira aproximação sem lastro externo e
+  precisam de decisão do grupo ou de limitação assumida.</p>
+</section>
+
+<section class="apx" id="a6">
+  <h2>A6 · Fontes, ano de referência e URL</h2>
+  <p class="sub">Fonte: docs/Guia_de_Coleta.md.</p>
+  <table>
+    <tr><th>Fonte</th><th>Ref.</th><th>URL</th></tr>
+    <tr><td>IBGE Localidades</td><td>malha 2022</td><td>servicodados.ibge.gov.br/api/v1/localidades/municipios</td></tr>
+    <tr><td>IBGE SIDRA, Censo 2022 (T. 10061)</td><td>2022</td><td>servicodados.ibge.gov.br/api/v3/agregados</td></tr>
+    <tr><td>IBGE CEMPRE (SIDRA 9528)</td><td>2024</td><td>servicodados.ibge.gov.br/api/v3/agregados</td></tr>
+    <tr><td>IBGE PIB dos Municípios</td><td>2023</td><td>ibge.gov.br/estatisticas/economicas/contas-nacionais/9088</td></tr>
+    <tr><td>BCB Pix por município</td><td>ago/2025 a ago/2026</td><td>olinda.bcb.gov.br/olinda/servico/Pix_DadosAbertos</td></tr>
+    <tr><td>BCB Correspondentes (OData)</td><td>30/08/2026</td><td>dadosabertos.bcb.gov.br/dataset/informes-correspondentes</td></tr>
+    <tr><td>BCB Estban</td><td>2026</td><td>bcb.gov.br/estatisticas/estatisticabancariamunicipios</td></tr>
+    <tr><td>Anatel banda larga fixa</td><td>2026</td><td>gov.br/anatel/pt-br/dados/dados-abertos</td></tr>
+    <tr><td>Ipeadata, série IDHM</td><td>2010</td><td>ipeadata.gov.br</td></tr>
+  </table>
+</section>
+
+<section class="apx" id="a7">
+  <h2>A7 · O que o CEMPRE mudou no Top 100</h2>
+  <p class="sub">Fonte: docs/Relatorio_EDA.md §8.2 e referencias/DISCUSSAO_IPB_CHAPEU_NEGOCIO.md §10.1.</p>
+  <table>
+    <tr><th>#</th><th>Entram (rank antes → depois)</th><th>Saem (rank antes → depois)</th></tr>
+    <tr><td>1</td><td>São Luís (MA) · 132 → 70</td><td>Valparaíso de Goiás (GO) · 68 → 101</td></tr>
+    <tr><td>2</td><td>Fortaleza (CE) · 126 → 75</td><td>Mário Campos (MG) · 78 → 102</td></tr>
+    <tr><td>3</td><td>Porto Velho (RO) · 138 → 78</td><td>Canarana (MT) · 88 → 135</td></tr>
+    <tr><td>4</td><td>Boa Vista (RR) · 120 → 80</td><td>Florestal (MG) · sai por margem</td></tr>
+    <tr><td>5</td><td>Rio Branco (AC) · 146 → 86</td><td>Santana do Paraíso (MG) · sai por margem</td></tr>
+    <tr><td>6</td><td>Montes Claros (MG) · 119 → 93</td><td>Tremembé (SP) · sai por margem</td></tr>
+    <tr><td>7</td><td>Guarulhos (SP) · 102 → 95</td><td>Piratininga (SP) · sai por margem</td></tr>
+    <tr><td>8</td><td>Patos de Minas (MG) · 104 → 97</td><td>Brumadinho (MG) · sai por margem</td></tr>
+    <tr><td>9</td><td>Gramado (RS) · 117 → 98</td><td>Jundiaí (SP) · sai por margem</td></tr>
+    <tr><td>10</td><td>Belém (PA) · 149 → 99</td><td>Votorantim (SP) · sai por margem</td></tr>
+  </table>
+  <p class="nota">Leitura: entraram capitais e polos com mercado formal forte que o PIB
+  per capita sub-declara. Saíram dormitórios de baixa formalização. Cidades conhecidas
+  estáveis: São Paulo 18 → 15, Florianópolis 11 → 9, Campinas 44 → 48.</p>
+</section>
+
+<footer>IPB · Grupo 4 · Hands On Engenharia de Dados · apêndice fora da fala</footer>
+
+</main>
+</body>
+</html>

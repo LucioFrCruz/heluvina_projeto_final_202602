@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<!--
+  Mapa coroplético (Drop 1) — site estático, 100% offline.
+
+  Como servir (rodar da raiz do repositório):
+      python3 -m http.server 8000 -d docs
+  e abrir no navegador:
+      http://localhost:8000/mapa.html
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa do Potencial Bancário (IPB)</title>
+<style>
+  :root {
+    --bg: #f3f5f7;
+    --card: #ffffff;
+    --borda: #e2e7ec;
+    --texto: #24303b;
+    --texto-suave: #5b6771;
+    --acento: #16637a;
+    --sem-dado: #d7dbe0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--texto);
+  }
+  .page-header { text-align: center; padding: 28px 16px 6px; }
+  .page-header h1 { font-size: 1.5rem; margin: 0 0 4px; font-weight: 650; }
+  .page-header .sub { margin: 0; color: var(--texto-suave); font-size: .9rem; }
+  .controls { display: flex; gap: 8px; justify-content: center; margin: 18px 0 4px; }
+  .layer-btn {
+    border: 1px solid #cdd5dd;
+    background: #fff;
+    color: #33414d;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .layer-btn:hover { border-color: #94a3b3; }
+  .layer-btn.active { background: var(--acento); border-color: var(--acento); color: #fff; }
+  .map-card {
+    max-width: 1080px;
+    margin: 12px auto 24px;
+    background: var(--card);
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 14px 14px 6px;
+    box-shadow: 0 1px 3px rgba(15, 30, 45, .06);
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    align-items: center;
+    font-size: .8rem;
+    color: #45525d;
+    padding: 2px 6px 12px;
+  }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .legend-item .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .legend-scale { display: inline-flex; align-items: center; gap: 8px; }
+  .legend-bar { width: 170px; height: 12px; border-radius: 6px; border: 1px solid var(--borda); }
+  .legend-title { font-weight: 600; }
+  .map-container svg { display: block; width: 100%; height: auto; }
+  .map-container { position: relative; }
+  .mun { stroke: #ffffff; stroke-width: .25; }
+  .mun:hover { stroke: #24303b; stroke-width: .8; }
+  .fronteira-uf {
+    fill: none;
+    stroke: #24303b;
+    stroke-width: .9;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    pointer-events: none;
+  }
+  .reset-btn {
+    border: 1px solid #cdd5dd;
+    background: #fff;
+    color: #33414d;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .reset-btn:hover { border-color: var(--acento); color: var(--acento); }
+  .status { text-align: center; color: var(--texto-suave); font-size: .8rem; padding: 6px 0 8px; margin: 0; }
+  .status.erro { color: #b91c1c; }
+  .page-footer { text-align: center; color: #7b8792; font-size: .78rem; padding: 8px 0 28px; }
+  .tooltip {
+    position: absolute;
+    display: none;
+    pointer-events: none;
+    background: rgba(31, 41, 55, .94);
+    color: #f8fafc;
+    font-size: .78rem;
+    line-height: 1.5;
+    padding: 8px 10px;
+    border-radius: 8px;
+    max-width: 260px;
+    z-index: 10;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+  }
+  .tooltip strong { font-size: .85rem; }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>Mapa do Potencial Bancário (IPB)</h1>
+  <p class="sub">Coroplético dos 5.570 municípios brasileiros (malha municipal IBGE 2022)</p>
+  <div class="controls" role="group" aria-label="Camadas do mapa">
+    <button type="button" class="layer-btn active" data-layer="ipb">IPB V3</button>
+    <button type="button" class="layer-btn" data-layer="arquetipo">Arquétipos</button>
+    <button type="button" class="reset-btn" id="reset-zoom" title="Volta o mapa para a vista inicial">Recentralizar</button>
+  </div>
+</header>
+
+<main class="map-card">
+  <div id="legend" class="legend" aria-hidden="true"></div>
+  <div id="map" class="map-container"></div>
+  <p id="status" class="status">Carregando dados…</p>
+</main>
+
+<footer class="page-footer">Fonte: IBGE</footer>
+
+<div id="tooltip" class="tooltip" aria-hidden="true"></div>
+
+<script src="assets/d3/d3.min.js"></script>
+<script src="assets/topojson/topojson-client.min.js"></script>
+<script src="assets/js/mapa.js"></script>
+<script>
+inicializarMapa({
+  container: '#map',
+  tooltip: '#tooltip',
+  status: '#status',
+  legend: '#legend',
+  botoesCamada: Array.prototype.slice.call(document.querySelectorAll('.layer-btn')),
+  botaoReset: '#reset-zoom'
+});
+</script>
+</body>
+</html>
