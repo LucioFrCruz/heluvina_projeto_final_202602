@@ -35,7 +35,10 @@ Dê preferência para leitura de nossos guias detalhados na pasta `docs/`:
 
 - [Relatório de EDA (inclui a comparação das 3 versões do IPB)](docs/Relatorio_EDA.md) 📊 *Achados da EDA, qualidade dos dados e comparação V1/V2/V3*
 - [Comparação das Três Abordagens do IPB](docs/Comparacao_Tres_Abordagens_IPB.md) ⚖️ *Rankings, movimentação do Top 100 e alertas por versão*
+- [Relatório de Modelagem — Etapa 3](docs/Relatorio_Modelagem_Etapa3.md) 🤖 *Clusters, classificação de presença, potencial latente e anomalias (ML com alvos proxy)*
+- [Arquétipos Municipais (perfis dos 6 clusters)](docs/Arquetipos_Municipais.md) 🏙️ *Perfil médio de cada arquétipo e como usá-los*
 - [Guia de Execução Técnica (Pipeline & SQL)](docs/Guia_de_Execucao.md) 💻 *Instruções de setup e queries SQL (100% automatizado)*
+- [Dicionário de Dados](docs/Dicionario_de_Dados.md) 📖 *Schemas de todas as tabelas raw_, trusted_ e analytics_*
 - [Plano de Implementação (Fases 0 a 4)](docs/Plano_de_Implementacao.md)
 - [Guia de Bases e Desenho (Tese, Pilares e Fórmula do IPB)](docs/IPB_Guia_de_Bases_e_Desenho.md)
 
@@ -65,13 +68,14 @@ Estamos desenvolvendo o projeto em etapas ágeis. Acompanhe nosso progresso:
   - Tabela consolidadora `trusted_municipios`.
   - Git Tag gerado [v0.1.0-etapa1](https://github.com/LucioFrCruz/heluvina_projeto_final_202602/releases/tag/v0.1.0-etapa1)
 
-- [x] **Etapa 2: Análise Exploratória (EDA) e Índice** (EDA concluída) 📍 **<-- ESTAMOS AQUI**
+- [x] **Etapa 2: Análise Exploratória (EDA) e Índice** (Concluída)
   - Tratamento de outliers e dados faltantes, correlações entre os pilares.
   - **3 versões do IPB publicadas no BigQuery** (`analytics_ipb_v1_classico`, `analytics_ipb_v2_recalibrado`, `analytics_ipb_v3_presenca_completa` + visão `analytics_ipb_comparacao`): Clássico, Recalibrado e Presença Bancária Completa — esta última enriquecida com empregos formais do CEMPRE/IBGE no pilar de capacidade de consumo, com comparação documentada no Relatório de EDA.
 
-- [ ] **Etapa 3: Refinamento e ML** (Prazo: 15/09)
-  - Validação de negócio dos Top 100 e escolha da versão oficial do IPB.
-  - Aplicação de técnicas de Machine Learning para *clustering* das cidades.
+- [x] **Etapa 3: Refinamento e ML** (Concluída - 12/09)
+  - Machine Learning sem rótulo de verdade (alvos proxy declarados): **6 arquétipos municipais** (K-Means/GMM, K=6) com classificação de presença bancária (RF ROC-AUC 0,939), regressão de potencial latente e detecção de anomalias.
+  - **Tabela `analytics_ipb_clusters` publicada no BigQuery** (5.570 municípios: clusters, probabilidades, arquétipo, potencial latente, anomalias). Relatório: `docs/Relatorio_Modelagem_Etapa3.md` + perfis em `docs/Arquetipos_Municipais.md`.
+  - Próximos passos desta etapa: validação de negócio dos Top 100, escolha da versão oficial do IPB e validação dos nomes dos arquétipos com o grupo.
 
-- [ ] **Apresentação Final** (Pitch: 17/09)
+- [ ] **Apresentação Final** (Pitch: 17/09) 📍 **<-- ESTAMOS AQUI**
   - Dashboard executivo e entrega final do projeto.
