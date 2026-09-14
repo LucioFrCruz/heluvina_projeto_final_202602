@@ -18,9 +18,9 @@ A pergunta do projeto: *quais municípios brasileiros apresentam a melhor relaç
 
 `data/processed/modelagem.parquet` (gerado no notebook 01): 5.570 municípios × 19 features + 2 alvos + referência `ipb`/`rank` da V3 (cruzamento, nunca feature).
 
-- **19 features aprovadas** (discussão v2 §3): demografia Censo 2022, PIB 2023, CEMPRE 2024, Pix 2023/24, Anatel/Estban 2026. Excluídas: colunas de índice (scores, gap, ranks), `domicilios_com_internet_pct` (100% nula), absolutos (efeito tamanho), `idhm` (vintage 2010 — teste opcional em fase 2).
+- **19 features aprovadas** (discussão v2 §3): demografia Censo 2022, PIB 2023, CEMPRE 2024, **Pix ago/2025–ago/2026** (últimos 12 meses disponíveis na API do BCB na data da coleta), Anatel/Estban 2026. Excluídas: colunas de índice (scores, gap, ranks), `domicilios_com_internet_pct` (100% nula), absolutos (efeito tamanho), `idhm` (vintage 2010 — teste opcional futuro).
 - **Transformação `log1p`** nas 14 variáveis não-percentuais de cauda longa (decisão metodológica registrada no notebook 01): sem ela, `populacao_total` dominava a padronização e o K-Means isolava SP e capitais em micró-grupos (1 e 9 municípios). Com o log, clusters equilibrados e mais contrastantes.
-- **13 exógenas vs 6 de presença:** `FEATURES_SEM_PRESENCA` (13 socioeconômicas + digitais) usada na classificação de presença; as 6 variáveis de presença (agências, correspondentes, depósitos, crédito) medem a estrutura instalada — ver correção nº 2 na §7.
+- **13 de perfil da cidade vs 6 de presença bancária:** as 19 variáveis se dividem em dois tipos. As **13 de perfil** (renda, população, PIB, Pix, banda larga, CEMPRE...) descrevem a cidade como ela é. As **6 de presença** (agências, correspondentes, depósitos, crédito) medem a estrutura bancária já instalada. Isso importa porque, para prever *presença*, usar as 6 de presença como preditora é vazamento — como adivinhar se a pessoa tem carro olhando a foto dela dentro do carro (correção nº 2 na §7). No jargão técnico, as 13 são as variáveis **exógenas** ("de fora" do que se prevê); no código, `FEATURES_SEM_PRESENCA`.
 
 ## 3. Arquétipos — clusterização (K-Means + GMM)
 
@@ -32,11 +32,12 @@ A pergunta do projeto: *quais municípios brasileiros apresentam a melhor relaç
 
 ![Elbow method: a inércia (WSS) por K, com o joelho entre K=5 e K=6 — a queda desacelera de ~5,6 mil para ~2 mil, confirmando a escolha de forma independente da silhouette.](assets/figures/01_elbow_inercia.png)
 
-**Validação cruzada de algoritmo** (notebook 01, seção 3.1): o hierárquico Agglomerative foi testado com os 3 linkages clássicos e discorda do K-Means em todos (ARI 0,169/0,067/0,002) — registrado como limitação na §9. E a projeção 2D ilustrativa dos grupos (notebook 01, seção 4.2):
+**Validação cruzada de algoritmo** (notebook 01, seção 3.1): o hierárquico Agglomerative foi testado com os 3 linkages clássicos e discorda do K-Means em todos (ARI 0,169/0,067/0,002) — registrado como limitação na §9. 
+> E a projeção 2D ilustrativa dos grupos (notebook 01, seção 4.2):
 
 ![Projeção 2D via PCA (ilustrativa): os 6 arquétipos ocupam regiões distintas do espaço, com os centroides em X vermelho. PC1+PC2 explicam ~64% da variância — a separação completa mora nas 19 dimensões.](assets/figures/01_scatter_pca_arquetipos.png)
 
-**Perfil dos 6 arquétipos** (médias nos valores reais; nomes sugeridos por regra sobre os dados com desambiguação de pares repetidos — validação do grupo pendente; documentação completa, com leitura de negócio de cada grupo, em **`docs/Arquetipos_Municipais.md`**; guia de conceitos em `referencias/ML_Guia_de_Conceitos.md`, material local do grupo fora do Git):
+**Perfil dos 6 arquétipos** (médias nos valores reais; nomes sugeridos por regra sobre os dados com desambiguação de pares repetidos, documentação completa, com leitura de negócio de cada grupo, em **`docs/Arquetipos_Municipais.md`**):
 
 | Cluster | Nome sugerido | n | Leitura de perfil |
 |---|---|---|---|
@@ -57,15 +58,15 @@ A pergunta do projeto: *quais municípios brasileiros apresentam a melhor relaç
 
 ![Histograma da probabilidade de pertencimento ao arquétipo (GMM): a maioria dos municípios é típica do seu grupo; a cauda esquerda são os "mestiços" na fronteira entre dois perfis.](assets/figures/01_prob_pertencimento_gmm.png)
 
-**Solidez dos grupos (classificador multi-classe):** prever o arquétipo **só pelas 13 exógenas** dá **F1 macro = 0,826 (RF)**. A matriz de confusão conta onde os grupos se parecem: "Turismo - sem banco" tropeça 26% em "Intermediário - empresarial" (cidades turísticas ricas têm perfil empresarial), e "Intermediário - tradicional" confunde 18% com "Sem rede - renda baixa" — a mesma fronteira que o GMM apontou nos mestiços:
+**Solidez dos grupos (classificador multi-classe):** prever o arquétipo **só pelo perfil da cidade (as 13 variáveis de perfil)** dá **F1 macro = 0,826 (RF)**. A matriz de confusão conta onde os grupos se parecem: "Turismo - sem banco" tropeça 26% em "Intermediário - empresarial" (cidades turísticas ricas têm perfil empresarial), e "Intermediário - tradicional" confunde 18% com "Sem rede - renda baixa" — a mesma fronteira que o GMM apontou nos mestiços:
 
 ![Matriz de confusão do classificador de arquétipos (RF, teste): diagonal = acertos; fora dela, quais arquétipos se parecem entre si.](assets/figures/02_matriz_confusao_arquetipos.png)
 
 ## 4. Classificação — presença bancária (alvo proxy `flag_tem_agencia`, ~52/48)
 
-**Ressalva (decisão do grupo):** este modelo **não é o índice e não o substitui** — é complemento de validação que cruza com o IPB.
+**Ressalva:** este modelo **não é o índice e não o substitui** — é complemento de validação que cruza com o IPB.
 
-**Protocolo (a prova):** split estratificado 80/20 (seed 42), padronização ajustada só no treino, métricas no teste, tuning `GridSearchCV` 5-fold (grid pequeno: RF `n_estimators`/`max_depth`, Logística `C`). Preditoras: **13 exógenas** (ver §7, correção nº 2).
+**Prova:** split estratificado 80/20 (seed 42), padronização ajustada só no treino, métricas no teste, tuning `GridSearchCV` 5-fold (grid pequeno: RF `n_estimators`/`max_depth`, Logística `C`). Preditoras: as **13 de perfil** (ver §7, correção nº 2).
 
 **Matriz de comparação (teste, n = 1.114):**
 
@@ -80,9 +81,9 @@ Leitura: RF e Logística empatam no topo (a linearidade do problema favorece a L
 
 ![Matriz de confusão do RF no teste (alvo: tem agência). Quadrantes escuros = acertos; os 88 falsos negativos (direita de baixo para cima: cidades COM agência previstas como sem) alimentam a lista de oportunidade.](assets/figures/02_matriz_confusao_agencia.png)
 
-**O que explica a presença (e o que NÃO é a importância do IPB):** aqui a pergunta é o que explica a *presença observada* — e o achado é contundente: `populacao_total` domina sozinha (queda de 0,288 na ROC-AUC ao embaralhar) e as outras 12 exógenas juntas somam 0,046 — **agência física é modelo de escala: banco coloca onde tem gente**. É o oposto do IPB (onde banda larga domina com 0,635), porque o índice busca oportunidade em taxas per capita, não presença. Ressalva: variáveis correlacionadas dividem importância na permutação, mas a dominância da população é esmagadora:
+**O que explica a presença (e o que NÃO é a importância do IPB):** aqui a pergunta é o que explica a *presença observada* — e o achado é contundente: `populacao_total` domina sozinha (queda de 0,288 na ROC-AUC ao embaralhar) e as outras 12 de perfil juntas somam 0,046 — **agência física é modelo de escala: banco coloca onde tem gente**. É o oposto do IPB (onde banda larga domina com 0,635), porque o índice busca oportunidade em taxas per capita, não presença. Ressalva: variáveis correlacionadas dividem importância na permutação, mas a dominância da população é esmagadora:
 
-![O que explica "tem agência" — top 8 das 13 exógenas por importância de permutação. População sozinha vale ~6× as outras 12 juntas.](assets/figures/02_importancia_agencia.png)
+![O que explica "tem agência" — top 8 das 13 variáveis de perfil por importância de permutação. População sozinha vale ~6× as outras 12 juntas.](assets/figures/02_importancia_agencia.png)
 
 ![Curvas ROC e Precision-Recall no teste (alvo: tem agência). Quanto mais afastada da linha pontilhada (ROC) e da linha da base (PR), melhor o modelo separa com/sem agência.](assets/figures/02_curvas_roc_pr_agencia.png)
 
@@ -112,7 +113,7 @@ Regressão com alvo = IPB V3. O acerto é alto **por construção** (as features
 
 ### 5.2 Potencial latente (o mais interessante)
 
-Lógica "precificar imóvel": o modelo (RF sobre `log1p(depositos_per_capita)`) treina **só nos municípios com agência** e com as **13 exógenas** (sem nenhuma variável de presença), e estima quanto cada cidade **sem** agência depositaria se tivesse banco. Onde já tem agência fica nulo — não se estima o que já se observa.
+Lógica "precificar imóvel": o modelo (RF sobre `log1p(depositos_per_capita)`) treina **só nos municípios com agência** e com as **13 variáveis de perfil** (sem nenhuma de presença), e estima quanto cada cidade **sem** agência depositaria se tivesse banco. Onde já tem agência fica nulo — não se estima o que já se observa.
 
 - **Holdout interno (só com-agência):** R² = 0,475, MAE ≈ R$ 0,45 de depósito per capita (escala do log revertida) — moderado e honesto: depósitos locais têm componente idiossincrático que perfil de cidade não captura.
 - **Validação cruzada do índice:** Spearman(potencial latente, IPB V3) nos 2.656 sem agência = **0,449** (p ≈ 6×10⁻¹³²). O IPB ordena essas cidades moderadamente alinhado com o que um modelo de dados puro estimaria — o índice captura essa dimensão, mas **metade da ordenação vem de outro lugar**: as divergências (potencial latente alto com rank ruim e vice-versa) são candidatas a investigação e materiais de discussão em banca.
@@ -130,7 +131,7 @@ Perfil médio do grupo vs. média nacional: 5,0× mais agências, 2,1× alojamen
 ## 7. Correções metodológicas registradas (a execução com dados reais pegou o que os brinquedos não pegam)
 
 1. **Cauda longa (notebook 01):** sem `log1p`, `populacao_total` gerava clusters degenerados. Transformação nas 14 variáveis não-percentuais, decisão documentada.
-2. **Vazamento de preditora (notebook 02):** a primeira execução com as 19 features deu ROC-AUC = 1,0 para **todos** os modelos — `agencias_por_100k_hab`, `depositos_per_capita` e `credito_per_capita` são **consequência** do alvo (cidade sem agência não tem agência/100k nem depósito Estban). Correção: classificação de presença e classificador de arquétipos usam só as 13 exógenas; constantes `FEATURES_PRESENCA`/`FEATURES_SEM_PRESENCA` centralizadas em `src/analytics/modelagem.py` com teste travando a separação. Com a correção, ROC-AUC realista (0,94) e os resíduos voltaram a existir.
+2. **Vazamento de preditora (notebook 02):** a primeira execução com as 19 features deu ROC-AUC = 1,0 para **todos** os modelos — `agencias_por_100k_hab`, `depositos_per_capita` e `credito_per_capita` são **consequência** do alvo (cidade sem agência não tem agência/100k nem depósito Estban). Correção: classificação de presença e classificador de arquétipos usam só as 13 de perfil; constantes `FEATURES_PRESENCA`/`FEATURES_SEM_PRESENCA` centralizadas em `src/analytics/modelagem.py` com teste travando a separação. Com a correção, ROC-AUC realista (0,94) e os resíduos voltaram a existir.
 3. **Alvo degenerado (notebooks 01–02):** `flag_tem_correspondente` é 100/0 — **todos os municípios têm ao menos 1 correspondente** (rede BCB cobre o país). Vira achado de negócio (a camada de correspondentes é universal; o que discrimina é a intensidade por 100k hab, mantida como feature) e sai da matriz de classificação.
 
 ## 8. Síntese — o que cada modelo responde da pergunta do projeto
@@ -139,7 +140,7 @@ Perfil médio do grupo vs. média nacional: 5,0× mais agências, 2,1× alojamen
 |---|---|---|
 | Clusterização (K=6) | Que tipos de municípios existem? | 6 arquétipos com jogadas distintas, do "turismo pequeno rico sem banco" ao "interior pobre sem rede" |
 | Classificação (RF/Log) | Onde o mercado já se revelou? | Presença explicada pelo perfil (ROC-AUC 0,94); os 56 falsos negativos são oportunidades não atendidas |
-| Classificador de arquétipos | Os grupos são sólidos? | F1 macro 0,83 só com exógenas — arquétipo é perfil da cidade, não acidente de rede |
+| Classificador de arquétipos | Os grupos são sólidos? | F1 macro 0,83 só com perfil da cidade — arquétipo é perfil da cidade, não acidente de rede |
 | Regressão explicativa | O que pesa no IPB? | Banda larga + correspondentes + Pix concentram a importância (insumo de fase 2) |
 | Potencial latente | Quanto renderia se tivesse banco? | IPB alinhado moderadamente (Spearman 0,45); divergências são mapa de investigação |
 | Isolation Forest | Quem foge do padrão? | Top 30 atípicos (Noronha #1) para leitura de negócio |
@@ -147,16 +148,12 @@ Perfil médio do grupo vs. média nacional: 5,0× mais agências, 2,1× alojamen
 ## 9. Limitações (declaradas)
 
 - **Alvos proxy** — nenhum modelo foi treinado contra "oportunidade real"; os resíduos e divergências são hipóteses geradas, não verdades.
-- **Vintage misto** (Censo 2022, PIB 2023, Pix 2023/24, Estban/correspondentes 2026, CEMPRE 2024) — mesma limitação do índice.
+- **Vintage misto** (Censo 2022, PIB 2023, Pix ago/2025–ago/2026, Estban/correspondentes 2026, CEMPRE 2024) — mesma limitação do índice.
 - **Classificação espacial não avaliada** (fase 2): municípios vizinhos se parecem; o holdout aleatório pode superestimar generalização.
 - **GMM secundário**: silhouette do GMM fica em ~0,10 — mantido como probabilidade de pertencimento, não como agrupador principal.
 - **Validação cruzada de algoritmo**: o Agglomerative hierárquico foi testado com os 3 linkages principais (ward, complete, average) em K=6 e discorda do K-Means em todos (ARI = 0,169 / 0,067 / 0,002 — os dois últimos degeneram em um grupo gigante + microgrupos, comportamento clássico de "chaining" em dados contínuos em escala). Como não há rótulo de verdade, cada algoritmo é uma lente diferente; os arquétipos são uma leitura defensável (elbow + silhouette convergindo, F1 macro 0,826, narrativa acionável), não a única possível.
 - **Nomes dos arquétipos são sugestões** por regra sobre os dados — validação do grupo pendente (decisão aberta nº 2 da discussão).
 
-## 10. Fase 2 (registrado, sem compromisso)
-
-Validação espacial por região; PCA como validação do índice; Agglomerative/dendrograma; iteração de K (5 vs 6) e dos nomes dos arquétipos; `idhm` como feature opcional; discussão de pesos do IPB à luz da importância (§5.1); mais tuning.
-
 ---
 
-*Entregas da rubrica: dataset de modelagem (§2), código de treinamento (módulos + notebooks), relatório (este), matriz de comparação (§4 e notebooks), gráficos (ROC/PR, matriz de confusão, importância, resíduos, silhouette, boxplots — em `data/processed/figures/`), pipeline de inferência (`analytics_ipb_clusters` + funções dos módulos com scaler/clusterizador retornados), documentação técnica (docstrings + notebooks narrados).*
+*Entregas da rubrica: dataset de modelagem (§2), código de treinamento (módulos + notebooks), relatório (este), matriz de comparação (§4 e notebooks), gráficos (ROC/PR, matriz de confusão, importância, resíduos, silhouette, boxplots — em `docs/assets/figures/`), pipeline de inferência (`analytics_ipb_clusters` + funções dos módulos com scaler/clusterizador retornados), documentação técnica (docstrings + notebooks narrados). Possibilidades de evolução (antiga seção "Fase 2") estão registradas em `referencias/Fase2_Possibilidades.md`.*
