@@ -78,6 +78,20 @@ poetry run python -m src.preparacao.trusted_municipios
 #    Lê trusted + correspondentes + CEMPRE do BQ, calcula V1/V2/V3,
 #    sobe analytics_ipb_* e regenera docs/Comparacao_Tres_Abordagens_IPB.md
 poetry run python scripts/07_publica_ipb_bigquery.py
+
+# 9. Etapa 3 — Modelagem (ML): executar os 3 notebooks em ordem
+#    (01_dataset_e_arquetipos → 02_classificacao_presenca →
+#     03_regressao_anomalias_sintese), que geram
+#    data/processed/modelagem_resultados.parquet
+poetry run jupyter nbconvert --to notebook --execute \
+    notebooks/01_modelagem/01_dataset_e_arquetipos.ipynb \
+    notebooks/01_modelagem/02_classificacao_presenca.ipynb \
+    notebooks/01_modelagem/03_regressao_anomalias_sintese.ipynb
+
+# 9.1 Publicação dos clusters (Camada Analytics)
+#     Sobe analytics_ipb_clusters (5.570 linhas, WRITE_TRUNCATE);
+#     integridade em tests/data_quality/test_analytics_clusters.py
+poetry run python scripts/08_publica_clusters_bigquery.py
 ```
 
 ---

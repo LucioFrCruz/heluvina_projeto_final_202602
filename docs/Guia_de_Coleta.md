@@ -1,7 +1,8 @@
 # Guia de Coleta — IPB
 
 Este documento contém o passo a passo para acessar cada fonte de dados do NÚCLEO do IPB.  
-Inclui resultados de testes de conectividade feitos em `2026-08-22` e indica quais fontes podem ser coletadas via API e quais exigem download manual.
+Inclui resultados de testes de conectividade feitos em `2026-08-22` e indica quais fontes podem ser coletadas via API e quais exigem download manual.  
+**Sincronizado em 2026-09-14**: a Etapa 1 (coleta) está concluída e as Etapas 2 (EDA) e 3 (modelagem) também — ver `AGENTS.md` §1, `docs/Relatorio_EDA.md` e `docs/Relatorio_Modelagem_Etapa3.md`. Este guia permanece como referência de fontes e contratos de coleta.
 
 ---
 
@@ -63,6 +64,8 @@ curl -s --max-time 15 "https://servicodados.ibge.gov.br/api/v1/localidades/munic
 - Agregado: `9605` (População residente)
 - Variável: `93` (População residente)
 - Período: `2022`
+
+> **Nota (reconciliação de fonte)**: o ingestor de produção (`src/ingestors/sidra_censo_2022.py`) usa a **Tabela 4709**, Variável `93`, para `populacao_total`; o teste acima usou o Agregado `9605` (mesma variável). A fonte da produção é a `4709`.
 
 **Teste realizado**:
 
@@ -380,14 +383,16 @@ Validação realizada em `2026-08-23` sobre os arquivos presentes em `data/raw/`
 
 ---
 
-## 7. Próximos passos de coleta
+## 7. Status da coleta
 
 1. ✅ IDHM obtido via Ipeadata (2010) + escolaridade 2022 via SIDRA.
-2. ✅ Ingestores de APIs implementados (IBGE Localidades, SIDRA, Pix, Ipeadata).
+2. ✅ Ingestores de APIs implementados (IBGE Localidades, SIDRA, Pix, Ipeadata, correspondentes BCB, CEMPRE).
 3. ✅ Ingestores de arquivos manuais via GCS implementados (PIB, Anatel, Estban).
-4. Próximo: validação cruzada com Base dos Dados e início da EDA (Etapa 2).
+4. ✅ **Etapa 1 (coleta) concluída.** As Etapas 2 (EDA + índice) e 3 (modelagem) também já foram concluídas e publicadas no BigQuery — ver `AGENTS.md` §1, `docs/Relatorio_EDA.md` e `docs/Relatorio_Modelagem_Etapa3.md`.
+
+> **Nota (2026-09-14)**: esta seção não descreve mais um "próximo passo" — o guia permanece como **referência de fontes e contratos de coleta** (endpoints, formatos, workarounds e validação por fonte). A validação cruzada com Base dos Dados segue reservada para trabalho futuro.
 
 ---
 
-*Documento atualizado após testes de conectividade (2026-08-22) e validação dos arquivos baixados (2026-08-23).*
+*Documento atualizado após testes de conectividade (2026-08-22) e validação dos arquivos baixados (2026-08-23). Sincronizado em 2026-09-14 com o estado real do projeto (Etapas 1, 2 e 3 concluídas).*
 
