@@ -10,7 +10,7 @@ A arquitetura é modular: cada fonte de dados tem seu próprio script de ingest�
 
 **Fontes de dados**:
 - **APIs**: IBGE Localidades, IBGE SIDRA, BCB Pix — coleta automatizada por script.
-- **Downloads manuais**: IBGE PIB, BCB Estban, Anatel Banda Larga Fixa, PNUD IDHM — baixados pelo time e lidos pelos scripts.
+- **Downloads manuais**: IBGE PIB, BCB Estban, Anatel Banda Larga Fixa, PNUD IDHM — download **pontual (feito uma única vez)** pelo time; os arquivos são armazenados no bucket GCS `ipb-raw-data-mba-projetc-final` (prefixos `pib/`, `estban/`, `anatel/`) e os ingestores os baixam automaticamente de lá (`src/utils/gcs.py`). Para re-executar o pipeline **não é mais necessário nenhum download manual**.
 - **Fora do escopo**: Banda larga móvel (muitos dados, baixo impacto esperado; não entra).
 
 ---
@@ -189,7 +189,7 @@ erDiagram
         float populacao_urbana_pct
         float rendimento_domiciliar_per_capita
         float escolaridade_ensino_medio_pct
-        float domicilios_com_internet_pct
+        int domicilios_com_internet_pct
         string _source_url
         timestamp _extracted_at
     }
@@ -199,38 +199,52 @@ erDiagram
         int ano
         float pib
         float pib_per_capita
-        float valor_adicionado_servicos
+        float va_servicos
         string _source_url
         timestamp _extracted_at
     }
 
     RAW_BCB_PIX_TRANSACOES {
-        string id_municipio PK
-        date data_base
-        int transacoes_pf
-        int transacoes_pj
-        float valor_pf
-        float valor_pj
+        int AnoMes
+        string id_municipio
+        string Municipio
+        float Estado_Ibge
+        string Estado
+        string Sigla_Regiao
+        string Regiao
+        float VL_PagadorPF
+        int QT_PagadorPF
+        float VL_PagadorPJ
+        int QT_PagadorPJ
+        float VL_RecebedorPF
+        int QT_RecebedorPF
+        float VL_RecebedorPJ
+        int QT_RecebedorPJ
+        int QT_PES_PagadorPF
+        int QT_PES_PagadorPJ
+        int QT_PES_RecebedorPF
+        int QT_PES_RecebedorPJ
         string _source_url
         timestamp _extracted_at
     }
 
     RAW_ANATEL_BANDA_LARGA_FIXA {
+        int ano
+        int mes
+        string UF
+        string Munic_pio
         string id_municipio
-        string nome_municipio
-        string sigla_uf
-        date data_base
-        float densidade_banda_larga_fixa
+        float densidade
+        string N_vel_Geogr_fico_Densidade
         string _source_url
         timestamp _extracted_at
     }
 
     RAW_BCB_ESTBAN {
         string id_municipio
-        date data_base
         int quantidade_agencias
-        float depositos
-        float credito
+        float volume_depositos
+        float volume_credito
         string _source_url
         timestamp _extracted_at
     }
@@ -247,8 +261,12 @@ erDiagram
         string id_municipio
         string cnpj_contratante
         string nome_contratante
+        string cnpj_correspondente
+        string nome_correspondente
         string tipo
+        string ordem
         string municipio_ibge
+        string municipio
         string uf
         string servicos_correspondentes
         string posicao
@@ -259,7 +277,9 @@ erDiagram
     RAW_IBGE_CEMPRE {
         string id_municipio
         string ano
+        int variavel_codigo
         string variavel
+        string cnae_codigo
         string cnae_secao
         float valor
         string _source_url
@@ -270,17 +290,18 @@ erDiagram
         string id_municipio PK
         string nome_municipio
         string sigla_uf
+        string nome_uf
         string nome_regiao
         float populacao_total
         float populacao_18_35_pct
         float populacao_urbana_pct
         float rendimento_domiciliar_per_capita
         float escolaridade_ensino_medio_pct
-        float domicilios_com_internet_pct
+        int domicilios_com_internet_pct
         float pib
         float pib_per_capita
         float pix_total_volume_12m
-        float pix_total_transacoes_12m
+        int pix_total_transacoes_12m
         float pix_per_capita_12m
         float banda_larga_fixa_por_100_hab
         float quantidade_agencias
@@ -291,6 +312,7 @@ erDiagram
         float credito_per_capita
         float idhm
         timestamp _extracted_at
+        string _source_url
     }
 
     RAW_IBGE_LOCALIDADES ||--o{ TRUSTED_MUNICIPIOS : enriquece
@@ -466,6 +488,8 @@ Essa abordagem mantém o pilar E funcional com dados oficiais e reprodutíveis, 
 5. Manter `.env.example` atualizado.
 6. Implementar ingestores do núcleo.
 7. Adicionar testes unitários para ingestores e utilitários.
+
+> **Nota (2026-09-14):** etapas desta seção já executadas; evoluções pós-Etapa 1 (`analytics_ipb_clusters`, `scripts/08_publica_clusters_bigquery.py`, `notebooks/01_modelagem/`) não são cobertas por este documento — ver AGENTS.md §1.
 
 ---
 

@@ -3,7 +3,7 @@
 > **Projeto**: Índice de Potencial Bancário (IPB)  
 > **Etapa**: 2 — Análise Exploratória e Limpeza  
 > **Base**: `trusted_municipios` (5.570 municípios) + tabelas `analytics_ipb_*` (3 versões do índice publicadas)  
-> **Período de referência**: Censo 2022, PIB 2023, CEMPRE 2024, Pix jul/2025–jun/2026, Anatel/Estban 2026, Correspondentes BCB 30/08/2026, IDHM 2010  
+> **Período de referência**: Censo 2022, PIB 2023, CEMPRE 2024, Pix ago/2025–ago/2026, Anatel/Estban 2026, Correspondentes BCB 30/08/2026, IDHM 2010  
 > **Gerado em**: 2026-09-03
 
 ---
@@ -45,7 +45,7 @@ A causa foi a ausência de `drop_duplicates` no ingestor `bcb_pix.py`, combinada
 df = df.drop_duplicates(subset=["id_municipio", "AnoMes"])
 ```
 
-Após a correção, o ingestor foi re-executado para os **12 meses mais recentes** (ago/2025 a jul/2026), resultando em **72.421 registros** brutos únicos. A `trusted_municipios` e o IPB *alpha* foram recalculados com a série corrigida.
+Após a correção, o ingestor foi re-executado cobrindo **ago/2025 a ago/2026** (13 meses na raw; a consolidação da `trusted_municipios` usa os 12 meses mais recentes), resultando em **72.421 registros** brutos únicos. A `trusted_municipios` e o IPB *alpha* foram recalculados com a série corrigida.
 
 **Impacto nos dados**:
 

@@ -210,6 +210,8 @@ curl -s --max-time 60 \
 
 ## 3. Fontes de download manual
 
+> **Nota — fluxo real (Etapa 1 concluída)**: o download na origem é **pontual (feito uma única vez)**. Após baixar o arquivo, o time o envia para o bucket GCS do projeto — `ipb-raw-data-mba-projetc-final`, prefixos `pib/`, `estban/` e `anatel/` (ex.: `gcloud storage cp <arquivo> gs://ipb-raw-data-mba-projetc-final/pib/`). A partir daí, os ingestores baixam automaticamente do GCS via `src/utils/gcs.py` e salvam o parquet de cache em `data/raw/<fonte>/`. **Para re-executar o pipeline não é mais necessário nenhum download manual** — os passos abaixo documentam apenas a obtenção pontual na origem.
+
 ### 3.1 IBGE — PIB dos Municípios
 
 **URL de acesso**: [https://www.ibge.gov.br/estatisticas/economicas/contas-nacionais/9088-produto-interno-bruto-dos-municipios.html](https://www.ibge.gov.br/estatisticas/economicas/contas-nacionais/9088-produto-interno-bruto-dos-municipios.html)
@@ -240,7 +242,7 @@ curl -s --max-time 60 \
 2. Navegar até o conjunto "Acessos - Banda Larga Fixa".
 3. Baixar o CSV mais recente (mensal) de densidade de acessos por 100 habitantes.
 4. Recomenda-se também consultar o painel: [https://informacoes.anatel.gov.br/paineis/acessos/banda-larga-fixa](https://informacoes.anatel.gov.br/paineis/acessos/banda-larga-fixa)
-5. Salvar em `data/raw/anatel_banda_larga/`.
+5. Salvar em `data/raw/anatel_banda_larga_fixa/` (e enviar ao prefixo `anatel/` do bucket GCS — ver nota na introdução desta seção).
 
 **URL alternativa do inventário** (funciona via `curl`):
 
@@ -345,7 +347,7 @@ Validação realizada em `2026-08-23` sobre os arquivos presentes em `data/raw/`
 
 ### 6.2 Anatel — Densidade de Banda Larga Fixa
 
-- **Arquivo**: `data/raw/anatel_banda_larga/Densidade_Banda_Larga_Fixa.csv`
+- **Arquivo**: `data/raw/anatel_banda_larga_fixa/Densidade_Banda_Larga_Fixa.csv`
 - **Status**: ✅ OK
 - **Detalhes**:
   - Encoding UTF-8 BOM, delimitador `;`, separador decimal `,`.
@@ -356,7 +358,7 @@ Validação realizada em `2026-08-23` sobre os arquivos presentes em `data/raw/`
 
 ### 6.3 BCB — Estban
 
-- **Arquivo**: `data/raw/bcb_estaban/202603_ESTBAN.CSV`
+- **Arquivo**: `data/raw/bcb_estban/202603_ESTBAN.CSV`
 - **Status**: ✅ OK
 - **Detalhes**:
   - Encoding `latin1`, delimitador `;`.

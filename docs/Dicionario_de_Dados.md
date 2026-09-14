@@ -13,20 +13,21 @@ A tabela `trusted_municipios` é o produto final da Etapa 1. Ela contém a chave
 | `id_municipio` | STRING | ID | IBGE | Código identificador de 7 dígitos do município. Chave Primária (PK). |
 | `nome_municipio` | STRING | Texto | IBGE | Nome oficial do município. |
 | `sigla_uf` | STRING | Texto | IBGE | Sigla da Unidade Federativa (UF) contendo 2 letras. |
+| `nome_uf` | STRING | Texto | IBGE | Nome da UF (ex: São Paulo). |
 | `nome_regiao` | STRING | Texto | IBGE | Região demográfica do Brasil (Norte, Nordeste, Centro-Oeste, Sudeste, Sul). |
 | `populacao_total` | FLOAT | Pessoas | Censo 2022 | Total de pessoas residentes no município (SIDRA Tabela 4709). |
 | `populacao_18_35_pct` | FLOAT | % | Censo 2022 | Percentual da população entre 18 e 35 anos (SIDRA Tabela 9514, soma de idades granulares). |
 | `populacao_urbana_pct` | FLOAT | % | Censo 2022 | Proporção de residentes em área urbana (SIDRA Tabela 10089, Var. 93, Situação do Domicílio). |
 | `rendimento_domiciliar_per_capita` | FLOAT | R$ | Censo 2022 | Valor do rendimento nominal médio mensal domiciliar per capita (SIDRA Tabela 10295, Var. 13431). |
 | `escolaridade_ensino_medio_pct` | FLOAT | % | Censo 2022 | Percentual de pessoas de 18 anos ou mais com ensino médio completo ou superior (SIDRA Tabela 10061, Var. 2667). |
-| `domicilios_com_internet_pct` | FLOAT | % | Censo 2022 | Proporção de residências com utilização de internet (SIDRA Tabela 7307). **Nota:** API do SIDRA retorna HTTP 500 para N6[all] em agosto/2026; coluna permanece nula até normalização. Usar `banda_larga_fixa_por_100_hab` (Anatel) como proxy na EDA. |
+| `domicilios_com_internet_pct` | INTEGER | % | Censo 2022 | Proporção de residências com utilização de internet (SIDRA Tabela 7307). **Nota:** API do SIDRA retorna HTTP 500 para N6[all] em agosto/2026; coluna permanece nula até normalização. Usar `banda_larga_fixa_por_100_hab` (Anatel) como proxy na EDA. |
 | `pib` | FLOAT | Mil R$ | IBGE PIB | Produto Interno Bruto a preços correntes (R$ 1.000). |
 | `pib_per_capita` | FLOAT | R$ | IBGE PIB | PIB absoluto (em R$) dividido pela população do ano. |
-| `pix_total_volume_12m` | FLOAT | R$ | BCB Pix | Volume financeiro total transacionado em Pix (PF + PJ) nos últimos 12 meses coletados. |
-| `pix_total_transacoes_12m` | FLOAT | Transações | BCB Pix | Quantidade total de transações Pix (PF + PJ) nos últimos 12 meses coletados. |
+| `pix_total_volume_12m` | FLOAT | R$ | BCB Pix | Volume financeiro total transacionado em Pix (PF + PJ) nos 12 meses mais recentes da série (raw `AnoMes` ago/2025–ago/2026). |
+| `pix_total_transacoes_12m` | INTEGER | Transações | BCB Pix | Quantidade total de transações Pix (PF + PJ) nos 12 meses mais recentes da série (raw `AnoMes` ago/2025–ago/2026). |
 | `pix_per_capita_12m` | FLOAT | R$ / hab. | BCB Pix | `pix_total_volume_12m / populacao_total`. |
 | `banda_larga_fixa_por_100_hab` | FLOAT | Acessos | Anatel | Quantidade de acessos de banda larga fixa para cada 100 moradores. |
-| `quantidade_agencias` | INTEGER | Unidades | BCB Estban | Total de pontos de atendimento de bancos tradicionais ativos. |
+| `quantidade_agencias` | FLOAT | Unidades | BCB Estban | Total de pontos de atendimento de bancos tradicionais ativos (float por causa da imputação de 0 nos municípios sem agência). |
 | `agencias_por_100k_hab` | FLOAT | Agências | BCB Estban | `(quantidade_agencias / populacao_total) * 100.000`. |
 | `volume_depositos` | FLOAT | R$ | BCB Estban | Volume total de depósitos (conta corrente + poupança) nas agências locais. |
 | `depositos_per_capita` | FLOAT | R$ / hab. | BCB Estban | `volume_depositos / populacao_total`. |
@@ -34,6 +35,7 @@ A tabela `trusted_municipios` é o produto final da Etapa 1. Ela contém a chave
 | `credito_per_capita` | FLOAT | R$ / hab. | BCB Estban | `volume_credito / populacao_total`. |
 | `idhm` | FLOAT | Índice | Ipeadata (PNUD/Atlas 2010) | Índice de Desenvolvimento Humano Municipal do Censo 2010. Mantido como variável histórica; o indicador principal do pilar E é a escolaridade 2022. |
 | `_extracted_at` | TIMESTAMP | Timestamp| Pipeline | Carimbo de tempo do momento da consolidação. |
+| `_source_url` | STRING | URL | Pipeline | Origem/consolidação da trusted (proveniência das métricas). |
 
 > **Disclaimer sobre vintage dos dados**: o `trusted_municipios` combina diferentes anos de referência por indisponibilidade de dados municipais atualizados. **Censo 2022** (população, renda, escolaridade, urbanização); **PIB IBGE** (último ano disponível, 2023); **Pix** (últimos 12 meses disponíveis, ago/2025–ago/2026); **Anatel** (último mês disponível, 2026); **Estban** (último mês disponível, 2026); **IDHM** (Censo 2010). Esse mix de vintages é uma limitação declarada do projeto e será tratado como viés/assumpção na EDA e na apresentação final.
 
@@ -61,7 +63,7 @@ Abaixo estão os dicionários das fontes individuais (ingestores) antes do proce
 | `populacao_urbana_pct` | FLOAT | % | Percentual da população residente em área urbana (Tabela 10089, Var. 93). |
 | `rendimento_domiciliar_per_capita` | FLOAT | R$ | Rendimento nominal médio mensal domiciliar per capita (Tabela 10295, Var. 13431). |
 | `escolaridade_ensino_medio_pct` | FLOAT | % | Percentual de pessoas 18+ com ensino médio completo ou superior (Tabela 10061, Var. 2667). |
-| `domicilios_com_internet_pct` | FLOAT | % | Percentual de domicílios com utilização de internet (Tabela 7307, Var. 9784). Nulo quando a API do SIDRA está indisponível para N6. |
+| `domicilios_com_internet_pct` | INTEGER | % | Percentual de domicílios com utilização de internet (Tabela 7307, Var. 9784). Nulo quando a API do SIDRA está indisponível para N6. |
 
 ### 2.3 `raw_pib_municipios`
 | Coluna | Tipo | Unidade | Descrição |
@@ -72,33 +74,53 @@ Abaixo estão os dicionários das fontes individuais (ingestores) antes do proce
 | `pib_per_capita` | FLOAT | R$ | PIB absoluto (em R$) dividido pela população do ano. |
 | `va_servicos` | FLOAT | Mil R$ | Valor adicionado bruto do setor de serviços. **Atualmente nulo para 2023** — o IBGE não divulgou essa rubrica para o ano mais recente do arquivo de origem. |
 
+**Nota**: a raw preserva o layout original do XLSX do IBGE (46 colunas no total, com os nomes originais da planilha — alguns exibidos com caracteres corrompidos por encoding, ex.: `C_digo_da_Grande_Regi_o`, além do artefato `__index_level_0__` do índice do pandas). A tabela acima lista apenas as colunas utilizadas pelo pipeline, renomeadas pelo ingestor (`id_municipio`, `va_servicos`, `pib`, `pib_per_capita`).
+
 ### 2.4 `raw_bcb_pix_transacoes`
 | Coluna | Tipo | Unidade | Descrição |
 | :--- | :--- | :--- | :--- |
-| `id_municipio` | STRING | ID | Código IBGE. |
-| `data_base` | DATE | Mês/Ano | Mês do lote de transações. Série mensal de 12 a 24 meses. |
-| `transacoes_pf` | INTEGER | Transações| Contagem absoluta de transferências de origem Pessoa Física. |
-| `transacoes_pj` | INTEGER | Transações| Contagem absoluta de transferências de origem Pessoa Jurídica. |
-| `valor_pf` | FLOAT | R$ | Volume bruto monetário enviado por Pessoas Físicas. |
-| `valor_pj` | FLOAT | R$ | Volume bruto monetário enviado por Pessoas Jurídicas. |
+| `AnoMes` | INTEGER | Mês/Ano | Competência no formato YYYYMM. Chave temporal; período carregado na raw: **ago/2025–ago/2026** (13 meses). |
+| `id_municipio` | STRING | ID | Código IBGE de 7 dígitos (derivado de `Municipio_Ibge` na fonte). |
+| `Municipio` | STRING | Texto | Nome do município na API. |
+| `Estado_Ibge` | FLOAT | ID | Código IBGE da UF na fonte. |
+| `Estado` | STRING | Texto | Nome da UF. |
+| `Sigla_Regiao` | STRING | Texto | Sigla da região (N, NE, CO, SE, S). |
+| `Regiao` | STRING | Texto | Nome da região. |
+| `VL_PagadorPF` | FLOAT | R$ | Volume enviado por Pessoas Físicas (lado pagador). |
+| `QT_PagadorPF` | INTEGER | Transações | Quantidade de transações com origem PF. |
+| `VL_PagadorPJ` | FLOAT | R$ | Volume enviado por Pessoas Jurídicas (lado pagador). |
+| `QT_PagadorPJ` | INTEGER | Transações | Quantidade de transações com origem PJ. |
+| `VL_RecebedorPF` | FLOAT | R$ | Volume recebido por Pessoas Físicas. |
+| `QT_RecebedorPF` | INTEGER | Transações | Quantidade de transações com destino PF. |
+| `VL_RecebedorPJ` | FLOAT | R$ | Volume recebido por Pessoas Jurídicas. |
+| `QT_RecebedorPJ` | INTEGER | Transações | Quantidade de transações com destino PJ. |
+| `QT_PES_PagadorPF` | INTEGER | Usuários | Usuários únicos PF no lado pagador no mês. |
+| `QT_PES_PagadorPJ` | INTEGER | Usuários | Usuários únicos PJ no lado pagador no mês. |
+| `QT_PES_RecebedorPF` | INTEGER | Usuários | Usuários únicos PF no lado recebedor no mês. |
+| `QT_PES_RecebedorPJ` | INTEGER | Usuários | Usuários únicos PJ no lado recebedor no mês. |
+
+**Notas**: nomes de colunas conforme a API OData do BCB (Olinda). Uma linha por município × mês (72.421 registros no período carregado; ingestor com `drop_duplicates` em `id_municipio`/`AnoMes` — ver Relatório EDA §2.1). A trusted consolida a janela de 12 meses em `pix_total_volume_12m` / `pix_total_transacoes_12m` / `pix_per_capita_12m`.
 
 ### 2.5 `raw_anatel_banda_larga_fixa`
 | Coluna | Tipo | Unidade | Descrição |
 | :--- | :--- | :--- | :--- |
-| `id_municipio` | STRING | ID | Código IBGE. |
-| `nome_municipio` | STRING | Texto | Nome de origem do CSV da Anatel (não utilizado após JOIN na Trusted). |
-| `sigla_uf` | STRING | Texto | Estado de origem do CSV. |
-| `data_base` | DATE | Mês/Ano | Safra dos dados (filtrado apenas mês/ano mais recente). |
-| `densidade` | FLOAT | Acessos | Contratos de internet física residencial/empresarial por 100 hab. Renomeado para `banda_larga_fixa_por_100_hab` na Trusted. |
+| `ano` | INTEGER | Ano | Ano de referência do recorte mensal. |
+| `mes` | INTEGER | Mês | Mês de referência do recorte mensal. |
+| `UF` | STRING | Texto | UF de origem do CSV. |
+| `Munic_pio` | STRING | Texto | Nome do município de origem do CSV (nome chega corrompido por encoding na carga; não utilizado após o JOIN na Trusted). |
+| `id_municipio` | STRING | ID | Código IBGE (coluna `Código IBGE` do CSV). Chave de join com a trusted. |
+| `densidade` | FLOAT | Acessos | Contratos de internet física por 100 hab. Renomeado para `banda_larga_fixa_por_100_hab` na Trusted. |
+| `N_vel_Geogr_fico_Densidade` | STRING | Texto | Nível geográfico do registro (`Municipio`, etc.; nome chega corrompido por encoding na carga). |
 
 ### 2.6 `raw_bcb_estban`
 | Coluna | Tipo | Unidade | Descrição |
 | :--- | :--- | :--- | :--- |
 | `id_municipio` | STRING | ID | Código IBGE. |
-| `data_base` | DATE | Mês/Ano | Data do balancete (Doc 4500). Filtrado pelo lote do bucket GCS. |
 | `quantidade_agencias` | INTEGER | Unidades | Total de pontos de atendimento de bancos tradicionais ativos. |
 | `volume_depositos` | FLOAT | R$ | Soma de conta corrente e poupança nas agências locais (Verbete 420). |
 | `volume_credito` | FLOAT | R$ | Operações de empréstimos/financiamentos cedidos (Verbete 160). |
+
+**Nota**: a safra do lote é definida pelo arquivo baixado do GCS (ex.: `202603_ESTBAN.CSV`, posição mar/2026); a raw guarda apenas o recorte agregado por município, sem coluna de data.
 
 ### 2.7 `raw_bcb_correspondentes`
 | Coluna | Tipo | Unidade | Descrição |
@@ -109,6 +131,7 @@ Abaixo estão os dicionários das fontes individuais (ingestores) antes do proce
 | `CnpjCorrespondente` | STRING | CNPJ | Empresa correspondente. |
 | `NomeCorrespondente` | STRING | Texto | Nome do correspondente. |
 | `Tipo` | STRING | Categoria | Tipo do ponto: Sede, Filial, Posto ou Agência. |
+| `Ordem` | STRING | Texto | Ordem/sequencial do ponto na fonte (campo original do BCB, sem uso no pipeline). |
 | `MunicipioIBGE` | STRING | ID | Código IBGE original da fonte (7 dígitos). |
 | `Municipio` | STRING | Texto | Nome do município de atendimento. |
 | `UF` | STRING | Texto | UF do ponto de atendimento. |
@@ -189,3 +212,30 @@ Presente nas três tabelas específicas (`analytics_ipb_v1_classico`, `analytics
 ### 3.3 `analytics_ipb_comparacao` (visão larga)
 
 `id_municipio`, `nome_municipio`, `sigla_uf`, `nome_regiao`, `estrato_populacional`, `ipb_v1_classico`, `ipb_v2_recalibrado`, `ipb_v3_presenca_completa`, `rank_v1`, `rank_v2`, `rank_v3`, `rank_v1_estrato`, `rank_v2_estrato`, `rank_v3_estrato` — as 3 versões lado a lado para consultas ad hoc e EDA (notebook 05).
+
+### 3.4 `analytics_ipb_clusters` (produto da Etapa 3 — modelagem)
+
+Tabela publicada por `scripts/08_publica_clusters_bigquery.py` (5.570 municípios; integridade em `tests/data_quality/test_analytics_clusters.py`). Modelagem sem rótulo de verdade — alvos proxy declarados (ver `docs/Relatorio_Modelagem_Etapa3.md`).
+
+| Coluna | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `id_municipio` | STRING | Código IBGE de 7 dígitos. Chave primária (5.570 municípios). |
+| `nome_municipio` | STRING | Nome do município. |
+| `sigla_uf` | STRING | UF. |
+| `nome_regiao` | STRING | Região (derivada da UF pelo pipeline). |
+| `estrato_populacional` | STRING | `pequena` (<50 mil), `media` (50–500 mil), `grande` (>500 mil). |
+| `cluster_kmeans` | INTEGER | Cluster atribuído pelo K-Means (K=6, features `log1p` padronizadas). |
+| `cluster_gmm` | INTEGER | Cluster atribuído pelo GMM (K=6). |
+| `prob_cluster_gmm` | FLOAT | Probabilidade do cluster GMM atribuído (confiança da atribuição). |
+| `arquetipo` | STRING | Nome do arquétipo do cluster (sugestão dos dados, a validar pelo grupo). |
+| `prob_tem_agencia_rf` | FLOAT | Probabilidade estimada (Random Forest) de o município ter agência bancária. |
+| `pred_tem_agencia_rf` | INTEGER | Predição binária (0/1) de presença de agência pelo RF. |
+| `potencial_latente_depositos_pc` | FLOAT | Potencial latente de depósitos per capita (regressão; nulo onde já existe agência — não se estima o que já se observa). |
+| `score_anomalia` | FLOAT | Score do Isolation Forest (quanto menor, mais anômalo). |
+| `flag_anomalia_top30` | BOOL | Flag do Top 30 de anomalias narráveis. |
+| `ipb` | FLOAT | IPB de referência (V3) para cruzamento — não é feature. |
+| `rank` | INTEGER | Rank geral do IPB de referência (V3). |
+| `_extracted_at` | TIMESTAMP | Carimbo de tempo da publicação. |
+| `_source_url` | STRING | Origem da tabela (padrão do pipeline). |
+
+> **Nota**: o schema planejado em `docs/Plano_de_Implementacao_Etapa3_Modelagem.md` §4.7 previa a coluna `prob_tem_correspondente_rf`, **removida na publicação** — o alvo `flag_tem_correspondente` mostrou-se degenerado (100% dos municípios têm correspondente), o que inviabilizou o classificador; ver `docs/Relatorio_Modelagem_Etapa3.md` §7.

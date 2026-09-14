@@ -46,7 +46,7 @@ COLUNAS_IDENTIDADE = [
 ]
 
 # Features oficiais de modelagem (19), por familia e vintage:
-# demografia Censo 2022, PIB 2023, CEMPRE 2024, Pix 2023/24,
+# demografia Censo 2022, PIB 2023, CEMPRE 2024, Pix ago/2025-ago/2026,
 # Anatel/Estban 2026. Ver discussao Etapa 3, secao 3.
 FEATURES_MODELO = [
     # Demografia (Censo 2022)
