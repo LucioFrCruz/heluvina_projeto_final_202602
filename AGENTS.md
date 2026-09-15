@@ -32,7 +32,16 @@
    - Todo ingestor deve salvar dados brutos em `data/raw/<fonte>/*.parquet` antes de subir para o BigQuery (`raw_*`).
    - Isso garante idempotência, desacoplamento e evita re-execuções desnecessárias contra APIs públicas.
 
-7. **Cultura de Testes Rigorosa**:
+7. **Fontes Manuais: Estágio Obrigatório no GCS**:
+   - Toda fonte obtida por **download manual** (PIB dos Municípios, Estban, Anatel) deve ser enviada ao bucket GCS do projeto (`GCS_BUCKET_NAME`, ex.: `ipb-raw-data-mba-projetc-final`, prefixos `pib/`, `estban/`, `anatel/`).
+   - O download na origem é **pontual (feito uma única vez)**; a partir daí, os ingestores baixam automaticamente do GCS via `src/utils/gcs.py` (`download_file_from_gcs`).
+   - **Nunca reintroduzir etapa manual no pipeline** — quem for executar o projeto não deve precisar baixar arquivo nenhum. Ao adicionar uma nova fonte manual, subir o arquivo ao GCS e registrar o prefixo neste documento (§2) e no `docs/Guia_de_Execucao.md`.
+
+8. **AGENTS.md Sempre Atualizado (memória oficial do projeto)**:
+   - **Qualquer mudança estrutural** — novo módulo, ingestor, script, notebook, tabela `raw_/trusted_/analytics_`, diretriz ou decisão de negócio — deve atualizar o AGENTS.md **no mesmo commit**.
+   - Ao final de qualquer sessão de trabalho, o agente deve revisar se §1 (status), §2 (estrutura), §3 (tecnologias), §9 (decisões/gaps) e §10 (próximos passos) ainda refletem a realidade do repositório. Se divergirem, corrigir antes de encerrar.
+
+9. **Cultura de Testes Rigorosa**:
    - Todo módulo ou parser em `src/utils/`, `src/ingestors/` e `src/analytics/` deve ter testes unitários correspondentes em `tests/unit/`.
    - Teste de conexão GCP em `tests/integration/test_bq_connection.py`.
    - Testes de integridade na camada `trusted` e nas tabelas `analytics_ipb_*` (`tests/data_quality/`) validando os 5.570 municípios.
@@ -51,10 +60,12 @@ Esta base de código entrega o **Índice de Potencial Bancário (IPB)**.
   - `analytics_ipb_v3_presenca_completa` — correspondentes por tipo + flag de turismo suave + `empregos_formais_por_1000_hab` (CEMPRE) no pilar A (ex-"Abordagem 2");
   - `analytics_ipb_comparacao` — visão larga das 3 versões lado a lado.
 - Pipeline do índice: `src/analytics/ipb.py` (fórmulas, com testes unitários) + `scripts/07_publica_ipb_bigquery.py` (lê trusted + correspondentes + CEMPRE do BQ e publica). Integridade das tabelas: `tests/data_quality/test_analytics_ipb.py`. A `trusted_municipios` **não** carrega colunas de índice — IPB é produto da camada analytics.
+- **Etapa 3 (Modelagem/ML): IMPLEMENTADA e PUBLICADA (2026-09-12).** Sem rótulo de verdade no projeto — modelos usam alvo proxy (declarado). Módulos testáveis em `src/analytics/` (`modelagem.py` com as constantes oficiais de features, `clustering.py`, `classificacao.py`, `regressao.py`, `anomalias.py`) + 3 notebooks executados em `notebooks/01_modelagem/`. Publicação: `scripts/08_publica_clusters_bigquery.py` → **`analytics_ipb_clusters`** (5.570 linhas: identidade, clusters K-Means/GMM com K=6, probabilidades, arquetipo, potencial latente, anomalias; integridade em `tests/data_quality/test_analytics_clusters.py`). Relatório com todos os números: `docs/Relatorio_Modelagem_Etapa3.md`. Decisões e correções metodológicas registradas: transformação `log1p` nas 14 colunas de cauda longa; classificação de presença usa só as 13 exógenas (`FEATURES_SEM_PRESENCA` — variáveis de presença vazam o alvo); alvo tem-correspondente degenerado (100% dos municípios têm correspondente).
 
 **ESCOPO DA SESSÃO (próximos passos):**
 - Validação de negócio dos Top 100 e escolha da versão oficial do IPB.
-- Clusterização/ML (Etapa 3) e enriquecimentos (4G/5G, CNPJ/Caged, dados de visitação para a flag de turismo).
+- Iteração da Etapa 3 com o grupo: **K=6 já confirmado (2026-09-14)**; falta validar os nomes dos arquétipos, a leitura dos resíduos da classificação e do Spearman potencial-latente × IPB (0,449).
+- Enriquecimentos (4G/5G, CNPJ/Caged, dados de visitação para a flag de turismo).
 - Manter a EDA sincronizada com as tabelas `analytics_ipb_*` (notebook 05 lê do BigQuery).
 
 ---
@@ -69,44 +80,60 @@ heluvina_projeto_final_202602/
 ├── .gitignore                   # deve ignorar .env, credenciais, caches e outputs locais
 ├── docs/
 │   ├── IPB_Guia_de_Bases_e_Desenho.md
-│   ├── Arquitetura_Tecnica.md
-│   └── Guia_de_Coleta.md
+│   ├── Arquitetura_Tecnica.md        # desenho da Etapa 1 (arquivado)
+│   ├── Guia_de_Coleta.md             # fontes e contratos de coleta (Etapa 1)
+│   ├── Dicionario_de_Dados.md        # schemas de todas as tabelas raw_/trusted_/analytics_
+│   ├── Relatorio_EDA.md              # achados da EDA + comparação V1/V2/V3
+│   ├── Comparacao_Tres_Abordagens_IPB.md  # gerado pelo script 07
+│   ├── Guia_de_Analise_Exploratoria.md / Plano_de_Implementacao_EDA.md  # planejamento Etapa 2
+│   ├── Relatorio_Modelagem_Etapa3.md # resultados da Etapa 3 (clusters, classificação, anomalias)
+│   ├── Arquetipos_Municipais.md      # perfis dos 6 arquétipos
+│   └── Plano_de_Implementacao_Etapa3_Modelagem.md
 ├── src/
 │   ├── __init__.py
-│   ├── config.py                # centraliza paths, URLs, nomes de tabelas, constantes
+│   ├── config.py                # centraliza paths, nomes de tabelas, dataset, bucket GCS
 │   ├── utils/
 │   │   ├── __init__.py
 │   │   ├── ibge.py              # funções para códigos IBGE, localidades, joins
 │   │   ├── bigquery.py          # cliente BigQuery, upload/download
-│   │   └── storage.py           # leitura de arquivos locais (csv/xlsx)
+│   │   ├── storage.py           # leitura de arquivos locais (csv/xlsx)
+│   │   ├── gcs.py               # download de arquivos das fontes manuais a partir do bucket GCS
+│   │   └── eda.py               # utilitários de EDA (figuras, parquet, JSON, outliers)
 │   ├── ingestors/               # um módulo por fonte de dados
 │   │   ├── __init__.py
 │   │   ├── ibge_localidades.py  # API
 │   │   ├── sidra_censo_2022.py  # API
 │   │   ├── ibge_cempre.py       # API (CEMPRE/SIDRA 9528, série 2022+)
-│   │   ├── ibge_pib_municipios.py  # XLSX manual
+│   │   ├── ibge_pib_municipios.py  # XLSX via GCS (upload pontual, ver Diretriz 0.7)
 │   │   ├── bcb_pix.py           # API
 │   │   ├── bcb_correspondentes.py  # API OData BCB (cache idempotente)
-│   │   ├── anatel_banda_larga_fixa.py  # CSV manual
-│   │   ├── bcb_estban.py        # CSV manual
-│   │   └── pnud_idhm.py         # XLSX manual (se disponível)
+│   │   ├── anatel_banda_larga_fixa.py  # CSV via GCS
+│   │   ├── bcb_estban.py        # CSV via GCS
+│   │   └── pnud_idhm.py         # API Ipeadata (OData)
 │   ├── preparacao/              # scripts de limpeza e consolidação trusted
 │   │   ├── __init__.py
 │   │   └── trusted_municipios.py
-│   └── analytics/               # cálculo das 3 versões do IPB (V1/V2/V3)
+│   └── analytics/               # índice (V1/V2/V3) + modelagem da Etapa 3
 │       ├── __init__.py
-│       └── ipb.py
+│       ├── ipb.py               # fórmulas V1/V2/V3, agregações, gerador da comparação
+│       ├── modelagem.py         # constantes oficiais de features (19; 13 exógenas), log1p, split
+│       ├── clustering.py        # K-Means/GMM, avaliação de K, regras de nomeação de arquétipos
+│       ├── classificacao.py     # presença bancária (alvo proxy)
+│       ├── regressao.py         # potencial latente + explicação do IPB
+│       └── anomalias.py         # Isolation Forest
 ├── scripts/
-│   └── 07_publica_ipb_bigquery.py  # publica analytics_ipb_* no BigQuery
+│   ├── 07_publica_ipb_bigquery.py      # publica analytics_ipb_* (V1/V2/V3 + comparação)
+│   └── 08_publica_clusters_bigquery.py # publica analytics_ipb_clusters (Etapa 3)
 ├── data/
 │   ├── raw/                     # dumps locais temporários (não commitados)
 │   └── processed/               # resultados intermediários (não commitados)
 ├── notebooks/
-│   └── 00_exploracao/           # EDA (7 notebooks, incl. 05 de comparação das abordagens)
+│   ├── 00_exploracao/           # EDA (7 notebooks, incl. 05 de comparação das abordagens)
+│   └── 01_modelagem/            # Etapa 3 (3 notebooks: dataset/arquétipos, classificação, regressão+anomalias)
 └── tests/
-    ├── unit/                    # testes pequenos para utilitários e módulos
+    ├── unit/                    # testes de utils, ingestores, ipb.py e módulos de modelagem
     ├── integration/             # teste de conexão BigQuery
-    └── data_quality/            # integridade da trusted e das analytics_ipb_*
+    └── data_quality/            # integridade da trusted e das analytics_ipb_* (V1/V2/V3 e clusters)
 ```
 
 **Regra de ouro**: nenhum dado bruto ou credencial entra no Git. Apenas código, SQL, documentação e configuração segura.
@@ -118,12 +145,16 @@ heluvina_projeto_final_202602/
 ## 3. Tecnologias e dependências
 
 - **Python 3.10+**
-- **Google Cloud SDK** (`gcloud`) — autenticação local opcional, mas recomendada.
-- **BigQuery** via `google-cloud-bigquery` — camada de persistência.
-- **Pandas / Polars** — manipulação de dados (escolher um e manter).
+- **Google Cloud SDK** (`gcloud`) — autenticação local via ADC (recomendado).
+- **BigQuery** via `google-cloud-bigquery` — camada de persistência (raw/trusted/analytics).
+- **Google Cloud Storage** via `google-cloud-storage` — estágio obrigatório das fontes manuais (Diretriz 0.7): bucket `GCS_BUCKET_NAME` com prefixos `pib/`, `estban/`, `anatel/`.
+- **Pandas** — manipulação de dados (padrão do projeto; não usar Polars).
+- **scikit-learn / scipy** — Etapa 3: clusters (K-Means/GMM), classificação, regressão e anomalias.
+- **matplotlib / seaborn / plotly** — EDA e figuras dos relatórios.
 - **Requests** — consumo de APIs HTTP.
 - **python-dotenv** — carregamento de variáveis de ambiente locais.
 - **openpyxl** — leitura de arquivos Excel (.xlsx).
+- **pre-commit** (dev) — bloqueio de credenciais e chaves privadas no commit (Diretriz 0.5).
 
 Todas as dependências devem ser declaradas em `pyproject.toml` e travadas em `poetry.lock` (ver Diretriz 0.3 — Poetry exclusivamente; não usar `requirements.txt`).
 
@@ -158,16 +189,17 @@ Todas as dependências devem ser declaradas em `pyproject.toml` e travadas em `p
 
 ## 5. Credenciais e ambiente
 
-- Nunca commitar arquivos `.env`, JSON de service account ou qualquer secret.
-- Criar `.env.example` com as chaves necessárias e valores fictícios.
+- Nunca commitar arquivos `.env`, JSON de service account ou qualquer secret. O repositório tem **pre-commit** (`.pre-commit-config.yaml`) que bloqueia chaves privadas e JSONs de service account nos commits — mantenha-o instalado com `poetry run pre-commit install`.
+- Criar `.env.example` com as chaves necessárias e valores fictícios (o exemplo deve espelhar as variáveis lidas por `src/config.py`).
 - Autenticação local no BigQuery pode ser feita de duas formas:
   1. `gcloud auth application-default login` (recomendado para desenvolvimento local).
-  2. Variável `GOOGLE_APPLICATION_CREDENTIALS` apontando para um JSON de service account fora do repo.
+  2. Variável `GOOGLE_APPLICATION_CREDENTIALS` apontando para um JSON de service account **fora do repo**.
 - Variáveis esperadas (exemplo):
   ```bash
   GCP_PROJECT_ID=meu-projeto-ipb
   BIGQUERY_DATASET=ipb_staging
   BIGQUERY_LOCATION=US
+  GCS_BUCKET_NAME=ipb-raw-data-mba-projetc-final
   ```
 
 ---
@@ -206,14 +238,27 @@ cp .env.example .env
 # 3. Autenticar no GCP (se necessário)
 gcloud auth application-default login
 
-# 4. Rodar um ingestor específico
+# 3.1 Instalar o pre-commit (bloqueio de credenciais — Diretriz 0.5)
+poetry run pre-commit install
+
+# 4. (PONTUAL, uma única vez) Subir os arquivos das fontes manuais ao GCS —
+#     depois disso os ingestores baixam sozinhos (Diretriz 0.7):
+#   gcloud storage cp pib_municipios_2010_2023.xlsx gs://$GCS_BUCKET_NAME/pib/
+#   gcloud storage cp 202603_ESTBAN.CSV          gs://$GCS_BUCKET_NAME/estban/
+#   gcloud storage cp Densidade_Banda_Larga_Fixa.csv gs://$GCS_BUCKET_NAME/anatel/
+
+# 5. Rodar um ingestor específico
 poetry run python -m src.ingestors.ibge_pib_municipios
 
-# 5. Rodar a consolidação trusted
+# 6. Rodar a consolidação trusted
 poetry run python -m src.preparacao.trusted_municipios
 
-# 6. Publicar as 3 versões do IPB (camada analytics_)
+# 7. Publicar as 3 versões do IPB (camada analytics_)
 poetry run python scripts/07_publica_ipb_bigquery.py
+
+# 8. Etapa 3: executar os 3 notebooks de notebooks/01_modelagem/ (01→02→03)
+#    e publicar os clusters
+poetry run python scripts/08_publica_clusters_bigquery.py
 ```
 
 ---
@@ -235,26 +280,26 @@ Antes de marcar uma fonte como "coletada", verificar:
 
 A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* e decisões conhecidas:
 - **Internet (Censo 2022)**: A tabela 7307 do SIDRA retorna HTTP 500 para `N6[all]` desde agosto/2026. A coluna `domicilios_com_internet_pct` permanece nula; usar `banda_larga_fixa_por_100_hab` (Anatel) como proxy na EDA.
-- **Estban**: Apenas ~2.900 municípios possuem agências. Os outros devem receber imputação zero para `quantidade_agencias`, `volume_depositos`, etc.
-- **PIB**: A coluna `va_servicos` teve o mapeamento corrigido no ingestor `ibge_pib_municipios.py`; validar se agora vem preenchida no trusted.
+- **Estban**: 2.915 municípios possuem registro (presença bancária). Os demais 2.655 recebem imputação zero para `quantidade_agencias`, `volume_depositos`, etc. (decisão declarada no Relatório EDA).
+- **PIB**: a rubrica `va_servicos` **não é divulgada pelo IBGE para 2023** no arquivo de origem. Decisão registrada (2026-09-14): a coluna fica **somente na `raw_pib_municipios`** e não é propagada para a trusted; o VA de serviços não compõe o índice. Não há pendência de validação.
 - **IDHM**: Mantido como variável histórica (2010) via Ipeadata. O indicador principal de capital humano passa a ser a **escolaridade (% ensino médio completo)** do Censo 2022 (SIDRA Tabela 10061).
 - **CEMPRE (IBGE, 2024)**: coletado em `raw_ibge_cempre` (unidades locais e pessoal ocupado por município e seção CNAE, via SIDRA 9528) — dimensão PJ/empresarial do potencial bancário. **Integrado à V3 desde 2026-09**: `empregos_formais_por_1000_hab` entra no pilar A (agregado por `agregar_cempre` no script 07); `unidades_alojamento_alimentacao_por_1000_hab` acompanha a tabela como validador objetivo de turismo, sem entrar na fórmula. MEIs excluídos pela fonte (limitação declarada).
 - **Correspondentes (BCB/OData, posição 30/08/2026)**: cobre 5.571 municípios — inclui **Boa Esperança do Norte/MT (5101837), município extinto**, que não está no Censo 2022. O pipeline (`agregar_correspondentes_por_tipo`) usa left join a partir da trusted e o caso é coberto por teste de integridade (`tests/data_quality/test_analytics_ipb.py`).
 - **Estrato populacional e região**: derivados no pipeline (`derive_estrato`/`derive_regiao`), não existem como colunas na trusted. Faixas oficiais: pequena <50k, média 50–500k, grande >500k (decisão do projeto, Relatório EDA 5.1).
 - **Analytics publicadas**: `analytics_ipb_v1_classico`, `analytics_ipb_v2_recalibrado`, `analytics_ipb_v3_presenca_completa` e `analytics_ipb_comparacao` (5.570 linhas cada, integridade testada). Nomes oficiais: V1 Clássico, V2 Recalibrado, V3 Presença Bancária Completa (ex-Abordagem 2).
 
-> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix 2023/2024, Anatel/Estban 2026, Correspondentes 30/08/2026, CEMPRE 2024, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
+> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix ago/2025–ago/2026, Anatel/Estban 2026, Correspondentes 30/08/2026, CEMPRE 2024, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
 
 > **Base dos Dados**: reservada para validação cruzada futura, não como fonte primária do pipeline.
 
 ---
 
-## 10. Evolução Futura (Etapa 3 - Não focar agora)
+## 10. Evolução Futura (pós-Etapa 3)
 
-- O cálculo do índice já foi realizado em 3 versões comparadas (seção 1). Resta:
+- O cálculo do índice já foi realizado em 3 versões comparadas (seção 1) e a modelagem da Etapa 3 está implementada e publicada. Resta:
   - **Validação de negócio** dos Top 100 e escolha da versão oficial do IPB;
-  - **Sensibilidade/ajuste fino** de pesos e da flag de turismo;
-  - **ML para clusterização** (arquétipos de municípios) e possível modelo residual;
+  - **Iteração da Etapa 3 com o grupo**: **K=6 confirmado (2026-09-14)**; falta validar os nomes dos arquétipos (sugestões por regra sobre os dados), a leitura dos resíduos da classificação e do Spearman potencial-latente × IPB (0,449);
+  - **Fase 2 da Etapa 3** (registrada no relatório): validação espacial por região, PCA como validação do índice, Agglomerative/dendrograma, `idhm` como feature opcional, discussão de pesos do IPB à luz da importância (banda larga + correspondentes + Pix concentram 0,64+0,29+0,17 da queda de R²);
   - **Enriquecimentos**: cobertura 4G/5G (pilar C), CNPJ/MEI + Caged, dados de visitação (Embratur/MTur) para a flag de turismo.
 
 ---
@@ -267,4 +312,4 @@ A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* e d
 - Proibido em qualquer hipótese: `rm -rf` fora de `data/`, `git push`, `git reset --hard`, `git clean`, expor conteúdo de `.env` ou credenciais.
 ---
 
-*Última atualização: V3 enriquecida com empregos formais do CEMPRE no pilar A (agregado `agregar_cempre`, analytics republicadas), ingestor oficial de correspondentes bancários (BCB/OData) e testes de integridade — v6.*
+*Última atualização (2026-09-14, v7): sincronização pós-Etapa 3 — estrutura de pastas ampliada (módulos de modelagem, script 08, notebooks/01_modelagem), Diretriz 0.7 (fontes manuais com estágio obrigatório no GCS) e Diretriz 0.8 (AGENTS.md sempre atualizado), tecnologias (GCS, scikit-learn, pre-commit), §9 com decisões registradas (Estban 2.915, `va_servicos` descartada da trusted) e K=6 confirmado.*

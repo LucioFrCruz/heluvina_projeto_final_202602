@@ -9,8 +9,8 @@ Este documento descreve o desenho técnico de ponta a ponta para a **Etapa 1 —
 A arquitetura é modular: cada fonte de dados tem seu próprio script de ingestão, e o BigQuery funciona como data lake/staging. Futuramente, a orquestração pode migrar para GitHub Actions sem reescrever os scripts.
 
 **Fontes de dados**:
-- **APIs**: IBGE Localidades, IBGE SIDRA, BCB Pix — coleta automatizada por script.
-- **Downloads manuais**: IBGE PIB, BCB Estban, Anatel Banda Larga Fixa, PNUD IDHM — baixados pelo time e lidos pelos scripts.
+- **APIs**: IBGE Localidades, IBGE SIDRA, BCB Pix, PNUD IDHM (Ipeadata) — coleta automatizada por script.
+- **Downloads manuais**: IBGE PIB, BCB Estban, Anatel Banda Larga Fixa — download **pontual (feito uma única vez)** pelo time; os arquivos são armazenados no bucket GCS `ipb-raw-data-mba-projetc-final` (prefixos `pib/`, `estban/`, `anatel/`) e os ingestores os baixam automaticamente de lá (`src/utils/gcs.py`). Para re-executar o pipeline **não é mais necessário nenhum download manual**.
 - **Fora do escopo**: Banda larga móvel (muitos dados, baixo impacto esperado; não entra).
 
 ---
@@ -60,7 +60,7 @@ flowchart LR
         F3["🌐 BCB API Pix"]:::api
         F4["📁 IBGE PIB dos Municípios (XLSX)"]:::manual
         F5["📁 BCB Estban (CSV)"]:::manual
-        F6["📁 PNUD IDHM (XLSX)"]:::manual
+        F6["🌐 PNUD IDHM (API Ipeadata)"]:::api
         F7["🌐 BCB Correspondentes (API OData)"]:::api
     end
 
@@ -89,7 +89,7 @@ flowchart LR
     T --> A
 ```
 
-> **Legenda**: azul = API automatizada; laranja = arquivo baixado manualmente; verde = scripts Python; cinza = cache local; roxo = BigQuery.
+> **Legenda**: azul = API automatizada; laranja = arquivo baixado manualmente; verde = scripts Python; roxo = BigQuery.
 
 ### 4.2 Código `.mermaid`
 
@@ -106,7 +106,7 @@ flowchart LR
         F3["🌐 BCB API Pix"]:::api
         F4["📁 IBGE PIB dos Municípios (XLSX)"]:::manual
         F5["📁 BCB Estban (CSV)"]:::manual
-        F6["📁 PNUD IDHM (XLSX)"]:::manual
+        F6["🌐 PNUD IDHM (API Ipeadata)"]:::api
         F7["🌐 BCB Correspondentes (API OData)"]:::api
     end
 
@@ -189,7 +189,7 @@ erDiagram
         float populacao_urbana_pct
         float rendimento_domiciliar_per_capita
         float escolaridade_ensino_medio_pct
-        float domicilios_com_internet_pct
+        int domicilios_com_internet_pct
         string _source_url
         timestamp _extracted_at
     }
@@ -199,38 +199,52 @@ erDiagram
         int ano
         float pib
         float pib_per_capita
-        float valor_adicionado_servicos
+        float va_servicos
         string _source_url
         timestamp _extracted_at
     }
 
     RAW_BCB_PIX_TRANSACOES {
-        string id_municipio PK
-        date data_base
-        int transacoes_pf
-        int transacoes_pj
-        float valor_pf
-        float valor_pj
+        int AnoMes
+        string id_municipio
+        string Municipio
+        float Estado_Ibge
+        string Estado
+        string Sigla_Regiao
+        string Regiao
+        float VL_PagadorPF
+        int QT_PagadorPF
+        float VL_PagadorPJ
+        int QT_PagadorPJ
+        float VL_RecebedorPF
+        int QT_RecebedorPF
+        float VL_RecebedorPJ
+        int QT_RecebedorPJ
+        int QT_PES_PagadorPF
+        int QT_PES_PagadorPJ
+        int QT_PES_RecebedorPF
+        int QT_PES_RecebedorPJ
         string _source_url
         timestamp _extracted_at
     }
 
     RAW_ANATEL_BANDA_LARGA_FIXA {
+        int ano
+        int mes
+        string UF
+        string Munic_pio
         string id_municipio
-        string nome_municipio
-        string sigla_uf
-        date data_base
-        float densidade_banda_larga_fixa
+        float densidade
+        string N_vel_Geogr_fico_Densidade
         string _source_url
         timestamp _extracted_at
     }
 
     RAW_BCB_ESTBAN {
         string id_municipio
-        date data_base
         int quantidade_agencias
-        float depositos
-        float credito
+        float volume_depositos
+        float volume_credito
         string _source_url
         timestamp _extracted_at
     }
@@ -247,8 +261,12 @@ erDiagram
         string id_municipio
         string cnpj_contratante
         string nome_contratante
+        string cnpj_correspondente
+        string nome_correspondente
         string tipo
+        string ordem
         string municipio_ibge
+        string municipio
         string uf
         string servicos_correspondentes
         string posicao
@@ -259,7 +277,9 @@ erDiagram
     RAW_IBGE_CEMPRE {
         string id_municipio
         string ano
+        int variavel_codigo
         string variavel
+        string cnae_codigo
         string cnae_secao
         float valor
         string _source_url
@@ -270,17 +290,18 @@ erDiagram
         string id_municipio PK
         string nome_municipio
         string sigla_uf
+        string nome_uf
         string nome_regiao
         float populacao_total
         float populacao_18_35_pct
         float populacao_urbana_pct
         float rendimento_domiciliar_per_capita
         float escolaridade_ensino_medio_pct
-        float domicilios_com_internet_pct
+        int domicilios_com_internet_pct
         float pib
         float pib_per_capita
         float pix_total_volume_12m
-        float pix_total_transacoes_12m
+        int pix_total_transacoes_12m
         float pix_per_capita_12m
         float banda_larga_fixa_por_100_hab
         float quantidade_agencias
@@ -291,6 +312,7 @@ erDiagram
         float credito_per_capita
         float idhm
         timestamp _extracted_at
+        string _source_url
     }
 
     RAW_IBGE_LOCALIDADES ||--o{ TRUSTED_MUNICIPIOS : enriquece
@@ -319,10 +341,10 @@ erDiagram
 | A | Rendimento domiciliar per capita | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Mesma tabela do item acima |
 | A | PIB municipal / per capita | IBGE | Download XLSX | `raw_pib_municipios` | 📁 Manual | Planilha única 2010–2023 |
 | A | Empregos formais por 1.000 hab | IBGE — CEMPRE (SIDRA 9528) | API | `raw_ibge_cempre` | 🌐 API | Ano 2024; **entra no Pilar A da V3**; exclui MEIs |
-| B | Crescimento populacional 2010→2022 | IBGE SIDRA | API | `raw_sidra_censo_2010` + `raw_sidra_censo_2022` | 🌐 API | stretch — variação percentual |
+| B | Crescimento populacional 2010→2022 | IBGE SIDRA | API | `raw_sidra_censo_2010` + `raw_sidra_censo_2022` | 🌐 API | stretch (NÃO implementado) — variação percentual |
 | B | Crescimento do Pix | BCB Olinda | API | `raw_bcb_pix_transacoes` | 🌐 API | stretch — calculado sobre a série |
 | C | Volume Pix PF/PJ per capita | BCB Olinda | API | `raw_bcb_pix_transacoes` | 🌐 API | `pix_total_volume_12m / populacao_total` |
-| C | % domicílios com internet | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Tabela 7307 — instável; usar Anatel como proxy |
+| C | % domicílios com internet | IBGE SIDRA | API | `raw_sidra_censo_2022` | 🌐 API | Tabela 7307 — indisponível (HTTP 500 para `N6[all]` desde ago/2026); usar Anatel como proxy |
 | C | Banda larga fixa por 100 hab. | Anatel | Download CSV | `raw_anatel_banda_larga_fixa` | 📁 Manual | Arquivo já baixado; 5.571 registros no mês mais recente |
 | D | Agências por 100 mil hab. | BCB — Estban | Download CSV | `raw_bcb_estban` | 📁 Manual | `quantidade_agencias / populacao * 100.000` |
 | D | Depósitos e crédito per capita | BCB — Estban | Download CSV | `raw_bcb_estban` | 📁 Manual | `volume_depositos` / `volume_credito` por população |
@@ -360,9 +382,9 @@ Ingestores do núcleo:
 - `bcb_pix.py` — API
 - `bcb_correspondentes.py` — API OData (Olinda), com cache parquet idempotente
 - `ibge_cempre.py` — API SIDRA (tabela 9528, série 2022+; ano 2024), dimensão PJ
-- `anatel_banda_larga_fixa.py` — leitura de CSV baixado manualmente
-- `bcb_estban.py` — leitura de CSV baixado manualmente
-- `pnud_idhm.py` — leitura de XLSX baixado manualmente (se disponível)
+- `anatel_banda_larga_fixa.py` — CSV a partir do GCS (upload pontual, Diretriz 0.7)
+- `bcb_estban.py` — CSV a partir do GCS (upload pontual, Diretriz 0.7)
+- `pnud_idhm.py` — API Ipeadata (OData, série ADH_IDHM)
 
 Além dos ingestores, a camada de cálculo vive em `src/analytics/ipb.py` (3 versões
 do IPB + geração do documento comparativo), orquestrada por
@@ -411,7 +433,7 @@ do IPB + geração do documento comparativo), orquestrada por
 - BCB Olinda: gratuita, sem autenticação para dados abertos.
 - IBGE PIB: download manual, sem autenticação.
 - BCB Estban: download manual, sem autenticação.
-- PNUD IDHM: download manual, sem autenticação (quando o site está disponível).
+- PNUD IDHM: API Ipeadata (OData), sem autenticação.
 
 ---
 
@@ -466,6 +488,8 @@ Essa abordagem mantém o pilar E funcional com dados oficiais e reprodutíveis, 
 5. Manter `.env.example` atualizado.
 6. Implementar ingestores do núcleo.
 7. Adicionar testes unitários para ingestores e utilitários.
+
+> **Nota (2026-09-14):** etapas desta seção já executadas; evoluções pós-Etapa 1 (`analytics_ipb_clusters`, `scripts/08_publica_clusters_bigquery.py`, `notebooks/01_modelagem/`) não são cobertas por este documento — ver AGENTS.md §1.
 
 ---
 

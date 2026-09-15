@@ -25,11 +25,21 @@ O projeto utiliza **Poetry** para gerenciamento de dependências e requer Python
 
 Anteriormente, era necessário baixar manualmente arquivos pesados (CSV e XLSX) para a pasta `data/raw/`. Para melhorar a reprodutibilidade, todas as bases manuais foram migradas para um **Bucket no Google Cloud Storage (GCS)** (`ipb-raw-data-mba-projetc-final`).
 
-- **IBGE PIB dos Municípios**
-- **BCB Estban (Estatística Bancária)**
-- **Anatel Banda Larga Fixa**
+- **IBGE PIB dos Municípios** → prefixo `pib/`
+- **BCB Estban (Estatística Bancária)** → prefixo `estban/`
+- **Anatel Banda Larga Fixa** → prefixo `anatel/`
 
 > **Nota:** Todos os dados, sejam APIs ou arquivos estáticos, são consumidos automaticamente do Data Lake no GCS ou de endpoints públicos. Nenhuma ação manual de download é necessária por parte dos engenheiros.
+
+**Para subir um arquivo manual ao bucket** (download pontual na origem, feito uma única vez — ex.: atualização anual do PIB ou troca de safra do Estban/Anatel):
+
+```bash
+gcloud storage cp "PIB dos Municípios - base de dados 2010-2023.xlsx" gs://ipb-raw-data-mba-projetc-final/pib/
+gcloud storage cp 202603_ESTBAN.CSV gs://ipb-raw-data-mba-projetc-final/estban/
+gcloud storage cp Densidade_Banda_Larga_Fixa.csv gs://ipb-raw-data-mba-projetc-final/anatel/
+```
+
+A partir daí, basta re-executar o ingestor correspondente (§3) que ele baixa o arquivo novo do GCS automaticamente via `src/utils/gcs.py`.
 
 ---
 
@@ -68,6 +78,20 @@ poetry run python -m src.preparacao.trusted_municipios
 #    Lê trusted + correspondentes + CEMPRE do BQ, calcula V1/V2/V3,
 #    sobe analytics_ipb_* e regenera docs/Comparacao_Tres_Abordagens_IPB.md
 poetry run python scripts/07_publica_ipb_bigquery.py
+
+# 9. Etapa 3 — Modelagem (ML): executar os 3 notebooks em ordem
+#    (01_dataset_e_arquetipos → 02_classificacao_presenca →
+#     03_regressao_anomalias_sintese), que geram
+#    data/processed/modelagem_resultados.parquet
+poetry run jupyter nbconvert --to notebook --execute \
+    notebooks/01_modelagem/01_dataset_e_arquetipos.ipynb \
+    notebooks/01_modelagem/02_classificacao_presenca.ipynb \
+    notebooks/01_modelagem/03_regressao_anomalias_sintese.ipynb
+
+# 9.1 Publicação dos clusters (Camada Analytics)
+#     Sobe analytics_ipb_clusters (5.570 linhas, WRITE_TRUNCATE);
+#     integridade em tests/data_quality/test_analytics_clusters.py
+poetry run python scripts/08_publica_clusters_bigquery.py
 ```
 
 ---
@@ -76,7 +100,7 @@ poetry run python scripts/07_publica_ipb_bigquery.py
 
 Após a execução, os dados estarão no dataset `ipb_staging`. Abaixo estão as consultas recomendadas para homologar os dados com a sua equipe.
 
-> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix 2023/2024, Anatel/Estban 2026, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
+> **Disclaimer de vintage**: o `trusted_municipios` combina diferentes anos de referência (Censo 2022, PIB 2023, Pix ago/2025–ago/2026, Anatel/Estban 2026, Correspondentes BCB 30/08/2026, CEMPRE 2024, IDHM 2010). Esse mix é uma limitação declarada do projeto e deve ser mencionado na EDA e apresentação final.
 
 ### 4.1. Visão Completa (Camada Trusted)
 *Os 10 municípios com maior volume transacionado no Pix (e seus PIBs).*

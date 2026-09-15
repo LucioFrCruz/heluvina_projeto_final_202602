@@ -2,7 +2,7 @@
 
 > **Propósito**: este documento estrutura a Etapa 2 do projeto — Análise Exploratória e Limpeza — com base nos objetivos da aula 3, no desenho técnico aprovado (`docs/Arquitetura_Tecnica.md`), na tese do índice (`docs/IPB_Guia_de_Bases_e_Desenho.md`) e no dicionário de dados (`docs/Dicionario_de_Dados.md`).
 >
-> **Escopo**: planejamento detalhado. A execução será feita em notebooks `.ipynb` dentro de `notebooks/00_exploracao/`, lendo diretamente das tabelas `trusted_*` e `raw_*` do BigQuery.
+> **Escopo**: planejamento detalhado. A execução será feita em notebooks `.ipynb` dentro de `notebooks/00_exploracao/`. **Fonte primária: BigQuery** — os notebooks 00–04 partem da tabela `trusted_municipios`; o notebook 00b exporta para `data/processed/trusted_municipios_eda.parquet` (cache local idempotente, Diretriz 0.6 do AGENTS.md) e os notebooks 01–04 leem esse parquet; o notebook 05 lê as tabelas `analytics_ipb_*` direto do BigQuery.
 >
 > **Público-alvo**: equipe do IPB e professor avaliador.
 
@@ -81,7 +81,7 @@ def query_bq(sql: str) -> pd.DataFrame:
 
 ## 3. Organização dos notebooks
 
-A EDA será dividida em **5 notebooks** na pasta `notebooks/00_exploracao/`. Cada notebook tem um objetivo claro, conjunto de análises, gráficos e entregáveis.
+A EDA será dividida em **6 notebooks** na pasta `notebooks/00_exploracao/`. Cada notebook tem um objetivo claro, conjunto de análises, gráficos e entregáveis.
 
 ### 3.0 Estrutura de pastas
 
@@ -120,9 +120,9 @@ notebooks/
    - `quantidade_agencias >= 0`.
 
 4. **Diagnóstico de nulos e gaps conhecidos**
-   - `domicilios_com_internet_pct`: documentar 100% nulo (API SIDRA instável).
+   - `domicilios_com_internet_pct`: documentar 100% nulo (API SIDRA indisponível — HTTP 500 desde ago/2026).
    - `idhm`: documentar vintage 2010.
-   - `quantidade_agencias`, `volume_depositos`, `volume_credito`: documentar ~2.900 municípios com registro.
+   - `quantidade_agencias`, `volume_depositos`, `volume_credito`: documentar 2.915 municípios com registro.
 
 #### Gráficos sugeridos
 
@@ -433,7 +433,7 @@ Para cada variável numérica, calcular:
 | Variável | Situação | Estratégia sugerida |
 |----------|----------|---------------------|
 | `domicilios_com_internet_pct` | 100% nulo (API indisponível) | **Não imputar**. Usar `banda_larga_fixa_por_100_hab` como proxy no pilar C. Documentar como limitação. |
-| `quantidade_agencias` | Nulo para ~2.600 municípios | Imputar `0` (município sem agência bancária). Consequentemente `volume_depositos = 0` e `volume_credito = 0`. |
+| `quantidade_agencias` | Nulo para os demais 2.655 municípios (imputação zero) | Imputar `0` (município sem agência bancária). Consequentemente `volume_depositos = 0` e `volume_credito = 0`. |
 | `depositos_per_capita` / `credito_per_capita` | Nulo quando `volume_*` é nulo | Imputar `0` após imputação de volume. |
 | `idhm` | Vintage 2010; pode ter poucos nulos | Manter como variável histórica. Não usar como principal no pilar E. |
 
@@ -463,6 +463,8 @@ Para cada variável numérica, calcular:
 | `pix_crescimento_12m` | Variação percentual do volume Pix no último ano | Mede dinamismo recente. |
 | `depositos_por_agencia` | `volume_depositos / quantidade_agencias` | Eficiência/pressão da rede física. |
 | `credito_por_agencia` | `volume_credito / quantidade_agencia` | Capacidade de crédito por ponto de atendimento. |
+
+> **Nota**: `pix_crescimento_12m` foi candidata avaliada na Etapa 2 e não entrou no `features_report` do pipeline (escopo definido no `Plano_de_Implementacao_EDA.md`).
 
 > **Regra**: uma feature só entra na base enriquecida se tiver interpretação clara para a tese do IPB. Caso contrário, fica apenas como análise descritiva no notebook.
 
@@ -568,7 +570,7 @@ Para cada variável numérica, calcular:
 
 ## 10. Riscos e cuidados metodológicos
 
-1. **Vintage misto de dados**: Censo 2022 + PIB 2023 + Pix 2023/2024 + Anatel/Estban 2026 + IDHM 2010. Sempre declarar isso nas análises e na apresentação final.
+1. **Vintage misto de dados**: Censo 2022 + PIB 2023 + Pix ago/2025–ago/2026 + Anatel/Estban 2026 + IDHM 2010. Sempre declarar isso nas análises e na apresentação final.
 2. **Efeito polo regional**: municípios próximos a grandes cidades podem parecer desatendidos porque recursos financeiros fluem para o polo. Tratar como insight, não defeito.
 3. **Correlação ≠ causalidade**: evitar afirmações do tipo "banda larga causa maior uso de Pix" sem validação estatística.
 4. **Outliers dom inantes**: São Paulo, Rio de Janeiro e Brasília podem distorcer médias e rankings. Usar medianas, winsorização e análise por estrato.
@@ -582,7 +584,7 @@ Para cada variável numérica, calcular:
 - [`IPB_Guia_de_Bases_e_Desenho.md`](IPB_Guia_de_Bases_e_Desenho.md) — tese, pilares e fórmula.
 - [`Arquitetura_Tecnica.md`](Arquitetura_Tecnica.md) — desenho técnico e fontes.
 - [`Dicionario_de_Dados.md`](Dicionario_de_Dados.md) — schema completo das tabelas.
-- [`Plano_de_Implementacao.md`](Plano_de_Implementacao.md) — cronograma e entregáveis.
+- [`Plano_de_Implementacao_EDA.md`](Plano_de_Implementacao_EDA.md) — cronograma e entregáveis.
 - [`../AGENTS.md`](../AGENTS.md) — regras e convenções do repositório.
 - `referencias/aula3-analise_exploratoria.pdf` — objetivos e rubrica da Etapa 2.
 

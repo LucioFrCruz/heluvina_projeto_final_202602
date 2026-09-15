@@ -1,0 +1,14 @@
+# Proteção de credenciais no commit — Diretriz 0.5 do AGENTS.md.
+# Instalação: poetry add --group dev pre-commit && poetry run pre-commit install
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: detect-private-key
+  - repo: local
+    hooks:
+      - id: no-gcp-service-account
+        name: Bloqueia JSON de service account (GCP)
+        entry: .hooks/no_service_account.py
+        language: script
+        types: [text]

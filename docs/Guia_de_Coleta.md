@@ -1,7 +1,8 @@
 # Guia de Coleta — IPB
 
 Este documento contém o passo a passo para acessar cada fonte de dados do NÚCLEO do IPB.  
-Inclui resultados de testes de conectividade feitos em `2026-08-22` e indica quais fontes podem ser coletadas via API e quais exigem download manual.
+Inclui resultados de testes de conectividade feitos em `2026-08-22` e indica quais fontes podem ser coletadas via API e quais exigem download manual.  
+**Sincronizado em 2026-09-14**: a Etapa 1 (coleta) está concluída e as Etapas 2 (EDA) e 3 (modelagem) também — ver `AGENTS.md` §1, `docs/Relatorio_EDA.md` e `docs/Relatorio_Modelagem_Etapa3.md`. Este guia permanece como referência de fontes e contratos de coleta.
 
 ---
 
@@ -63,6 +64,8 @@ curl -s --max-time 15 "https://servicodados.ibge.gov.br/api/v1/localidades/munic
 - Agregado: `9605` (População residente)
 - Variável: `93` (População residente)
 - Período: `2022`
+
+> **Nota (reconciliação de fonte)**: o ingestor de produção (`src/ingestors/sidra_censo_2022.py`) usa a **Tabela 4709**, Variável `93`, para `populacao_total`; o teste acima usou o Agregado `9605` (mesma variável). A fonte da produção é a `4709`.
 
 **Teste realizado**:
 
@@ -210,6 +213,8 @@ curl -s --max-time 60 \
 
 ## 3. Fontes de download manual
 
+> **Nota — fluxo real (Etapa 1 concluída)**: o download na origem é **pontual (feito uma única vez)**. Após baixar o arquivo, o time o envia para o bucket GCS do projeto — `ipb-raw-data-mba-projetc-final`, prefixos `pib/`, `estban/` e `anatel/` (ex.: `gcloud storage cp <arquivo> gs://ipb-raw-data-mba-projetc-final/pib/`). A partir daí, os ingestores baixam automaticamente do GCS via `src/utils/gcs.py` e salvam o parquet de cache em `data/raw/<fonte>/`. **Para re-executar o pipeline não é mais necessário nenhum download manual** — os passos abaixo documentam apenas a obtenção pontual na origem.
+
 ### 3.1 IBGE — PIB dos Municípios
 
 **URL de acesso**: [https://www.ibge.gov.br/estatisticas/economicas/contas-nacionais/9088-produto-interno-bruto-dos-municipios.html](https://www.ibge.gov.br/estatisticas/economicas/contas-nacionais/9088-produto-interno-bruto-dos-municipios.html)
@@ -240,7 +245,7 @@ curl -s --max-time 60 \
 2. Navegar até o conjunto "Acessos - Banda Larga Fixa".
 3. Baixar o CSV mais recente (mensal) de densidade de acessos por 100 habitantes.
 4. Recomenda-se também consultar o painel: [https://informacoes.anatel.gov.br/paineis/acessos/banda-larga-fixa](https://informacoes.anatel.gov.br/paineis/acessos/banda-larga-fixa)
-5. Salvar em `data/raw/anatel_banda_larga/`.
+5. Salvar em `data/raw/anatel_banda_larga_fixa/` (e enviar ao prefixo `anatel/` do bucket GCS — ver nota na introdução desta seção).
 
 **URL alternativa do inventário** (funciona via `curl`):
 
@@ -345,7 +350,7 @@ Validação realizada em `2026-08-23` sobre os arquivos presentes em `data/raw/`
 
 ### 6.2 Anatel — Densidade de Banda Larga Fixa
 
-- **Arquivo**: `data/raw/anatel_banda_larga/Densidade_Banda_Larga_Fixa.csv`
+- **Arquivo**: `data/raw/anatel_banda_larga_fixa/Densidade_Banda_Larga_Fixa.csv`
 - **Status**: ✅ OK
 - **Detalhes**:
   - Encoding UTF-8 BOM, delimitador `;`, separador decimal `,`.
@@ -356,7 +361,7 @@ Validação realizada em `2026-08-23` sobre os arquivos presentes em `data/raw/`
 
 ### 6.3 BCB — Estban
 
-- **Arquivo**: `data/raw/bcb_estaban/202603_ESTBAN.CSV`
+- **Arquivo**: `data/raw/bcb_estban/202603_ESTBAN.CSV`
 - **Status**: ✅ OK
 - **Detalhes**:
   - Encoding `latin1`, delimitador `;`.
@@ -378,14 +383,16 @@ Validação realizada em `2026-08-23` sobre os arquivos presentes em `data/raw/`
 
 ---
 
-## 7. Próximos passos de coleta
+## 7. Status da coleta
 
 1. ✅ IDHM obtido via Ipeadata (2010) + escolaridade 2022 via SIDRA.
-2. ✅ Ingestores de APIs implementados (IBGE Localidades, SIDRA, Pix, Ipeadata).
+2. ✅ Ingestores de APIs implementados (IBGE Localidades, SIDRA, Pix, Ipeadata, correspondentes BCB, CEMPRE).
 3. ✅ Ingestores de arquivos manuais via GCS implementados (PIB, Anatel, Estban).
-4. Próximo: validação cruzada com Base dos Dados e início da EDA (Etapa 2).
+4. ✅ **Etapa 1 (coleta) concluída.** As Etapas 2 (EDA + índice) e 3 (modelagem) também já foram concluídas e publicadas no BigQuery — ver `AGENTS.md` §1, `docs/Relatorio_EDA.md` e `docs/Relatorio_Modelagem_Etapa3.md`.
+
+> **Nota (2026-09-14)**: esta seção não descreve mais um "próximo passo" — o guia permanece como **referência de fontes e contratos de coleta** (endpoints, formatos, workarounds e validação por fonte). A validação cruzada com Base dos Dados segue reservada para trabalho futuro.
 
 ---
 
-*Documento atualizado após testes de conectividade (2026-08-22) e validação dos arquivos baixados (2026-08-23).*
+*Documento atualizado após testes de conectividade (2026-08-22) e validação dos arquivos baixados (2026-08-23). Sincronizado em 2026-09-14 com o estado real do projeto (Etapas 1, 2 e 3 concluídas).*
 

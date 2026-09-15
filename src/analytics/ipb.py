@@ -11,7 +11,8 @@ Versoes:
       por_1000_hab` (CEMPRE/IBGE) no pilar A.
 
 Esta logica e uma refatoracao de `scripts/06_comparacao_tres_abordagens_ipb.py`
-(fonte original das formulas, validadas e publicadas em
+(incorporado ao `scripts/07_publica_ipb_bigquery.py`; fonte original das
+formulas, validadas e publicadas em
 `docs/Comparacao_Tres_Abordagens_IPB.md`), com UMA correcao: o
 `gap_bancario_completo` da V3 deixou de ser hiperbolico
 (`1 / (presenca + 1)`, que saturava e zerava o IPB de cidades pequenas com
@@ -787,9 +788,9 @@ Quantidade de municípios por região entre os 100 primeiros de cada versão:
 
 ## 8. Alertas importantes para discussão do grupo
 
-### 8.1 V3 ainda privilegia cidades pequenas com eventos especiais
+### 8.1 Top 10 da V3 combina turismo, renda alta de entorno metropolitano e capitais planejadas
 
-O Top 10 da V3 ainda traz cidades pequenas como Engenheiro Coelho-SP, Arraial do Cabo-RJ, Armação dos Búzios-RJ e Barra dos Coqueiros-SE. Essas cidades provavelmente têm Pix alto por turismo ou por atividade econômica não residente. A flag de turismo suave mitiga, mas não elimina o efeito.
+O Top 10 real da V3 mistura três perfis: **(i) cidades catarinenses de turismo** — Bombinhas, Balneário Camboriú e Itapema, além de Florianópolis em 9º; **(ii) municípios de renda alta do entorno metropolitano** — Nova Lima-MG, Santana de Parnaíba-SP e Confins-MG; e **(iii) capitais planejadas e polos de crescimento** — Palmas-TO, com Eusébio-CE (alto padrão na RM de Fortaleza) e Santa Rita do Trivelato-MT (pequena cidade com forte atividade agropecuária não residente) completando a lista. Ou seja, o topo segue explicado mais por efeitos de **turismo e renda** — Pix alto por fluxo de visitantes ou por economia formal concentrada — do que por potencial bancário latente óbvio. A flag de turismo suave mitiga, mas não elimina o efeito (ver também `Relatorio_EDA.md` §8.3).
 
 ### 8.2 Distribuição regional no Top 100
 
