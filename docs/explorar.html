@@ -81,7 +81,7 @@
   .ipb-destaque .rank { margin-left: auto; color: var(--suave); font-size: .85rem; }
 
   .comparacao { margin-bottom: 14px; }
-  .comparacao .linha, .scores .linha { display: grid; grid-template-columns: 34px 1fr 52px; gap: 8px; align-items: center; margin: 5px 0; font-size: .8rem; }
+  .comparacao .linha, .scores .linha { display: grid; grid-template-columns: 85px 1fr 52px; gap: 8px; align-items: center; margin: 5px 0; font-size: .8rem; }
   .comparacao .rot, .scores .rot { color: var(--suave); }
   .barra-fundo { background: #eceff2; border-radius: 6px; height: 12px; overflow: hidden; }
   .barra-frente { background: var(--acento); height: 100%; border-radius: 6px; }
@@ -270,11 +270,11 @@
     'Turismo - sem banco': 'Turismo - sem banco'
   };
   var PILARES = [
-    ['score_a_v3', 'A consumo'],
-    ['score_b_v3', 'B dinheiro'],
-    ['score_c_v3', 'C digital'],
-    ['score_d_v3', 'D gap'],
-    ['score_e_v3', 'E perfil']
+    ['score_a_v3', 'A. Consumo', 'Capacidade de consumo (renda, PIB per capita, empregos formais)'],
+    ['score_b_v3', 'B. Dinamismo', 'Dinamismo econômico (movimentação e transações no Pix)'],
+    ['score_c_v3', 'C. Digital', 'Adoção digital (banda larga fixa, volume Pix per capita)'],
+    ['score_d_v3', 'D. Gap', 'Oportunidade bancária (baixa penetração de agências, crédito e depósitos)'],
+    ['score_e_v3', 'E. Perfil', 'Perfil demográfico (urbanização, jovens 18-35, escolaridade)']
   ];
   var TAMANHO_PAGINA = 100;
 
@@ -353,7 +353,6 @@
       mais.textContent = total.toLocaleString('pt-BR') + ' cidades encontradas. Mostrando as 10 melhores: refine a busca ou use o modo Tabela.';
       lista.appendChild(mais);
     }
-    // Sem termo (só UF): já abre o card da primeira cidade? Não: deixa a lista.
   }
 
   function botaoResultado(mun) {
@@ -373,11 +372,13 @@
 
   /* ---------- card da cidade ---------- */
 
-  function linhaComparacao(rotulo, valor, classe, maximo) {
+  function linhaPilar(rotulo, valor, classe, maximo, descricao) {
     var largura = Math.max(0, Math.min(100, valor / maximo * 100));
-    return '<div class="linha"><span class="rot">' + rotulo + '</span>' +
+    var barra = '<div class="linha" style="margin-bottom: 2px;"><span class="rot" style="font-weight: 650; color: var(--texto);">' + rotulo + '</span>' +
       '<div class="barra-fundo"><div class="barra-frente ' + classe + '" style="width:' + largura + '%"></div></div>' +
       '<span class="valor-barra">' + fmt(valor, 1) + '</span></div>';
+    var texto = '<div style="font-size: .72rem; color: var(--suave); margin-bottom: 12px; line-height: 1.3;">' + descricao + '</div>';
+    return barra + texto;
   }
 
   function dado(rotulo, valorHtml) {
@@ -400,18 +401,13 @@
 
     html += '<div class="ipb-destaque"><span class="valor">' + fmt(mun.ipb_v3, 1) + '</span>' +
       '<span class="rotulo">IPB V3 (0–100)</span>' +
-      '<span class="rank">rank V3: ' + mun.rank_v3 + ' de 5.570</span></div>';
-
-    html += '<div class="comparacao">' +
-      linhaComparacao('V1', mun.ipb_v1, 'v1', 100) +
-      linhaComparacao('V2', mun.ipb_v2, 'v2', 100) +
-      linhaComparacao('V3', mun.ipb_v3, '', 100) + '</div>';
+      '<span class="rank">rank: ' + mun.rank_v3 + ' de 5.570</span></div>';
 
     html += '<div class="scores">';
     for (var i = 0; i < PILARES.length; i++) {
       var campo = PILARES[i][0];
       var valor = (mun[campo] === null || mun[campo] === undefined) ? 0 : mun[campo] * 100;
-      html += linhaComparacao(PILARES[i][1], valor, campo === 'score_d_v3' ? 'd' : '', 100);
+      html += linhaPilar(PILARES[i][1], valor, campo === 'score_d_v3' ? 'd' : '', 100, PILARES[i][2]);
     }
     html += '</div>';
 
@@ -423,7 +419,6 @@
       dado('PIB per capita 2023', fmtMoeda(mun.pib_per_capita)) +
       dado('Agências /100 mil hab', fmt(mun.agencias_por_100k, 1)) +
       dado('Correspondentes /100 mil hab', fmt(mun.correspondentes_por_100k, 1)) +
-      dado('Rank V1 → V2', mun.rank_v1 + ' → ' + mun.rank_v2) +
       '</div>';
 
     if (mun.potencial_latente === null || mun.potencial_latente === undefined) {
