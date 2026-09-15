@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Explorar cidades · IPB</title>
+<style>
+  :root {
+    --acento: #16637a;
+    --texto: #24303b;
+    --suave: #5b6771;
+    --borda: #e2e7ec;
+    --bg: #f3f5f7;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--texto);
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  a { color: var(--acento); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header.topo {
+    background: var(--card);
+    border-bottom: 1px solid var(--borda);
+    padding: 12px 16px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between;
+  }
+  header.topo .titulo { font-weight: 700; font-size: 1.05rem; }
+  header.topo nav { display: flex; gap: 6px; }
+  header.topo nav a {
+    font-size: .82rem; border: 1px solid var(--borda); border-radius: 999px;
+    padding: 8px 14px; background: #fff; min-height: 40px; display: inline-flex; align-items: center;
+  }
+
+  main { max-width: 1080px; margin: 0 auto; padding: 14px 14px 60px; }
+
+  /* abas */
+  .abas { display: flex; gap: 8px; margin-bottom: 20px; position: sticky; top: 0; background: var(--bg); padding: 10px 0; z-index: 20; }
+  .aba {
+    flex: 1; border: 1px solid var(--borda); background: var(--card); color: var(--texto);
+    border-radius: 10px; padding: 14px 8px; font-size: .95rem; font-weight: 650; cursor: pointer;
+    min-height: 48px;
+  }
+  .aba.ativa { background: var(--acento); border-color: var(--acento); color: #fff; }
+  .view[hidden] { display: none; }
+
+  /* busca */
+  .busca-linha { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+  #campo-busca, #sel-uf {
+    width: 100%; border: 1px solid #cdd5dd; border-radius: 10px; background: #fff;
+    padding: 14px; font-size: 1.05rem; color: var(--texto); min-height: 52px;
+  }
+  #campo-busca:focus, #sel-uf:focus { outline: 2px solid var(--acento); outline-offset: 1px; }
+  .resultados { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .resultado {
+    text-align: left; border: 1px solid var(--borda); background: var(--card); border-radius: 10px;
+    padding: 13px 14px; font-size: .95rem; cursor: pointer; min-height: 48px;
+    display: flex; justify-content: space-between; gap: 10px; align-items: center;
+  }
+  .resultado .estrato { color: var(--suave); font-size: .78rem; white-space: nowrap; }
+  .resultado:hover, .resultado:focus { border-color: var(--acento); outline: none; }
+  .sem-resultado { color: var(--suave); font-size: .9rem; padding: 8px 2px; }
+
+  /* card da cidade */
+  .card-cidade { border: 1px solid var(--borda); border-radius: 14px; background: var(--card); padding: 18px; box-shadow: 0 1px 3px rgba(15,30,45,.06); }
+  .card-cidade[hidden] { display: none; }
+  .card-topo { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
+  .card-topo h2 { font-size: 1.35rem; margin: 0; }
+  .selo-arq { font-size: .72rem; font-weight: 700; border-radius: 999px; padding: 4px 10px; color: #fff; }
+  .selo-anomalia { font-size: .72rem; font-weight: 700; border-radius: 999px; padding: 4px 10px; background: #7c2d12; color: #fff; }
+  .card-meta { color: var(--suave); font-size: .82rem; margin: 4px 0 14px; }
+  .ipb-destaque { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--borda); padding-bottom: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .ipb-destaque .valor { font-size: 2.4rem; font-weight: 700; color: var(--acento); line-height: 1; }
+  .ipb-destaque .rotulo { color: var(--suave); font-size: .8rem; }
+  .ipb-destaque .rank { margin-left: auto; color: var(--suave); font-size: .85rem; }
+
+  .comparacao { margin-bottom: 14px; }
+  .comparacao .linha, .scores .linha { display: grid; grid-template-columns: 34px 1fr 52px; gap: 8px; align-items: center; margin: 5px 0; font-size: .8rem; }
+  .comparacao .rot, .scores .rot { color: var(--suave); }
+  .barra-fundo { background: #eceff2; border-radius: 6px; height: 12px; overflow: hidden; }
+  .barra-frente { background: var(--acento); height: 100%; border-radius: 6px; }
+  .barra-frente.v1 { background: #9aa5ae; }
+  .barra-frente.v2 { background: #6b8a99; }
+  .barra-frente.d { background: #b45f16; }
+  .valor-barra { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .grade-dados { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+  .dado { border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; }
+  .dado .rot { color: var(--suave); font-size: .72rem; }
+  .dado .val { font-size: 1.02rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .latente { margin-top: 10px; font-size: .85rem; color: var(--suave); border-top: 1px dashed var(--borda); padding-top: 10px; }
+  .latente strong { color: var(--texto); }
+
+  /* tabelas */
+  .tabela-wrap { 
+    overflow: auto; 
+    max-height: calc(100vh - 200px); 
+    border: 1px solid var(--borda); 
+    border-radius: 12px; 
+    background: var(--card); 
+  }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .86rem; }
+  th, td { padding: 14px 10px; text-align: left; border-bottom: 1px solid var(--borda); white-space: nowrap; }
+  th { 
+    color: var(--acento); 
+    font-weight: 650; 
+    cursor: pointer; 
+    user-select: none; 
+    background: #f6f9fa; 
+    position: sticky; 
+    top: 0; 
+    z-index: 10; 
+  }
+  th::after { content: ""; position: absolute; left: 0; bottom: 0; width: 100%; height: 2px; background: var(--borda); }
+  th .seta { font-size: .7em; margin-left: 4px; }
+  tbody tr:hover { background: #fdfdfd; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .mini-selo { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+  .paginacao { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+  .paginacao button {
+    border: 1px solid var(--borda); background: #fff; border-radius: 8px; padding: 12px 18px;
+    font-size: .9rem; cursor: pointer; min-height: 46px; min-width: 46px; color: var(--texto);
+  }
+  .paginacao button:disabled { opacity: .45; cursor: default; }
+  .paginacao .info { color: var(--suave); font-size: .85rem; }
+  .nota { color: var(--suave); font-size: .8rem; margin-top: 10px; margin-bottom: 14px; }
+  .status-carregando { color: var(--suave); padding: 30px 0; text-align: center; }
+
+  @media (min-width: 760px) {
+    .busca-linha { flex-direction: row; }
+    #campo-busca { flex: 1; }
+    #sel-uf { width: 220px; }
+    .grade-dados { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <span class="titulo">IPB · Explorar cidades</span>
+  <nav>
+    <a href="apresentacao.html">Apresentação</a>
+    <a href="mapa.html">Mapa</a>
+  </nav>
+</header>
+
+<main>
+  <div class="abas" role="tablist">
+    <button class="aba ativa" id="aba-busca" role="tab">Busca</button>
+    <button class="aba" id="aba-uf" role="tab">Por UF</button>
+    <button class="aba" id="aba-tabela" role="tab">Tabela</button>
+  </div>
+
+  <!-- BUSCA -->
+  <section class="view" id="view-busca" role="tabpanel">
+    <div class="busca-linha">
+      <input type="search" id="campo-busca" placeholder="Digite o nome da cidade…" autocomplete="off">
+      <select id="sel-uf" aria-label="Filtrar por UF">
+        <option value="">Todas as UFs</option>
+      </select>
+    </div>
+    <div class="resultados" id="lista-resultados"></div>
+
+    <article class="card-cidade" id="card-cidade" hidden></article>
+  </section>
+
+  <!-- POR UF -->
+  <section class="view" id="view-uf" role="tabpanel" hidden>
+    <p class="nota" style="margin-top:0">Toque no cabeçalho pra ordenar. Toque num estado pra filtrar a busca.</p>
+    <div class="tabela-wrap">
+      <table id="tabela-uf">
+        <thead>
+          <tr>
+            <th data-chave="uf">UF</th>
+            <th data-chave="ipb" class="num">IPB V3 mediano <span class="seta"></span></th>
+            <th data-chave="escolaridade" class="num">Escolaridade média <span class="seta"></span></th>
+            <th data-chave="pix" class="num">Pix pc mediano <span class="seta"></span></th>
+            <th data-chave="agencias" class="num">Agências /100k <span class="seta"></span></th>
+            <th data-chave="correspondentes" class="num">Corresp. /100k <span class="seta"></span></th>
+            <th data-chave="n" class="num">Municípios <span class="seta"></span></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TABELA COMPLETA -->
+  <section class="view" id="view-tabela" role="tabpanel" hidden>
+    <p class="nota" style="margin-top:0">5.570 municípios, 100 por página. Toque no cabeçalho pra ordenar.</p>
+    <div class="tabela-wrap">
+      <table id="tabela-todos">
+        <thead>
+          <tr>
+            <th data-chave="nome_municipio">Município <span class="seta"></span></th>
+            <th data-chave="sigla_uf">UF <span class="seta"></span></th>
+            <th data-chave="ipb_v3" class="num">IPB V3 <span class="seta"></span></th>
+            <th data-chave="rank_v3" class="num">Rank <span class="seta"></span></th>
+            <th data-chave="arquetipo">Arquétipo <span class="seta"></span></th>
+            <th data-chave="pix_per_capita" class="num">Pix pc <span class="seta"></span></th>
+            <th data-chave="escolaridade_pct" class="num">Escolaridade <span class="seta"></span></th>
+            <th data-chave="idhm" class="num">IDH(m) <span class="seta"></span></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="paginacao">
+      <button id="pag-ant" type="button">‹ Anterior</button>
+      <span class="info" id="pag-info"></span>
+      <button id="pag-prox" type="button">Próxima ›</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- funções puras (testáveis) ---------- */
+
+  // Busca lisa: tira acentos (NFD + diacríticos) e coloca em minúsculas.
+  function normalizar(texto) {
+    return String(texto == null ? '' : texto)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  }
+
+  // Deep-link: extrai o id de 7 dígitos de ?cidade=3550308 (ou #cidade=…).
+  function idCidadeNaUrl(search, hash) {
+    var fontes = [search || '', hash || ''];
+    for (var i = 0; i < fontes.length; i++) {
+      var m = /[?#&]cidade=(\d{7})/.exec(fontes[i]);
+      if (m) { return m[1]; }
+    }
+    return null;
+  }
+
+  // Pontuação de relevância: nome que COMEÇA com o termo ganha de nome que contém.
+  function pontuar(nomeNorm, termo) {
+    if (nomeNorm.indexOf(termo) === 0) { return 0; }
+    if (nomeNorm.indexOf(' ' + termo) !== -1) { return 1; }
+    if (nomeNorm.indexOf(termo) !== -1) { return 2; }
+    return -1;
+  }
+
+  /* ---------- estado e constantes ---------- */
+
+  var CORES_ARQUETIPOS = {
+    'Perfil intermediario - empresarial': '#4e79a7',
+    'Perfil intermediario - tradicional': '#f28e2b',
+    'Sem rede bancaria - renda alta': '#59a14f',
+    'Sem rede bancaria - renda baixa': '#e15759',
+    'Turismo - com rede': '#b07aa1',
+    'Turismo - sem banco': '#76b7b2'
+  };
+  var ROTULO_ARQUETIPO = {
+    'Perfil intermediario - empresarial': 'Perfil intermediário - empresarial',
+    'Perfil intermediario - tradicional': 'Perfil intermediário - tradicional',
+    'Sem rede bancaria - renda alta': 'Sem rede bancária - renda alta',
+    'Sem rede bancaria - renda baixa': 'Sem rede bancária - renda baixa',
+    'Turismo - com rede': 'Turismo - com rede',
+    'Turismo - sem banco': 'Turismo - sem banco'
+  };
+  var PILARES = [
+    ['score_a_v3', 'A consumo'],
+    ['score_b_v3', 'B dinheiro'],
+    ['score_c_v3', 'C digital'],
+    ['score_d_v3', 'D gap'],
+    ['score_e_v3', 'E perfil']
+  ];
+  var TAMANHO_PAGINA = 100;
+
+  var municipios = [];
+  var porId = new Map();
+  var ufs = [];               // agregação por UF
+  var ordenacaoUf = { chave: 'ipb', dir: -1 };
+  var ordenacaoTabela = { chave: 'rank_v3', dir: 1 };
+  var paginaAtual = 0;
+  var ufFiltroTabela = '';
+
+  /* ---------- formatação pt-BR ---------- */
+
+  function fmt(v, casas) {
+    if (v === null || v === undefined) { return '—'; }
+    return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: casas });
+  }
+  function fmtMoeda(v) {
+    if (v === null || v === undefined) { return '—'; }
+    return 'R$ ' + Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+  }
+
+  /* ---------- abas ---------- */
+
+  function mostrarAba(idAba) {
+    var abas = document.querySelectorAll('.aba');
+    for (var i = 0; i < abas.length; i++) { abas[i].classList.toggle('ativa', abas[i].id === idAba); }
+    document.getElementById('view-busca').hidden = idAba !== 'aba-busca';
+    document.getElementById('view-uf').hidden = idAba !== 'aba-uf';
+    document.getElementById('view-tabela').hidden = idAba !== 'aba-tabela';
+    window.scrollTo(0, 0);
+  }
+  document.getElementById('aba-busca').addEventListener('click', function () { mostrarAba('aba-busca'); });
+  document.getElementById('aba-uf').addEventListener('click', function () { mostrarAba('aba-uf'); });
+  document.getElementById('aba-tabela').addEventListener('click', function () { mostrarAba('aba-tabela'); });
+
+  /* ---------- busca ---------- */
+
+  function executarBusca() {
+    var termo = normalizar(document.getElementById('campo-busca').value.trim());
+    var uf = document.getElementById('sel-uf').value;
+    var lista = document.getElementById('lista-resultados');
+    lista.innerHTML = '';
+
+    if (!termo && !uf) { return; }
+
+    var achados = [];
+    for (var i = 0; i < municipios.length; i++) {
+      var mun = municipios[i];
+      if (uf && mun.sigla_uf !== uf) { continue; }
+      if (!termo) {
+        achados.push({ mun: mun, ponto: 3, nome: normalizar(mun.nome_municipio) });
+        continue;
+      }
+      var nomeNorm = normalizar(mun.nome_municipio);
+      var ponto = pontuar(nomeNorm, termo);
+      if (ponto >= 0) { achados.push({ mun: mun, ponto: ponto, nome: nomeNorm }); }
+    }
+    achados.sort(function (a, b) {
+      if (a.ponto !== b.ponto) { return a.ponto - b.ponto; }
+      return a.nome.localeCompare(b.nome, 'pt-BR');
+    });
+
+    if (!achados.length) {
+      lista.innerHTML = '<p class="sem-resultado">Nenhuma cidade encontrada. Tente sem acento ou outro trecho do nome.</p>';
+      return;
+    }
+    var total = achados.length;
+    var limite = achados.slice(0, 10);
+    for (var j = 0; j < limite.length; j++) {
+      lista.appendChild(botaoResultado(limite[j].mun));
+    }
+    if (total > 10) {
+      var mais = document.createElement('p');
+      mais.className = 'sem-resultado';
+      mais.textContent = total.toLocaleString('pt-BR') + ' cidades encontradas. Mostrando as 10 melhores: refine a busca ou use o modo Tabela.';
+      lista.appendChild(mais);
+    }
+    // Sem termo (só UF): já abre o card da primeira cidade? Não: deixa a lista.
+  }
+
+  function botaoResultado(mun) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'resultado';
+    var nome = document.createElement('span');
+    nome.textContent = mun.nome_municipio + ' (' + mun.sigla_uf + ')';
+    var estrato = document.createElement('span');
+    estrato.className = 'estrato';
+    estrato.textContent = mun.estrato_populacional;
+    btn.appendChild(nome);
+    btn.appendChild(estrato);
+    btn.addEventListener('click', function () { abrirCidade(mun.id_municipio, true); });
+    return btn;
+  }
+
+  /* ---------- card da cidade ---------- */
+
+  function linhaComparacao(rotulo, valor, classe, maximo) {
+    var largura = Math.max(0, Math.min(100, valor / maximo * 100));
+    return '<div class="linha"><span class="rot">' + rotulo + '</span>' +
+      '<div class="barra-fundo"><div class="barra-frente ' + classe + '" style="width:' + largura + '%"></div></div>' +
+      '<span class="valor-barra">' + fmt(valor, 1) + '</span></div>';
+  }
+
+  function dado(rotulo, valorHtml) {
+    return '<div class="dado"><div class="rot">' + rotulo + '</div><div class="val">' + valorHtml + '</div></div>';
+  }
+
+  function abrirCidade(id, atualizarUrl) {
+    var mun = porId.get(id);
+    var card = document.getElementById('card-cidade');
+    if (!mun) { card.hidden = true; return; }
+    mostrarAba('aba-busca');
+
+    var corArq = CORES_ARQUETIPOS[mun.arquetipo] || '#9aa5ae';
+    var html = '';
+    html += '<div class="card-topo"><h2>' + mun.nome_municipio + ' (' + mun.sigla_uf + ')</h2>' +
+      '<span class="selo-arq" style="background:' + corArq + '">' + (ROTULO_ARQUETIPO[mun.arquetipo] || mun.arquetipo) + '</span>' +
+      (mun.flag_anomalia ? '<span class="selo-anomalia">perfil atípico</span>' : '') + '</div>';
+    html += '<p class="card-meta">' + mun.nome_regiao + ' · estrato ' + mun.estrato_populacional +
+      ' · código IBGE ' + mun.id_municipio + '</p>';
+
+    html += '<div class="ipb-destaque"><span class="valor">' + fmt(mun.ipb_v3, 1) + '</span>' +
+      '<span class="rotulo">IPB V3 (0–100)</span>' +
+      '<span class="rank">rank V3: ' + mun.rank_v3 + ' de 5.570</span></div>';
+
+    html += '<div class="comparacao">' +
+      linhaComparacao('V1', mun.ipb_v1, 'v1', 100) +
+      linhaComparacao('V2', mun.ipb_v2, 'v2', 100) +
+      linhaComparacao('V3', mun.ipb_v3, '', 100) + '</div>';
+
+    html += '<div class="scores">';
+    for (var i = 0; i < PILARES.length; i++) {
+      var campo = PILARES[i][0];
+      var valor = (mun[campo] === null || mun[campo] === undefined) ? 0 : mun[campo] * 100;
+      html += linhaComparacao(PILARES[i][1], valor, campo === 'score_d_v3' ? 'd' : '', 100);
+    }
+    html += '</div>';
+
+    html += '<div class="grade-dados">' +
+      dado('Pix per capita (12m)', fmtMoeda(mun.pix_per_capita)) +
+      dado('Participação PJ no Pix', fmt(mun.pix_pj_pct, 2)) +
+      dado('IDH(m) 2010', fmt(mun.idhm, 3)) +
+      dado('Ensino médio completo', fmt(mun.escolaridade_pct, 1) + '%') +
+      dado('PIB per capita 2023', fmtMoeda(mun.pib_per_capita)) +
+      dado('Agências /100 mil hab', fmt(mun.agencias_por_100k, 1)) +
+      dado('Correspondentes /100 mil hab', fmt(mun.correspondentes_por_100k, 1)) +
+      dado('Rank V1 → V2', mun.rank_v1 + ' → ' + mun.rank_v2) +
+      '</div>';
+
+    if (mun.potencial_latente === null || mun.potencial_latente === undefined) {
+      html += '<p class="latente">Potencial latente: <strong>não se aplica</strong>, cidade com presença bancária.</p>';
+    } else {
+      html += '<p class="latente">Potencial latente (depósitos per capita estimados, modelo da Etapa 3): <strong>' +
+        fmt(mun.potencial_latente, 1) + '</strong></p>';
+    }
+
+    card.innerHTML = html;
+    card.hidden = false;
+    if (atualizarUrl && window.history && history.replaceState) {
+      history.replaceState(null, '', '?cidade=' + mun.id_municipio);
+    }
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.getElementById('campo-busca').addEventListener('input', executarBusca);
+  document.getElementById('sel-uf').addEventListener('change', executarBusca);
+
+  /* ---------- visão por UF ---------- */
+
+  function mediana(numeros) {
+    var ordenados = numeros.slice().sort(function (a, b) { return a - b; });
+    var meio = Math.floor(ordenados.length / 2);
+    return ordenados.length % 2 ? ordenados[meio] : (ordenados[meio - 1] + ordenados[meio]) / 2;
+  }
+
+  function calcularUfs() {
+    var grupos = new Map();
+    for (var i = 0; i < municipios.length; i++) {
+      var mun = municipios[i];
+      if (!grupos.has(mun.sigla_uf)) { grupos.set(mun.sigla_uf, []); }
+      grupos.get(mun.sigla_uf).push(mun);
+    }
+    ufs = [];
+    grupos.forEach(function (lista, sigla) {
+      var ipbs = [], pixs = [], escolas = 0, agencias = 0, corresp = 0;
+      for (var j = 0; j < lista.length; j++) {
+        ipbs.push(lista[j].ipb_v3);
+        pixs.push(lista[j].pix_per_capita);
+        escolas += lista[j].escolaridade_pct || 0;
+        agencias += lista[j].agencias_por_100k || 0;
+        corresp += lista[j].correspondentes_por_100k || 0;
+      }
+      ufs.push({
+        uf: sigla,
+        ipb: mediana(ipbs),
+        pix: mediana(pixs),
+        escolaridade: escolas / lista.length,
+        agencias: agencias / lista.length,
+        correspondentes: corresp / lista.length,
+        n: lista.length
+      });
+    });
+  }
+
+  function ordenarPor(estado, linhas) {
+    var chave = estado.chave, dir = estado.dir;
+    linhas.sort(function (a, b) {
+      var va = a[chave], vb = b[chave];
+      if (typeof va === 'string') { return va.localeCompare(vb, 'pt-BR') * dir; }
+      return (va - vb) * dir;
+    });
+  }
+
+  function renderizarUf() {
+    var corpo = document.querySelector('#tabela-uf tbody');
+    corpo.innerHTML = '';
+    ordenarPor(ordenacaoUf, ufs);
+    for (var i = 0; i < ufs.length; i++) {
+      var u = ufs[i];
+      var tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.innerHTML =
+        '<td><strong>' + u.uf + '</strong></td>' +
+        '<td class="num">' + fmt(u.ipb, 1) + '</td>' +
+        '<td class="num">' + fmt(u.escolaridade, 1) + '%</td>' +
+        '<td class="num">' + fmtMoeda(u.pix) + '</td>' +
+        '<td class="num">' + fmt(u.agencias, 1) + '</td>' +
+        '<td class="num">' + fmt(u.correspondentes, 0) + '</td>' +
+        '<td class="num">' + u.n + '</td>';
+      (function (sigla) {
+        tr.addEventListener('click', function () {
+          document.getElementById('sel-uf').value = sigla;
+          document.getElementById('campo-busca').value = '';
+          mostrarAba('aba-busca');
+          executarBusca();
+        });
+      })(u.uf);
+      corpo.appendChild(tr);
+    }
+    marcarSetas('#tabela-uf', ordenacaoUf);
+  }
+
+  function marcarSetas(seletorTabela, estado) {
+    var ths = document.querySelectorAll(seletorTabela + ' th');
+    for (var i = 0; i < ths.length; i++) {
+      var seta = ths[i].querySelector('.seta');
+      if (!seta) { continue; }
+      seta.textContent = ths[i].getAttribute('data-chave') === estado.chave
+        ? (estado.dir === 1 ? '▲' : '▼') : '';
+    }
+  }
+
+  document.querySelectorAll('#tabela-uf th').forEach(function (th) {
+    th.addEventListener('click', function () {
+      var chave = th.getAttribute('data-chave');
+      if (ordenacaoUf.chave === chave) { ordenacaoUf.dir *= -1; }
+      else { ordenacaoUf = { chave: chave, dir: chave === 'uf' ? 1 : -1 }; }
+      renderizarUf();
+    });
+  });
+
+  /* ---------- tabela completa ---------- */
+
+  function linhaTabela(mun) {
+    return '<td>' + mun.nome_municipio + '</td>' +
+      '<td>' + mun.sigla_uf + '</td>' +
+      '<td class="num">' + fmt(mun.ipb_v3, 1) + '</td>' +
+      '<td class="num">' + mun.rank_v3 + '</td>' +
+      '<td><span class="mini-selo" style="background:' + (CORES_ARQUETIPOS[mun.arquetipo] || '#9aa5ae') + '"></span>' +
+        (ROTULO_ARQUETIPO[mun.arquetipo] || mun.arquetipo) + '</td>' +
+      '<td class="num">' + fmtMoeda(mun.pix_per_capita) + '</td>' +
+      '<td class="num">' + fmt(mun.escolaridade_pct, 1) + '%</td>' +
+      '<td class="num">' + fmt(mun.idhm, 3) + '</td>';
+  }
+
+  function renderizarTabela() {
+    var corpo = document.querySelector('#tabela-todos tbody');
+    corpo.innerHTML = '';
+    var linhas = municipios.slice();
+    ordenarPor(ordenacaoTabela, linhas);
+    var totalPaginas = Math.ceil(linhas.length / TAMANHO_PAGINA);
+    if (paginaAtual > totalPaginas - 1) { paginaAtual = totalPaginas - 1; }
+    var inicio = paginaAtual * TAMANHO_PAGINA;
+    var fim = Math.min(inicio + TAMANHO_PAGINA, linhas.length);
+    var html = '';
+    for (var i = inicio; i < fim; i++) {
+      html += '<tr data-id="' + linhas[i].id_municipio + '" style="cursor:pointer">' + linhaTabela(linhas[i]) + '</tr>';
+    }
+    corpo.innerHTML = html;
+    var trs = corpo.querySelectorAll('tr');
+    for (var j = 0; j < trs.length; j++) {
+      trs[j].addEventListener('click', function () {
+        abrirCidade(this.getAttribute('data-id'), true);
+      });
+    }
+    document.getElementById('pag-info').textContent =
+      'Página ' + (paginaAtual + 1) + ' de ' + totalPaginas.toLocaleString('pt-BR');
+    document.getElementById('pag-ant').disabled = paginaAtual === 0;
+    document.getElementById('pag-prox').disabled = paginaAtual >= totalPaginas - 1;
+    marcarSetas('#tabela-todos', ordenacaoTabela);
+  }
+
+  document.querySelectorAll('#tabela-todos th').forEach(function (th) {
+    th.addEventListener('click', function () {
+      var chave = th.getAttribute('data-chave');
+      if (ordenacaoTabela.chave === chave) { ordenacaoTabela.dir *= -1; }
+      else { ordenacaoTabela = { chave: chave, dir: chave === 'rank_v3' ? 1 : -1 }; }
+      paginaAtual = 0;
+      renderizarTabela();
+    });
+  });
+  document.getElementById('pag-ant').addEventListener('click', function () {
+    if (paginaAtual > 0) { paginaAtual -= 1; renderizarTabela(); window.scrollTo(0, 0); }
+  });
+  document.getElementById('pag-prox').addEventListener('click', function () {
+    paginaAtual += 1; renderizarTabela(); window.scrollTo(0, 0);
+  });
+
+  /* ---------- inicialização ---------- */
+
+  function preencherSelectUf() {
+    var sel = document.getElementById('sel-uf');
+    var siglas = ufs.slice().sort(function (a, b) { return a.uf.localeCompare(b.uf); });
+    for (var i = 0; i < siglas.length; i++) {
+      var op = document.createElement('option');
+      op.value = siglas[i].uf;
+      op.textContent = siglas[i].uf;
+      sel.appendChild(op);
+    }
+  }
+
+  function iniciar() {
+    var lista = document.getElementById('lista-resultados');
+    lista.innerHTML = '<p class="status-carregando">Carregando os 5.570 municípios…</p>';
+    fetch('data/municipios.json')
+      .then(function (r) {
+        if (!r.ok) { throw new Error('municipios.json respondeu HTTP ' + r.status); }
+        return r.json();
+      })
+      .then(function (dados) {
+        municipios = dados;
+        for (var i = 0; i < municipios.length; i++) {
+          porId.set(municipios[i].id_municipio, municipios[i]);
+        }
+        calcularUfs();
+        preencherSelectUf();
+        renderizarUf();
+        paginaAtual = 0;
+        renderizarTabela();
+        lista.innerHTML = '<p class="sem-resultado">Digite o nome de uma cidade pra começar.</p>';
+
+        var id = idCidadeNaUrl(window.location.search, window.location.hash);
+        if (id && porId.has(id)) { abrirCidade(id, false); }
+      })
+      .catch(function (err) {
+        console.error('[explorar]', err);
+        lista.innerHTML = '<p class="sem-resultado">Erro ao carregar os dados: ' + err.message + '</p>';
+      });
+  }
+
+  iniciar();
+})();
+</script>
+</body>
+</html>
