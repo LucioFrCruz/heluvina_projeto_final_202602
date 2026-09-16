@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IPB — Índice de Potencial Bancário · Apresentação</title>
+<link rel="stylesheet" href="assets/reveal/dist/reveal.css">
+<style>
+  :root {
+    --acento: #16637a;
+    --texto: #24303b;
+    --suave: #5b6771;
+    --borda: #e2e7ec;
+    --fundo: #fbfcfd;
+  }
+  .reveal-viewport { background: var(--fundo); }
+  .reveal {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 30px;
+    color: var(--texto);
+  }
+  .reveal .slides section { text-align: left; }
+  .reveal h1, .reveal h2, .reveal h3 {
+    font-family: inherit;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--texto);
+  }
+  .reveal h2 { font-size: 1.25em; font-weight: 650; margin: 0 0 .45em; }
+  .reveal h3 { font-size: .8em; font-weight: 600; color: var(--acento); margin: 0 0 .35em; }
+  .reveal p { line-height: 1.45; margin: .4em 0; }
+  .reveal section img { border: 0; box-shadow: none; margin: 0; background: transparent; }
+
+  .kicker { color: var(--suave); font-size: .56em; letter-spacing: .08em; text-transform: uppercase; }
+  .secao-tag {
+    display: inline-block; color: var(--suave); font-size: .5em; letter-spacing: .06em;
+    text-transform: uppercase; border: 1px solid var(--borda); border-radius: 999px;
+    background: #fff; padding: .3em .9em; margin-bottom: .7em;
+  }
+  .capa { text-align: center; }
+  .capa h1 { font-size: 2em; margin: .25em 0 .5em; }
+  .capa .pergunta { font-size: .9em; color: var(--acento); font-weight: 600; margin-top: 1.3em; }
+  .integrantes { color: var(--suave); font-size: .58em; margin-top: 2em; }
+
+  .faixa-stats { display: flex; gap: 14px; margin: .2em 0 .7em; }
+  .faixa-stat {
+    flex: 1; border: 1px solid var(--borda); border-radius: 10px; background: #fff;
+    padding: 12px 14px; font-size: .52em; color: var(--suave); line-height: 1.3;
+  }
+  .faixa-stat .valor { display: block; font-size: 2.3em; color: var(--acento); font-weight: 700; line-height: 1.1; margin-bottom: .1em; }
+  .fecho { color: var(--acento); font-weight: 600; font-size: .78em; margin-top: .7em; }
+  .pergunta-cheia { font-size: 1.5em; color: var(--acento); font-weight: 650; line-height: 1.35; margin-top: 1.3em; }
+  .gancho { color: var(--acento); font-weight: 650; font-size: .82em; margin: 0 0 .5em; }
+
+  /* diagrama do pipeline */
+  .pipe-grid-fontes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .pipe-fonte {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    border: 1px solid var(--borda); border-radius: 7px; background: #fff;
+    padding: 6px 10px; font-size: .5em;
+  }
+  .pipe-fonte .nome { font-weight: 600; }
+  .selo { font-size: .82em; font-weight: 700; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+  .selo-api { background: #e3eff3; color: var(--acento); }
+  .selo-manual { background: #fdf0e3; color: #b45f16; }
+  .pipe-conector { text-align: center; color: var(--acento); font-size: .9em; line-height: 1.1; margin: 2px 0; }
+  .pipe-lake {
+    text-align: center; background: var(--acento); color: #fff; border-radius: 10px;
+    font-size: .62em; font-weight: 650; padding: .5em; width: 46%; margin: 0 auto;
+  }
+  .pipe-camadas { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 4px; }
+  .pipe-camada {
+    border: 1.5px solid var(--acento); color: var(--acento); border-radius: 8px;
+    background: #fff; font-size: .5em; font-weight: 650; padding: .45em .8em;
+  }
+  .pipe-seta { color: var(--acento); font-weight: 700; }
+
+  /* cards genéricos (preparação e versões) */
+  .cards3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: .3em; }
+  .card3 { border: 1px solid var(--borda); border-radius: 10px; background: #fff; padding: 14px; }
+  .card3 .num {
+    display: inline-block; background: var(--acento); color: #fff; border-radius: 6px;
+    width: 1.5em; height: 1.5em; line-height: 1.5em; text-align: center; font-weight: 700; font-size: .7em;
+  }
+  .card3 .tag-versao { display: inline-block; font-size: .62em; font-weight: 700; color: var(--acento); }
+  .card3 h3 { margin-top: .4em; }
+  .card3 p { font-size: .56em; color: var(--suave); line-height: 1.45; margin: .35em 0 0; }
+
+  /* pilares */
+  .pilares { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: .2em 0 .6em; }
+  .pilar { border: 1px solid var(--borda); border-radius: 10px; padding: 11px 9px; background: #fff; }
+  .pilar .letra { display: inline-block; background: var(--acento); color: #fff; border-radius: 6px; width: 1.5em; height: 1.5em; line-height: 1.5em; text-align: center; font-weight: 700; margin-bottom: .3em; }
+  .pilar .nome { font-size: .54em; font-weight: 600; display: block; line-height: 1.25; }
+  .pilar .comp { font-size: .47em; color: var(--suave); display: block; margin-top: .3em; line-height: 1.35; }
+  .pilar .ancora { font-size: .47em; color: var(--texto); display: block; margin-top: .35em; line-height: 1.3; border-top: 1px dashed var(--borda); padding-top: .35em; }
+  .pilar .peso { font-size: .47em; color: var(--acento); display: block; margin-top: .3em; font-weight: 600; }
+  .formula { text-align: center; background: #eef4f6; border-radius: 8px; padding: .4em .8em; font-size: .7em; color: var(--acento); font-weight: 600; margin-top: .35em; }
+
+  /* figuras interativas */
+  .duas-figuras { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  .fig-interativa { width: 100%; }
+  .leitura-slide { font-size: .56em; color: var(--suave); margin-top: .5em; line-height: 1.4; }
+
+  /* mapa no slide */
+  .mapa-toolbar { display: flex; gap: 8px; margin-bottom: 6px; }
+  .layer-btn {
+    border: 1px solid #cdd5dd; background: #fff; color: #33414d;
+    padding: 5px 16px; border-radius: 7px; font-size: .5em; cursor: pointer;
+  }
+  .layer-btn.active { background: var(--acento); border-color: var(--acento); color: #fff; }
+  .reset-btn {
+    border: 1px solid #cdd5dd; background: #fff; color: #33414d;
+    padding: 5px 16px; border-radius: 7px; font-size: .5em; cursor: pointer;
+  }
+  .mapa-slide-container { border: 1px solid var(--borda); border-radius: 10px; background: #fff; overflow: hidden; }
+  .mapa-slide-container svg { display: block; width: 100%; height: auto; max-height: 44vh; }
+  .mun { stroke: #ffffff; stroke-width: .25; }
+  .mun:hover { stroke: #24303b; stroke-width: .8; }
+  .fronteira-uf { fill: none; stroke: #24303b; stroke-width: .9; stroke-linejoin: round; stroke-linecap: round; pointer-events: none; }
+  .legend-slide { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; font-size: .44em; color: #45525d; margin-top: 4px; }
+  .legend-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .legend-item .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .legend-scale { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-bar { width: 130px; height: 10px; border-radius: 5px; border: 1px solid var(--borda); }
+  .legend-title { font-weight: 600; }
+  .leituras { font-size: .54em; color: var(--suave); margin-top: .35em; }
+
+  /* arquétipos */
+  .arq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin-top: .3em; }
+  .arq { font-size: .48em; line-height: 1.3; padding: 4px 7px; border-radius: 6px; background: #fff; border: 1px solid var(--borda); }
+  .arq .chip { display: inline-block; width: .75em; height: .75em; border-radius: 2px; margin-right: .4em; }
+  .arq .n { color: var(--suave); }
+
+  /* classificação */
+  .class-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; align-items: start; }
+  .class-lado p { font-size: .6em; color: var(--suave); line-height: 1.45; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: .15em 0 .5em; }
+  .stat { border: 1px solid var(--borda); border-radius: 10px; background: #fff; padding: 10px 12px; font-size: .48em; color: var(--suave); line-height: 1.3; }
+  .stat .valor { display: block; font-size: 2.2em; color: var(--acento); font-weight: 700; line-height: 1.1; margin-bottom: .15em; }
+
+  /* resultados */
+  .resultados-grid { display: grid; grid-template-columns: 1fr 1.25fr; gap: 14px; align-items: start; margin-top: .2em; }
+  .takeaway {
+    margin-top: .6em; border-left: 4px solid var(--acento); background: #fff;
+    border-radius: 0 8px 8px 0; padding: .55em .8em; font-size: .62em; line-height: 1.4;
+  }
+
+  /* limitações */
+  .lim-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: .3em; }
+  .lim-card { border: 1px solid var(--borda); border-radius: 10px; background: #fff; padding: 12px; }
+  .lim-num { font-size: .95em; font-weight: 700; color: var(--acento); }
+  .lim-card p { font-size: .52em; line-height: 1.4; margin: .3em 0 0; }
+  .lim-mit { color: var(--suave); border-top: 1px dashed var(--borda); padding-top: .4em; }
+  .chips { display: flex; gap: 8px; justify-content: center; margin-top: .9em; flex-wrap: wrap; }
+  .chip {
+    border: 1.5px solid var(--acento); color: var(--acento); border-radius: 999px;
+    background: #fff; font-size: .52em; font-weight: 600; padding: .4em .9em;
+  }
+
+  .fechamento { text-align: center; }
+  .fechamento h2 { text-align: center; }
+  #qrcode { margin: .4em auto .3em; width: 240px; height: 240px; }
+  #qrcode img, #qrcode canvas { display: block; margin: 0 auto; }
+  .url { font-size: .52em; color: var(--suave); }
+
+  /* ==============================================================
+     DIRECAO VISUAL 2.0 — linguagem do PowerPoint, com mais contraste
+     ============================================================== */
+  :root {
+    --navy: #071f2e;
+    --navy-2: #0b3040;
+    --cyan: #12b8c4;
+    --cyan-soft: #dff4f5;
+    --gold: #f2b84b;
+    --red: #d95359;
+    --paper: #f3f7f8;
+    --white: #ffffff;
+    --acento: var(--cyan);
+    --texto: var(--navy);
+    --suave: #687983;
+    --borda: #dbe5e8;
+    --fundo: var(--paper);
+  }
+
+  .reveal-viewport { background: var(--paper); }
+  .reveal { color: var(--navy); font-weight: 400; }
+  .reveal .slides section {
+    box-sizing: border-box;
+    padding: 38px 48px;
+    background:
+      radial-gradient(circle at 92% 8%, rgba(18,184,196,.055), transparent 25%),
+      var(--paper);
+  }
+  .reveal .slides section::before {
+    content: "";
+    position: absolute;
+    left: 48px;
+    right: 48px;
+    top: 27px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--cyan), rgba(18,184,196,0) 36%);
+  }
+  .reveal h1, .reveal h2, .reveal h3 { color: var(--navy); }
+  .reveal h2 {
+    font-size: 1.16em;
+    font-weight: 760;
+    line-height: 1.08;
+    margin: 0 0 .62em;
+  }
+  .reveal h3 { color: var(--navy); font-weight: 720; }
+  .reveal p { line-height: 1.38; }
+  .reveal .progress { height: 4px; color: var(--cyan); }
+  .reveal .progress span { background: var(--cyan); }
+  .reveal .slide-number {
+    top: 16px;
+    right: 24px;
+    bottom: auto;
+    background: transparent;
+    color: var(--cyan);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .08em;
+  }
+  .reveal .controls { color: var(--cyan); }
+
+  .secao-tag {
+    color: var(--cyan);
+    border: 0;
+    background: var(--cyan-soft);
+    font-weight: 750;
+    letter-spacing: .08em;
+    padding: .38em .9em;
+  }
+  .fecho { color: var(--navy); border-left: 4px solid var(--cyan); padding-left: .7em; }
+  .gancho { color: var(--navy); font-size: .86em; max-width: 900px; }
+
+  /* capa: composicao editorial em dois planos, com o mapa real do IPB */
+  .reveal .slides section.capa {
+    display: grid !important;
+    grid-template-columns: 44% 56%;
+    padding: 0 !important;
+    text-align: left;
+    color: #fff;
+    overflow: hidden;
+    background: var(--navy);
+  }
+  .reveal .slides section.capa::before { display: none; }
+  .capa-copy {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 70px 42px 58px 58px;
+    background: linear-gradient(135deg, #061c2a 0%, #092b3b 100%);
+  }
+  .capa-copy::before {
+    content: "";
+    position: absolute;
+    left: 58px;
+    top: 140px;
+    width: 5px;
+    height: 174px;
+    border-radius: 999px;
+    background: var(--cyan);
+    box-shadow: 0 0 28px rgba(18,184,196,.5);
+  }
+  .capa .kicker { color: var(--cyan); font-weight: 760; margin: 0 0 2.2em 18px; }
+  .capa h1 {
+    color: #fff;
+    font-size: 1.72em;
+    line-height: 1.02;
+    margin: 0 0 .55em 18px;
+    max-width: 470px;
+    letter-spacing: -.025em;
+  }
+  .capa .pergunta {
+    color: #d9e8ec;
+    font-size: .64em;
+    line-height: 1.45;
+    margin: 0 0 0 18px;
+    max-width: 430px;
+    font-weight: 500;
+  }
+  .capa .integrantes {
+    color: #9db4bd;
+    font-size: .43em;
+    line-height: 1.55;
+    margin: auto 0 0 18px;
+    max-width: 420px;
+  }
+  .capa-visual {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    background:
+      radial-gradient(circle at 55% 46%, rgba(18,184,196,.26), transparent 34%),
+      radial-gradient(circle at 78% 16%, rgba(242,184,75,.12), transparent 24%),
+      #082534;
+  }
+  .capa-visual::before,
+  .capa-visual::after {
+    content: "";
+    position: absolute;
+    border: 1px solid rgba(86,216,225,.14);
+    border-radius: 50%;
+  }
+  .capa-visual::before { width: 610px; height: 610px; }
+  .capa-visual::after { width: 420px; height: 420px; }
+  #capa-mapa {
+    position: relative;
+    z-index: 2;
+    width: 84%;
+    height: 84%;
+    pointer-events: none;
+    filter: saturate(1.3) contrast(1.08) drop-shadow(0 0 22px rgba(18,184,196,.24));
+  }
+  #capa-mapa svg { width: 100%; height: 100%; }
+  #capa-mapa .mun { stroke: rgba(7,31,46,.55); stroke-width: .34; }
+  #capa-mapa .fronteira-uf { stroke: rgba(222,250,251,.44); stroke-width: 1.05; }
+  .capa-selo {
+    position: absolute;
+    z-index: 4;
+    right: 34px;
+    bottom: 30px;
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    color: #cce2e7;
+    font-size: .42em;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .capa-selo::before { content: ""; width: 26px; height: 3px; background: var(--gold); }
+
+  /* problema: numeros com hierarquia e cor sem cara de dashboard */
+  .slide-problema .faixa-stats {
+    display: grid;
+    grid-template-columns: 1.08fr .82fr 1fr;
+    gap: 26px;
+    margin: .7em 0 1.15em;
+  }
+  .slide-problema .faixa-stat {
+    border: 0;
+    border-top: 4px solid var(--cyan);
+    border-radius: 0;
+    background: transparent;
+    padding: 13px 0 0;
+    font-size: .52em;
+  }
+  .slide-problema .faixa-stat:nth-child(1) { border-color: var(--red); }
+  .slide-problema .faixa-stat:nth-child(2) { border-color: var(--cyan); }
+  .slide-problema .faixa-stat:nth-child(3) { border-color: var(--gold); }
+  .slide-problema .faixa-stat:nth-child(1) .valor { color: var(--red); }
+  .slide-problema .faixa-stat:nth-child(2) .valor { color: var(--cyan); }
+  .slide-problema .faixa-stat:nth-child(3) .valor { color: #d99a21; }
+  .slide-problema .faixa-stat .valor { font-size: 3.15em; letter-spacing: -.04em; }
+  .slide-problema > p:not(.fecho) { max-width: 880px; font-size: .78em; }
+  .slide-problema .fecho { margin-top: 1.1em; max-width: 760px; }
+
+  /* pergunta: pausa visual escura entre problema e solucao */
+  .reveal .slides section.slide-pergunta {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    color: #fff;
+    background:
+      radial-gradient(circle at 84% 18%, rgba(18,184,196,.2), transparent 28%),
+      var(--navy);
+  }
+  .reveal .slides section.slide-pergunta::before { background: linear-gradient(90deg, var(--cyan), transparent 65%); }
+  .slide-pergunta h2 { color: var(--cyan); font-size: .56em; text-transform: uppercase; letter-spacing: .12em; }
+  .slide-pergunta .pergunta-cheia {
+    color: #fff;
+    font-size: 1.72em;
+    line-height: 1.16;
+    letter-spacing: -.025em;
+    max-width: 980px;
+    margin: .35em 0 .8em;
+  }
+  .eixos { display: flex; gap: 10px; flex-wrap: wrap; }
+  .eixo {
+    font-size: .46em;
+    color: #d7e8ec;
+    border: 1px solid rgba(143,205,211,.34);
+    border-radius: 999px;
+    padding: .52em 1em;
+    background: rgba(255,255,255,.045);
+  }
+  .eixo:nth-child(2) { color: #fff; border-color: rgba(242,184,75,.6); }
+
+  /* pipeline */
+  .pipe-grid-fontes { gap: 9px; }
+  .pipe-fonte {
+    min-height: 32px;
+    border: 0;
+    border-left: 3px solid var(--cyan);
+    border-radius: 0 7px 7px 0;
+    background: #fff;
+    box-shadow: 0 5px 18px rgba(7,31,46,.055);
+  }
+  .pipe-fonte:nth-child(n+7) { border-left-color: var(--gold); }
+  .selo-api { background: var(--cyan-soft); color: #087c86; }
+  .selo-manual { background: #fff0d4; color: #9a6110; }
+  .pipe-conector { color: var(--cyan); }
+  .pipe-lake {
+    width: 42%;
+    border-radius: 7px;
+    background: var(--navy);
+    box-shadow: 0 10px 24px rgba(7,31,46,.18);
+  }
+  .pipe-camada { border: 0; background: var(--cyan-soft); color: #087c86; }
+  .pipe-camada:last-child { background: var(--cyan); color: #fff; }
+
+  /* cards: menos interface, mais narrativa */
+  .cards3 { gap: 18px; }
+  .card3 {
+    position: relative;
+    min-height: 170px;
+    border: 0;
+    border-top: 4px solid var(--cyan);
+    border-radius: 0 0 10px 10px;
+    padding: 18px;
+    box-shadow: 0 10px 30px rgba(7,31,46,.07);
+  }
+  .card3:nth-child(2) { border-top-color: var(--red); }
+  .card3:nth-child(3) { border-top-color: var(--gold); }
+  .card3 .num { background: var(--navy); border-radius: 50%; }
+  .card3:nth-child(2) .num { background: var(--red); }
+  .card3:nth-child(3) .num { background: var(--gold); color: var(--navy); }
+
+  /* figuras: moldura de apresentacao, nao de dashboard */
+  .duas-figuras, .resultados-grid { gap: 18px; }
+  .fig-interativa {
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 9px 26px rgba(7,31,46,.065);
+  }
+  .leitura-slide {
+    color: var(--navy);
+    border-left: 4px solid var(--gold);
+    padding: .38em 0 .38em .75em;
+    font-size: .58em;
+  }
+
+  /* pilares */
+  .pilares { gap: 14px; margin-top: .55em; }
+  .pilar {
+    border: 0;
+    border-top: 3px solid var(--cyan);
+    border-radius: 0;
+    padding: 14px 8px 10px 0;
+    background: transparent;
+  }
+  .pilar:nth-child(4) { border-top-color: var(--gold); }
+  .pilar .letra {
+    width: 1.9em;
+    height: 1.9em;
+    line-height: 1.9em;
+    border-radius: 50%;
+    background: var(--cyan);
+    color: var(--navy);
+  }
+  .pilar:nth-child(4) .letra { background: var(--gold); }
+  .pilar .ancora { border-color: #cad7db; }
+  .pilar .peso { color: #078995; }
+  .formula {
+    background: var(--navy);
+    color: #fff;
+    border-radius: 7px;
+    box-shadow: 0 9px 25px rgba(7,31,46,.16);
+  }
+
+  /* tres versoes: a V3 vira escolha visual */
+  .slide-versoes .card3 { min-height: 190px; }
+  .slide-versoes .card3:nth-child(3) {
+    color: #fff;
+    background: var(--navy);
+    border-top-color: var(--gold);
+  }
+  .slide-versoes .card3:nth-child(3)::after {
+    content: "ESCOLHIDA";
+    position: absolute;
+    right: 16px;
+    top: 14px;
+    color: var(--gold);
+    font-size: .36em;
+    font-weight: 850;
+    letter-spacing: .1em;
+  }
+  .slide-versoes .card3:nth-child(3) h3,
+  .slide-versoes .card3:nth-child(3) p { color: #fff; }
+  .slide-versoes .card3:nth-child(3) .tag-versao { color: var(--gold); }
+
+  /* mapa e controles */
+  .mapa-toolbar { gap: 10px; }
+  .layer-btn, .reset-btn { border: 0; box-shadow: inset 0 0 0 1px #cbd9dd; font-weight: 650; }
+  .layer-btn.active { background: var(--navy); box-shadow: none; }
+  .mapa-slide-container { border: 0; box-shadow: 0 9px 28px rgba(7,31,46,.08); }
+
+  /* resultados de ML */
+  .arq {
+    border: 0;
+    border-left: 3px solid var(--cyan);
+    border-radius: 0 6px 6px 0;
+    box-shadow: 0 4px 14px rgba(7,31,46,.045);
+  }
+  .arq:nth-child(5) { border-left-color: var(--gold); background: #fff8e9; }
+  .stats { gap: 16px; }
+  .stat {
+    border: 0;
+    border-top: 3px solid var(--cyan);
+    border-radius: 0;
+    padding: 11px 0;
+    background: transparent;
+  }
+  .stat:nth-child(2) { border-color: var(--gold); }
+  .stat:nth-child(3) { border-color: var(--red); }
+  .stat .valor { color: var(--navy); font-size: 2.55em; }
+  .class-lado .fecho { background: #fff; padding: .7em .8em; }
+  .takeaway { border-left-color: var(--gold); box-shadow: 0 7px 22px rgba(7,31,46,.05); }
+
+  /* limitacoes no formato de lista editorial do PPT */
+  .lim-cards { display: grid; grid-template-columns: 1fr; gap: 0; margin-top: .2em; }
+  .lim-card {
+    display: grid;
+    grid-template-columns: 62px 1fr 1fr;
+    align-items: center;
+    gap: 18px;
+    border: 0;
+    border-bottom: 1px solid var(--borda);
+    border-radius: 0;
+    background: transparent;
+    padding: 11px 0;
+  }
+  .lim-num { color: var(--red); font-size: .76em; }
+  .lim-card p { margin: 0; font-size: .5em; }
+  .lim-mit { border: 0; padding: 0; color: var(--suave); }
+  .chips { justify-content: flex-start; margin-top: .7em; }
+  .chip { border: 0; color: #087c86; background: var(--cyan-soft); }
+
+  /* fechamento */
+  .reveal .slides section.fechamento {
+    display: grid !important;
+    grid-template-columns: 1fr 340px;
+    grid-template-rows: 1fr auto auto;
+    align-items: center;
+    column-gap: 56px;
+    padding: 70px 110px !important;
+    text-align: left;
+    color: #fff;
+    background:
+      radial-gradient(circle at 84% 24%, rgba(18,184,196,.22), transparent 28%),
+      var(--navy);
+  }
+  .reveal .slides section.fechamento::before { background: linear-gradient(90deg, var(--gold), transparent 44%); }
+  .fechamento h2 {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    color: #fff;
+    text-align: left;
+    font-size: 1.75em;
+    line-height: 1.05;
+    margin-bottom: .35em;
+  }
+  .fechamento h2::after { content: "O mapa esta aberto."; display: block; color: var(--cyan); }
+  .fechamento > p:not(.url) { grid-column: 1; grid-row: 2; font-size: .7em; color: #d9e8ec; }
+  .fechamento .url { grid-column: 1; grid-row: 3; color: #8fb1bb; font-size: .44em; }
+  #qrcode {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    width: 240px;
+    height: 240px;
+    margin: 0;
+    padding: 22px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 18px 60px rgba(0,0,0,.28);
+  }
+
+  /* problema: evidencia geografica ao lado da magnitude nacional */
+  .problema-layout {
+    display: grid;
+    grid-template-columns: .9fr 1.1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  .slide-problema .problema-copy .faixa-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 22px;
+    margin: .2em 0 .7em;
+  }
+  .slide-problema .problema-copy .faixa-stat:first-child { grid-column: 1 / -1; }
+  .slide-problema .problema-copy .faixa-stat .valor { font-size: 2.6em; }
+  .slide-problema .problema-copy > p:not(.fecho) { font-size: .6em; margin-top: .8em; }
+  .slide-problema .problema-copy .fecho { font-size: .62em; margin-top: .8em; }
+  #fig-gap-uf { min-height: 430px; }
+
+  /* pipeline iconografica: fontes → Python → dados → produto */
+  .pipeline-v2 { margin-top: .1em; }
+  .pipeline-inputs {
+    display: grid;
+    grid-template-columns: 1fr 34px 1fr .7fr;
+    gap: 10px;
+    align-items: stretch;
+    margin-bottom: 15px;
+  }
+  .input-group, .input-summary {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 10px;
+    border-left: 4px solid var(--cyan);
+    background: #fff;
+    padding: 9px 12px;
+    box-shadow: 0 6px 18px rgba(7,31,46,.055);
+  }
+  .input-file { border-left-color: var(--gold); }
+  .input-icon {
+    grid-row: 1 / 3;
+    display: inline-flex;
+    width: 42px;
+    height: 42px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--cyan-soft);
+    color: #087c86;
+    font-size: .38em;
+    font-weight: 850;
+    letter-spacing: .04em;
+  }
+  .input-file .input-icon { background: #fff0d4; color: #9a6110; }
+  .input-group strong, .input-summary strong { font-size: .46em; color: var(--navy); }
+  .input-group > span:last-child, .input-summary > span { font-size: .37em; color: var(--suave); }
+  .input-plus { display: flex; align-items: center; justify-content: center; color: var(--cyan); font-weight: 850; }
+  .input-summary {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    border-left-color: var(--navy);
+    background: var(--navy);
+  }
+  .input-summary strong { color: #fff; font-size: .58em; }
+  .input-summary > span { color: #a9c0c8; }
+
+  .pipeline-flow {
+    display: grid;
+    grid-template-columns: 1fr 24px 1fr 24px 1fr 24px 1fr 24px 1.08fr;
+    align-items: stretch;
+  }
+  .pipeline-step {
+    position: relative;
+    min-height: 250px;
+    box-sizing: border-box;
+    padding: 17px 13px 13px;
+    border-top: 4px solid var(--cyan);
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(7,31,46,.06);
+  }
+  .pipeline-step::before {
+    content: attr(data-step);
+    position: absolute;
+    top: 11px;
+    right: 11px;
+    color: #b6c7cc;
+    font-size: .34em;
+    font-weight: 850;
+  }
+  .pipeline-step:nth-of-type(3) { border-top-color: var(--gold); }
+  .pipeline-step.step-dark { border-top-color: var(--gold); background: var(--navy); }
+  .pipeline-step.step-output { border-top-color: var(--gold); background: #e8f6f6; }
+  .pipeline-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cyan);
+    font-size: .72em;
+    font-weight: 900;
+  }
+  .step-icon {
+    display: inline-flex;
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    margin-bottom: 12px;
+    background: var(--cyan-soft);
+    color: #087c86;
+    font-size: .48em;
+    font-weight: 900;
+    box-shadow: inset 0 0 0 1px rgba(18,184,196,.15);
+  }
+  .step-storage { background: #fff0d4; color: #9a6110; font-size: .72em; }
+  .step-database { background: rgba(255,255,255,.1); color: var(--gold); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+  .step-chart { background: var(--gold); color: var(--navy); font-size: .72em; }
+  .step-kicker {
+    display: block;
+    color: #087c86;
+    font-size: .32em;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+  }
+  .pipeline-step h3 { font-size: .61em; margin: .28em 0 .35em; }
+  .pipeline-step code {
+    display: block;
+    min-height: 2.5em;
+    color: #304854;
+    font-size: .32em;
+    line-height: 1.3;
+    white-space: normal;
+  }
+  .pipeline-step p { color: var(--suave); font-size: .34em; line-height: 1.35; margin-top: .6em; }
+  .pipeline-step.step-dark h3 { color: #fff; }
+  .pipeline-step.step-dark .step-kicker { color: var(--gold); }
+  .pipeline-step.step-dark code, .pipeline-step.step-dark p { color: #bad0d7; }
+  .pipeline-ribbon {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 13px;
+    padding: 10px 14px;
+    border-radius: 7px;
+    background: var(--navy);
+    color: #bcd2d9;
+    font-size: .34em;
+  }
+  .pipeline-ribbon strong { color: var(--cyan); }
+  .slide-pipeline .fecho { margin-top: .52em; font-size: .55em; }
+  .pipeline-figure {
+    margin: 0;
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .pipeline-figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 500px;
+  }
+
+  /* comparacao das versoes: narrativa + evidencia regional */
+  .versoes-layout {
+    display: grid;
+    grid-template-columns: .82fr 1.18fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .slide-versoes .cards3 { display: flex; flex-direction: column; gap: 10px; }
+  .slide-versoes .card3 {
+    min-height: 0;
+    padding: 12px 14px;
+    border-top-width: 3px;
+  }
+  .slide-versoes .card3 h3 { display: inline; font-size: .55em; margin-left: .45em; }
+  .slide-versoes .card3 p { font-size: .42em; margin-top: .4em; }
+  .slide-versoes .card3:nth-child(3)::after { top: 12px; }
+  .slide-versoes .fecho { font-size: .47em; margin-top: .85em; }
+  #fig-versoes-regiao { min-height: 455px; }
+
+  /* tres leituras do modelo no mesmo slide, sem sacrificar legibilidade */
+  .model-visual { min-width: 0; }
+  .model-tabs { display: flex; gap: 7px; margin-bottom: 8px; }
+  .model-tab {
+    border: 0;
+    border-radius: 999px;
+    padding: 6px 13px;
+    background: #e4edef;
+    color: #49616c;
+    font-size: .38em;
+    font-weight: 760;
+    cursor: pointer;
+  }
+  .model-tab.active { background: var(--navy); color: #fff; }
+  .model-panel {
+    min-height: 420px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 9px 26px rgba(7,31,46,.065);
+  }
+  .model-panel[hidden] { display: none; }
+  .model-panel .fig-interativa { box-shadow: none; }
+  .model-panel img {
+    display: block;
+    width: 100%;
+    height: 420px;
+    object-fit: contain;
+    background: #fff;
+  }
+
+  /* entrada discreta: reforca ritmo sem distrair dos dados */
+  .reveal .slides section.present > h2,
+  .reveal .slides section.present > .gancho,
+  .reveal .slides section.present > .faixa-stats,
+  .reveal .slides section.present > .cards3,
+  .reveal .slides section.present > .pilares,
+  .reveal .slides section.present > .duas-figuras,
+  .reveal .slides section.present > .class-grid,
+  .reveal .slides section.present > .resultados-grid,
+  .reveal .slides section.present > .lim-cards {
+    animation: subir-suave .46s ease-out both;
+  }
+  @keyframes subir-suave {
+    from { opacity: .2; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal .slides section.present > * { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ==================== 1. CAPA (~15s) ==================== -->
+<section class="capa">
+  <div class="capa-copy">
+  <p class="kicker">Hands On Engenharia de Dados · Grupo 4</p>
+  <h1>Mapa do Potencial Bancário Brasileiro</h1>
+  <!--
+    FRASE DE IMPACTO (provisória — o grupo escolhe a definitiva no ensaio, com calma):
+    "Quase 1 em cada 2 cidades brasileiras não tem agência bancária.
+     Onde está o potencial que os bancos não veem?"
+  -->
+  <p class="pergunta">Onde potencial econômico, adoção digital e baixa concorrência física se encontram?</p>
+  <p class="integrantes">Hermes Augusto · Lúcio Franchi Cruz · Vitor Paes · Nathalia Miranda<br>MBA Engenharia de Dados · Setembro de 2026</p>
+  </div>
+  <div class="capa-visual" aria-hidden="true">
+    <div id="capa-mapa"></div>
+    <div class="capa-selo">5.570 municípios · IPB V3</div>
+  </div>
+  <aside class="notes">
+    [Capa — 15s] Boa tarde, a gente é o grupo 4. O projeto responde uma pergunta: onde
+    potencial econômico, adoção digital e baixa concorrência física se encontram? Em dez
+    minutos a gente mostra a resposta, que virou um índice e um site.
+  </aside>
+</section>
+
+<!-- ==================== 2. O PROBLEMA (~40s) ==================== -->
+<section class="slide-problema">
+  <h2>O problema</h2>
+  <div class="problema-layout">
+    <div class="problema-copy">
+      <div class="faixa-stats">
+        <div class="faixa-stat"><span class="valor">2.656</span>cidades sem nenhuma agência bancária</div>
+        <div class="faixa-stat"><span class="valor">47,7%</span>do Brasil</div>
+        <div class="faixa-stat"><span class="valor">19,8 mi</span>de pessoas moram nelas</div>
+      </div>
+      <p>Quem decide onde abrir agência, colocar correspondente ou dar crédito olha para o
+      país inteiro e aposta no escuro.</p>
+      <p class="fecho">Na prática, quem decide tem conta em São Paulo.</p>
+    </div>
+    <div id="fig-gap-uf" class="fig-interativa" data-fig="assets/data/fig_gap_agencias_uf.json"></div>
+  </div>
+  <aside class="notes">
+    [O problema — 40s] Quase metade das cidades do país não tem banco: 2.656, onde moram
+    quase vinte milhões de pessoas. Quem decide onde investir olha pra isso no escuro,
+    sem nenhum ranking público que junte potencial, digital e concorrência. Na prática,
+    quem decide tem conta em São Paulo. O gráfico mostra que o vazio é territorial: no
+    Piauí e no Tocantins, mais de oito em cada dez municípios não têm agência.
+  </aside>
+</section>
+
+<!-- ==================== 3. O OBJETIVO (~25s) ==================== -->
+<section class="slide-pergunta">
+  <h2>O objetivo</h2>
+  <p class="pergunta-cheia">Onde potencial econômico, adoção digital e baixa concorrência
+  física se encontram?</p>
+  <div class="eixos" aria-label="Eixos da pergunta de negócio">
+    <span class="eixo">potencial econômico</span>
+    <span class="eixo">adoção digital</span>
+    <span class="eixo">baixa concorrência física</span>
+  </div>
+  <aside class="notes">
+    [O objetivo — 25s] O objetivo virou a pergunta do projeto: onde potencial econômico,
+    adoção digital e baixa concorrência física se encontram? A resposta é um índice que
+    ranqueia as 5.570 cidades nesses três eixos, de 0 a 100.
+  </aside>
+</section>
+
+<!-- ==================== 4. OS DADOS (~40s) ==================== -->
+<section class="slide-pipeline">
+  <h2>Os dados</h2>
+  <figure class="pipeline-figure">
+    <img src="assets/pipeline_iconografica.svg" alt="Pipeline técnico com fontes públicas, ingestores Python, Parquet e GCS, BigQuery, preparação trusted e produtos analytics">
+  </figure>
+  <p class="fecho">Cada etapa vira tabela no BigQuery (dataset ipb_staging). Dá pra
+  auditar tudo.</p>
+  <aside class="notes">
+    [Os dados — 40s] Nove fontes, todas públicas. Seis entram por API nos ingestores
+    Python. Três ficam no GCS e entram sem etapa manual na execução. Antes do BigQuery,
+    cada coleta ganha cache Parquet idempotente. A camada raw preserva a origem; o script
+    trusted_municipios faz joins, taxas e tratamentos; ipb.py e os módulos de modelagem
+    publicam analytics, ranking, clusters e os JSONs do site. Testes acompanham o fluxo.
+  </aside>
+</section>
+
+<!-- ==================== 5. PREPARAÇÃO (~50s) ==================== -->
+<section>
+  <h2>Preparação: o que a gente aprendeu</h2>
+  <div class="cards3">
+    <div class="card3">
+      <span class="num">1</span>
+      <h3>O que existia no começo</h3>
+      <p>Censo, PIB, Pix, Estban, Anatel e IDHM. Pix de poucos meses, sem correspondentes
+      e sem CEMPRE no índice.</p>
+    </div>
+    <div class="card3">
+      <span class="num">2</span>
+      <h3>O erro que a gente achou</h3>
+      <p>A primeira fórmula zerou 119 cidades pequenas cheias de lotérica. Era a fórmula
+      que estava errada, não as cidades. Trocamos para gap linear e as versões
+      convergiram.</p>
+    </div>
+    <div class="card3">
+      <span class="num">3</span>
+      <h3>O que a gente tratou</h3>
+      <p>Zero assumido nas 2.656 cidades sem agência. Min-max com winsorize, taxas por
+      100 mil hab, estratos, log1p, correspondentes agregados por tipo.</p>
+    </div>
+  </div>
+  <p class="fecho">A gente quebrou a fórmula antes de confiar nela.</p>
+  <aside class="notes">
+    [Preparação — 50s] Três aprendizados. O primeiro é de base: ela nasceu pequena, com
+    seis fontes e Pix de janela curta; correspondentes entrou na Etapa 2 e o CEMPRE, em
+    setembro. O segundo é o erro que a gente mesmo achou: a curva hiperbólica do gap
+    explodia o denominador em cidade com muita lotérica e zerava o IPB de 119 cidades
+    pequenas. Era a fórmula que estava errada, não as cidades. Trocamos para gap linear e
+    as três versões convergiram. O terceiro é o tratamento: zero assumido nas 2.656 sem
+    agência, normalização com winsorize, taxas por 100 mil. A gente quebrou a fórmula
+    antes de confiar nela.
+  </aside>
+</section>
+
+<!-- ==================== 6. O QUE OS DADOS CONTAM I — ESCOLARIDADE (~45s) ==================== -->
+<section>
+  <h2>O que os dados contam I · escolaridade</h2>
+  <p class="gancho">Na cidade média do país, só 4 em cada 10 adultos concluíram o
+  ensino médio.</p>
+  <div class="duas-figuras">
+    <div id="fig-esc-hist" class="fig-interativa" data-fig="assets/data/fig_espelho_escolaridade_hist.json"></div>
+    <div id="fig-esc-regiao" class="fig-interativa" data-fig="assets/data/fig_espelho_escolaridade_regiao.json"></div>
+  </div>
+  <p class="leitura-slide">Ponderando pela população, a média sobe para 52%. As grandes
+  cidades são mais escolarizadas, e elas puxam a conta pra cima.</p>
+  <aside class="notes">
+    [Escolaridade — 45s] O que os dados contam. Primeiro, escolaridade. A cidade média do
+    país tem só quatro em cada dez adultos com ensino médio completo: 39,5% entre os
+    5.570 municípios. Ponderando pela população sobe pra 52%, porque as grandes cidades
+    são mais escolarizadas. E o corte regional mostra o Nordeste embaixo, 33,9%, contra
+    44,4% no Sudeste. Banco segue população escolarizada.
+  </aside>
+</section>
+
+<!-- ==================== 7. O QUE OS DADOS CONTAM II — DINHEIRO (~40s) ==================== -->
+<section>
+  <h2>O que os dados contam II · dinheiro em movimento</h2>
+  <div class="duas-figuras">
+    <div id="fig-pix-top15" class="fig-interativa" data-fig="assets/data/fig_espelho_pix_top15.json"></div>
+    <div id="fig-pix-uf" class="fig-interativa" data-fig="assets/data/fig_pix_por_uf.json"></div>
+  </div>
+  <p class="leitura-slide">O agro do Centro-Oeste e o comércio de fronteira do Norte movem
+  mais Pix por habitante que as metrópoles do Sudeste. Dinheiro que circula fora do
+  radar do PIB.</p>
+  <aside class="notes">
+    [Dinheiro — 40s] Segundo, dinheiro em movimento. As quinze maiores taxas de Pix per
+    capita do país são cidades pequenas de agro e fronteira: Pacaraima lidera com meio
+    milhão de reais per capita, efeito do comércio de fronteira. E o mapa por estado
+    mostra o Centro-Oeste e o Norte lá em cima, com mediana acima de sessenta mil reais
+    por habitante no Mato Grosso, Goiás e Mato Grosso do Sul. É o agro e a fronteira
+    circulando dinheiro que o PIB sub-declara. Série temporal do Pix ficou pra fase dois,
+    a janela é curta demais.
+  </aside>
+</section>
+
+<!-- ==================== 8. A SOLUÇÃO (~50s) ==================== -->
+<section>
+  <h2>A solução: 5 pilares e uma média geométrica</h2>
+  <div class="pilares">
+    <div class="pilar"><span class="letra">A</span><span class="nome">Capacidade de consumo</span><span class="comp">PIB per capita, rendimento, empregos formais</span><span class="ancora">CEMPRE 2024 entra aqui</span><span class="peso">peso 15%</span></div>
+    <div class="pilar"><span class="letra">B</span><span class="nome">Dinamismo financeiro</span><span class="comp">Pix per capita nos últimos 12 meses</span><span class="ancora">R$ 13,8 trilhões movimentados</span><span class="peso">peso 20%</span></div>
+    <div class="pilar"><span class="letra">C</span><span class="nome">Adoção digital</span><span class="comp">Banda larga fixa por 100 habitantes</span><span class="ancora">o proxy do acesso digital</span><span class="peso">peso 15%</span></div>
+    <div class="pilar"><span class="letra">D</span><span class="nome">Gap bancário</span><span class="comp">Agências e correspondentes por tipo, invertido</span><span class="ancora">as 2.656 cidades sem agência moram aqui</span><span class="peso">peso 30%</span></div>
+    <div class="pilar"><span class="letra">E</span><span class="nome">Perfil demográfico</span><span class="comp">Escolaridade e população de 18 a 35 anos</span><span class="ancora">39,5% com ensino médio completo</span><span class="peso">peso 20%</span></div>
+  </div>
+  <p class="formula">IPB = (A<sup>0,15</sup> × B<sup>0,20</sup> × C<sup>0,15</sup> × D<sup>0,30</sup> × E<sup>0,20</sup>) × 100</p>
+  <p class="fecho">Pilar zerado zera o índice. Quem não tem nada em nenhuma dimensão não
+  entra no ranking à força.</p>
+  <aside class="notes">
+    [A solução — 50s] A solução é um índice de cinco pilares. Cada variável é winsorizada
+    e normalizada entre zero e um. O IPB é a média geométrica ponderada, vezes cem. Os
+    números de âncora: treze trilhões e oitocentos bilhões de Pix em doze meses no pilar
+    B; as duas mil seiscentas e cinquenta e seis cidades sem agência no pilar D; os trinta
+    e nove vírgula cinco por cento de escolaridade no pilar E. E a regra que manda em
+    tudo: se qualquer pilar zera, o índice zera. Por isso existem 119 cidades com IPB
+    zero. É propriedade do método, não bug.
+  </aside>
+</section>
+
+<!-- ==================== 9. TRÊS VERSÕES (~45s) ==================== -->
+<section class="slide-versoes">
+  <h2>Três versões do índice</h2>
+  <div class="versoes-layout">
+    <div class="versoes-copy">
+      <div class="cards3">
+        <div class="card3">
+          <span class="tag-versao">V1 · Clássico</span>
+          <h3>A fórmula original</h3>
+          <p>Pesos iguais nos cinco pilares. Ranqueou riqueza e chamou de potencial.</p>
+        </div>
+        <div class="card3">
+          <span class="tag-versao">V2 · Recalibrado</span>
+          <h3>O ajuste rápido</h3>
+          <p>Dobrou o peso do gap bancário pra tirar o viês da renda.</p>
+        </div>
+        <div class="card3">
+          <span class="tag-versao">V3 · Presença completa</span>
+          <h3>A oficial</h3>
+          <p>Mede a rede inteira, não só agência, e soma os empregos formais.</p>
+        </div>
+      </div>
+      <p class="fecho">Spearman V1 × V3: 0,840. A V3 é a oficial porque a pergunta do projeto é de concorrência.</p>
+    </div>
+    <div id="fig-versoes-regiao" class="fig-interativa" data-fig="assets/data/fig_ipb_versoes_regiao.json"></div>
+  </div>
+  <aside class="notes">
+    [Três versões — 45s] Foram três versões, não uma. A V1, pesos iguais, ranqueou
+    riqueza e chamou de potencial. A V2 dobrou o peso da concorrência. A V3 redesenhou o
+    pilar D: agência sozinha não mede mais acesso, então mede a rede completa, com
+    correspondentes por tipo, e soma os empregos formais do CEMPRE. As três concordam em
+    mais de oitenta por cento das posições. O gráfico mostra a correção regional: a V3
+    reduz a inflação da riqueza sem apagar Norte e Nordeste. A V3 é a oficial porque a
+    pergunta do projeto é de concorrência física.
+  </aside>
+</section>
+
+<!-- ==================== 10. O MAPA (~45s) ==================== -->
+<section id="slide-mapa">
+  <span class="secao-tag">Além do índice: o que a gente experimentou com ML</span>
+  <h2>O mapa</h2>
+  <div class="mapa-toolbar" role="group" aria-label="Camadas do mapa">
+    <button type="button" class="layer-btn active" data-layer="ipb">IPB V3</button>
+    <button type="button" class="layer-btn" data-layer="arquetipo">Arquétipos</button>
+    <button type="button" class="reset-btn" id="reset-zoom-slide">Recentralizar</button>
+  </div>
+  <div id="mapa-slide" class="mapa-slide-container"></div>
+  <div id="legend-slide" class="legend-slide" aria-hidden="true"></div>
+  <p class="leituras">Leituras prontas: o potencial concentra no eixo sul-sudeste, no
+  litoral turístico e nos dormitórios industriais. Ao vivo dá pra dar zoom, trocar para
+  arquétipos e passar o mouse em qualquer cidade.</p>
+  <aside class="notes">
+    [Mapa — 45s] O mapa aqui é o site funcionando dentro do próprio slide. Dá pra dar
+    zoom com a roda, arrastar, trocar a camada pra arquétipos. Três leituras prontas: o
+    potencial concentra no eixo sul-sudeste; o litoral turístico acende, Santa Catarina
+    inteira; e os dormitórios industriais ricos aparecem como oportunidade. Passe o mouse
+    na sua cidade. Clicando fora do mapa, as setas voltam a trocar o slide.
+  </aside>
+</section>
+
+<!-- ==================== 11. ARQUÉTIPOS (~45s) ==================== -->
+<section>
+  <span class="secao-tag">Além do índice: o que a gente experimentou com ML</span>
+  <h2>Arquétipos: 6 tipos de cidade</h2>
+  <div class="duas-figuras">
+    <div id="fig-arq-barras" class="fig-interativa" data-fig="assets/data/fig_arquetipos_barras.json"></div>
+    <div id="fig-pca-arq" class="fig-interativa" data-fig="assets/data/fig_pca_arquetipos.json"></div>
+  </div>
+  <div class="arq-grid">
+    <div class="arq"><span class="chip" style="background:#b07aa1"></span>Turismo - com rede <span class="n">(740)</span>: destinos grandes e ricos, já atendidos</div>
+    <div class="arq"><span class="chip" style="background:#e15759"></span>Sem rede bancária - renda baixa <span class="n">(1.278)</span>: o interior pobre, 100% sem agência</div>
+    <div class="arq"><span class="chip" style="background:#4e79a7"></span>Perfil intermediário - empresarial <span class="n">(1.248)</span>: PIB pc alto, Pix PJ de 42%</div>
+    <div class="arq"><span class="chip" style="background:#f28e2b"></span>Perfil intermediário - tradicional <span class="n">(919)</span>: cidades médias de renda mediana</div>
+    <div class="arq"><span class="chip" style="background:#76b7b2"></span>Turismo - sem banco <span class="n">(653)</span>: pequenas, ricas e 100% sem agência. O achado</div>
+    <div class="arq"><span class="chip" style="background:#59a14f"></span>Sem rede bancária - renda alta <span class="n">(732)</span>: muito pequenas, renda acima da média</div>
+  </div>
+  <aside class="notes">
+    [Arquétipos — 45s] Na Etapa 3, o K-Means com K igual a 6 separou seis arquétipos, com
+    nome de negócio. O gráfico da direita é o mapa de perfil: os dois componentes
+    principais sobre as dezenove variáveis, que resumem 63% da variância, e cada grupo
+    ocupa um território próprio. O achado do projeto é o turismo sem banco: 653 cidades
+    pequenas e ricas, cem por cento sem agência. Bombinhas, líder do IPB, mora aí. Na
+    outra ponta, o interior pobre sem rede é o maior grupo do país: 1.278 cidades.
+  </aside>
+</section>
+
+<!-- ==================== 12. O QUE TENTAMOS (~35s) ==================== -->
+<section>
+  <span class="secao-tag">Além do índice: o que a gente experimentou com ML</span>
+  <h2>O que a gente tentou: prever presença bancária</h2>
+  <div class="class-grid">
+    <div class="model-visual">
+      <div class="model-tabs" role="tablist" aria-label="Evidências do modelo">
+        <button type="button" class="model-tab active" data-model-view="roc">Curva ROC</button>
+        <button type="button" class="model-tab" data-model-view="importancia">O que pesa</button>
+        <button type="button" class="model-tab" data-model-view="residuos">56 desvios</button>
+      </div>
+      <div class="model-panel" data-model-panel="roc">
+        <div id="fig-roc" class="fig-interativa" data-fig="assets/data/fig_classificacao_roc.json"></div>
+      </div>
+      <div class="model-panel" data-model-panel="importancia" hidden>
+        <img src="assets/figures/02_importancia_agencia.png" alt="Importância das variáveis na previsão de presença bancária">
+      </div>
+      <div class="model-panel" data-model-panel="residuos" hidden>
+        <img src="assets/figures/02_residuos_rank.png" alt="Resíduos do modelo destacando municípios com perfil bancarizado e sem agência">
+      </div>
+    </div>
+    <div class="class-lado">
+      <div class="stats">
+        <div class="stat"><span class="valor">0,94</span>ROC-AUC no teste (n = 1.114)</div>
+        <div class="stat"><span class="valor">0,95</span>PR-AUC</div>
+        <div class="stat"><span class="valor">0,87</span>F1</div>
+      </div>
+      <p>A pergunta: dá pra prever presença bancária olhando só o contexto da cidade?
+      Dá. Presença é prevível, porque banco coloca agência onde tem gente.</p>
+      <p>O produto útil são os desvios: as 56 cidades com cara de bancarizada e zero
+      agência.</p>
+      <p class="fecho">Foi experimentação honesta, com alvo proxy. Sem rótulo de
+      verdade, o modelo cruza com o IPB. Não o substitui.</p>
+    </div>
+  </div>
+  <aside class="notes">
+    [O que tentamos — 35s] A pergunta era: dá pra prever presença bancária olhando só o
+    contexto da cidade? A curva mostra que dá: AUC zero vírgula noventa e quatro no
+    teste. Nos botões, a importância mostra que população domina a decisão; em resíduos,
+    aparecem as cinquenta e seis cidades com cara de bancarizada e nenhuma agência. Mas
+    é alvo proxy, declarado. Sem rótulo de verdade no mundo, isso é hipótese gerada, não
+    verdade revelada.
+  </aside>
+</section>
+
+<!-- ==================== 13. RESULTADOS (~65s) ==================== -->
+<section>
+  <h2>Resultados</h2>
+  <div class="stats">
+    <div class="stat"><span class="valor">R$ 93 mil</span>PIB per capita do Top 30. A mediana nacional é R$ 30 mil.</div>
+    <div class="stat"><span class="valor">0,57</span>Participação PJ no Pix no Top 30. Nos 30 piores, 0,19.</div>
+    <div class="stat"><span class="valor">32</span>Cidades do Top 100 que trocam se o pilar D sair. Mesmo com Spearman de 0,894.</div>
+  </div>
+  <div class="resultados-grid">
+    <div id="fig-top15" class="fig-interativa" data-fig="assets/data/fig_top15_ipb.json"></div>
+    <div id="fig-ipb-arq" class="fig-interativa" data-fig="assets/data/fig_resultados_ipb_arquetipos.json"></div>
+  </div>
+  <p class="takeaway">Pra quem vai usar: o topo do ranking junta as três coisas de uma
+  vez, dinheiro circulando, cidade digitalizada e pouco banco físico. É isso que separa
+  oportunidade de aparência.</p>
+  <aside class="notes">
+    [Resultados — 65s] O slide principal. O Top 30 do IPB tem PIB per capita mediano de
+    93 mil reais, contra 30 mil da mediana nacional. Participação de PJ no Pix de 0,57,
+    contra 0,19 nas 30 piores. O Top 15 mistura litoral turístico, renda alta de entorno
+    e capitais planejadas. O gráfico da direita mostra onde cada arquétipo mora no
+    índice: turismo pontua alto, interior sem rede fica embaixo. E o que isso significa
+    pra quem vai usar: o topo junta as três coisas de uma vez, dinheiro circulando,
+    cidade digitalizada e pouco banco físico. Oportunidade de verdade, não aparência. E
+    pra medir o peso da concorrência: tiramos o pilar D e rodamos de novo. O ranking
+    geral mal mexe, Spearman de 0,894. Mas 32 das 100 cidades do topo trocam. O pilar D
+    não reescreve o ranking: ele dá identidade ao recorte.
+  </aside>
+</section>
+
+<!-- ==================== 14. LIMITAÇÕES (~35s) ==================== -->
+<section>
+  <h2>Limitações e próximos passos</h2>
+  <div class="lim-cards">
+    <div class="lim-card">
+      <span class="lim-num">01</span>
+      <p>Anos de referência misturados entre as fontes: Censo 2022 até correspondentes
+      de 2026.</p>
+      <p class="lim-mit">Declarado em cada entrega.</p>
+    </div>
+    <div class="lim-card">
+      <span class="lim-num">02</span>
+      <p>Concorrência digital quase impossível de pegar com dado público: só 2,2% dos
+      correspondentes são de banco digital.</p>
+      <p class="lim-mit">O Pix segue medindo adoção instalada.</p>
+    </div>
+    <div class="lim-card">
+      <span class="lim-num">03</span>
+      <p>Não existe ground truth. O alvo é proxy, assumido e declarado.</p>
+      <p class="lim-mit">Validações objetivas com CEMPRE e turismo.</p>
+    </div>
+    <div class="lim-card">
+      <span class="lim-num">04</span>
+      <p>Faltou coletar: Anatel móvel 4G/5G, CNPJ/Caged, visitação e dados de
+      crédito.</p>
+      <p class="lim-mit">Tudo na fila de enriquecimento.</p>
+    </div>
+  </div>
+  <div class="chips">
+    <span class="chip">4G/5G no pilar C</span>
+    <span class="chip">CNPJ e Caged cobrem o MEI</span>
+    <span class="chip">Visitação (Embratur) fecha o turismo</span>
+    <span class="chip">Validar o Top 100 com negócio</span>
+  </div>
+  <aside class="notes">
+    [Limitações — 35s] Quatro limitações, cada uma com o caminho de saída do lado. Anos
+    de referência misturados, declarado. Concorrência digital, que o dado público quase
+    não enxerga: só dois vírgula dois por cento dos correspondentes são de banco
+    digital. Alvo proxy, segurado por validações objetivas. E as bases que faltaram
+    coletar, móvel, CNPJ, visitação, crédito. Os chips de baixo conectam cada limitação à
+    base que a resolve.
+  </aside>
+</section>
+
+<!-- ==================== 15. FECHAMENTO (~15s) ==================== -->
+<section class="fechamento">
+  <h2>Fechamento</h2>
+  <div id="qrcode" aria-label="QR code para a página exploradora"></div>
+  <p>Cada uma das 5.570 cidades dá pra consultar aqui.</p>
+  <p class="url">luciofrcruz.github.io/heluvina_projeto_final_202602/explorar.html</p>
+  <aside class="notes">
+    [Fechamento — 15s] Fica o convite: cada uma das 5.570 cidades dá pra consultar no QR,
+    com IPB nas três versões, rank e arquétipo. Obrigado, e pode perguntar.
+  </aside>
+</section>
+
+</div>
+</div>
+
+<script src="assets/reveal/dist/reveal.js"></script>
+<script src="assets/reveal/plugin/notes/notes.js"></script>
+<script src="assets/plotly/plotly.min.js"></script>
+<script src="assets/qrcodejs/qrcode.min.js"></script>
+<script src="assets/d3/d3.min.js"></script>
+<script src="assets/topojson/topojson-client.min.js"></script>
+<script src="assets/js/mapa.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  Reveal.initialize({
+    hash: true,
+    progress: true,
+    slideNumber: 'c/t',
+    transition: 'fade',
+    transitionSpeed: 'default',
+    backgroundTransition: 'fade',
+    width: 1240,
+    height: 760,
+    margin: 0.04,
+    plugins: [RevealNotes]
+  });
+
+  /* Renderizacao preguicosa: plotly em slide display:none mede 0x0, entao cada
+     figura so e desenhada quando o slide fica visivel pela primeira vez. */
+  var figurasProntas = {};
+  var mapaIniciado = false;
+  var mapaCapaIniciado = false;
+
+  function renderizarFiguras(secao) {
+    var alvos = secao.querySelectorAll('[data-fig]');
+    Array.prototype.forEach.call(alvos, function (el) {
+      if (figurasProntas[el.id]) { return; }
+      figurasProntas[el.id] = true;
+      fetch(el.getAttribute('data-fig'))
+        .then(function (r) {
+          if (!r.ok) { throw new Error(el.id + ' respondeu HTTP ' + r.status); }
+          return r.json();
+        })
+        .then(function (fig) {
+          fig.layout = Object.assign({}, fig.layout, {
+            paper_bgcolor: 'rgba(255,255,255,0)',
+            plot_bgcolor: 'rgba(255,255,255,0)',
+            font: Object.assign({}, fig.layout.font || {}, {
+              family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
+              color: '#243744'
+            })
+          });
+          Plotly.newPlot(el, fig.data, fig.layout, { responsive: true, displayModeBar: false });
+        })
+        .catch(function (err) {
+          console.error('[deck] figura falhou:', err);
+          el.textContent = 'Erro ao carregar figura (' + el.getAttribute('data-fig') + '): ' + err.message;
+          el.style.cssText = 'color:#b91c1c;font-size:14px;padding:12px;border:1px solid #b91c1c;border-radius:8px;';
+        });
+    });
+  }
+
+  function iniciarMapa(secao) {
+    if (mapaIniciado || !secao.querySelector('#mapa-slide')) { return; }
+    mapaIniciado = true;
+    inicializarMapa({
+      container: '#mapa-slide',
+      botoesCamada: Array.prototype.slice.call(
+        document.querySelectorAll('#slide-mapa .layer-btn')
+      ),
+      botaoReset: '#reset-zoom-slide',
+      legend: '#legend-slide'
+    });
+  }
+
+  function iniciarMapaCapa(secao) {
+    if (mapaCapaIniciado || !secao.querySelector('#capa-mapa')) { return; }
+    mapaCapaIniciado = true;
+    inicializarMapa({ container: '#capa-mapa' }).catch(function (err) {
+      console.error('[deck] mapa da capa falhou:', err);
+    });
+  }
+
+  function iniciarTabsModelo(secao) {
+    var botoes = secao.querySelectorAll('[data-model-view]');
+    if (!botoes.length || secao.dataset.modelTabsReady === 'true') { return; }
+    secao.dataset.modelTabsReady = 'true';
+    Array.prototype.forEach.call(botoes, function (botao) {
+      botao.addEventListener('click', function () {
+        var alvo = botao.dataset.modelView;
+        Array.prototype.forEach.call(botoes, function (b) {
+          b.classList.toggle('active', b === botao);
+        });
+        Array.prototype.forEach.call(secao.querySelectorAll('[data-model-panel]'), function (painel) {
+          painel.hidden = painel.dataset.modelPanel !== alvo;
+        });
+        if (alvo === 'roc' && window.Plotly && document.getElementById('fig-roc')) {
+          window.setTimeout(function () { Plotly.Plots.resize('fig-roc'); }, 30);
+        }
+      });
+    });
+  }
+
+  function prepararSlide(secao) {
+    renderizarFiguras(secao);
+    iniciarMapa(secao);
+    iniciarMapaCapa(secao);
+    iniciarTabsModelo(secao);
+  }
+
+  Reveal.on('slidechanged', function (event) {
+    prepararSlide(event.currentSlide);
+  });
+  Reveal.on('ready', function (event) {
+    prepararSlide(event.currentSlide);
+  });
+
+  new QRCode(document.getElementById('qrcode'), {
+    text: 'https://luciofrcruz.github.io/heluvina_projeto_final_202602/explorar.html',
+    width: 240,
+    height: 240,
+    colorDark: '#16637a',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+})();
+</script>
+</body>
+</html>
