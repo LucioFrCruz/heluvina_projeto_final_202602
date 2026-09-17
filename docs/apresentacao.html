@@ -6,162 +6,239 @@
 <title>IPB — Índice de Potencial Bancário · Apresentação</title>
 <link rel="stylesheet" href="assets/reveal/dist/reveal.css">
 <style>
+  @font-face {
+    font-family: 'Sora';
+    src: url('assets/fonts/sora-var.woff2') format('woff2');
+    font-weight: 100 800;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('assets/fonts/inter-var.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+
   :root {
-    --acento: #16637a;
-    --texto: #24303b;
+    --petroleo: #16637a;
+    --petroleo-escuro: #0b3542;
+    --petroleo-medio: #0e4a5c;
+    --ink: #16232d;
     --suave: #5b6771;
     --borda: #e2e7ec;
     --fundo: #fbfcfd;
+    --ambar: #e8821e;
+    --ambar-claro: #fdf3e7;
+    --coral: #d64550;
+    --verde: #2f9e6e;
   }
   .reveal-viewport { background: var(--fundo); }
   .reveal {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     font-size: 30px;
-    color: var(--texto);
+    color: var(--ink);
   }
   .reveal .slides section { text-align: left; }
   .reveal h1, .reveal h2, .reveal h3 {
-    font-family: inherit;
+    font-family: 'Sora', 'Inter', sans-serif;
     text-transform: none;
-    letter-spacing: normal;
-    color: var(--texto);
+    letter-spacing: -0.01em;
+    color: var(--ink);
   }
-  .reveal h2 { font-size: 1.25em; font-weight: 650; margin: 0 0 .45em; }
-  .reveal h3 { font-size: .8em; font-weight: 600; color: var(--acento); margin: 0 0 .35em; }
-  .reveal p { line-height: 1.45; margin: .4em 0; }
+  .reveal h2 { font-size: 1.18em; font-weight: 800; margin: 0 0 .4em; }
+  .reveal h3 { font-size: .72em; font-weight: 700; color: var(--petroleo); margin: 0 0 .3em; }
+  .reveal p { line-height: 1.4; margin: .35em 0; }
   .reveal section img { border: 0; box-shadow: none; margin: 0; background: transparent; }
 
-  .kicker { color: var(--suave); font-size: .56em; letter-spacing: .08em; text-transform: uppercase; }
+  .kicker { color: var(--ambar); font-size: .5em; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; }
   .secao-tag {
-    display: inline-block; color: var(--suave); font-size: .5em; letter-spacing: .06em;
-    text-transform: uppercase; border: 1px solid var(--borda); border-radius: 999px;
-    background: #fff; padding: .3em .9em; margin-bottom: .7em;
+    display: inline-block; color: var(--petroleo); font-size: .44em; letter-spacing: .1em;
+    text-transform: uppercase; border-radius: 999px; font-weight: 700;
+    background: #e3eff3; padding: .3em .95em; margin-bottom: .65em;
   }
-  .capa { text-align: center; }
-  .capa h1 { font-size: 2em; margin: .25em 0 .5em; }
-  .capa .pergunta { font-size: .9em; color: var(--acento); font-weight: 600; margin-top: 1.3em; }
-  .integrantes { color: var(--suave); font-size: .58em; margin-top: 2em; }
 
-  .faixa-stats { display: flex; gap: 14px; margin: .2em 0 .7em; }
+  /* capa e fechamento escuros */
+  .capa, .fechamento {
+    text-align: center;
+    background: linear-gradient(135deg, #10485c 0%, #16637a 60%, #1f7a94 100%);
+    border-radius: 18px;
+    height: 100%;
+    padding: 1.2em 1em;
+    color: #eaf4f7;
+  }
+  .capa h1, .fechamento h2 { color: #ffffff; font-size: 1.9em; font-weight: 800; line-height: 1.12; margin: .3em 0 .4em; }
+  .capa .pergunta { font-size: .78em; color: #ffd9ae; font-weight: 600; margin-top: 1.1em; line-height: 1.35; }
+  .capa .integrantes { color: #b9d4dd; font-size: .5em; margin-top: 1.6em; letter-spacing: .04em; }
+  .capa .marca {
+    display: inline-block; border: 1.5px solid rgba(255,255,255,.35); color: #eaf4f7;
+    border-radius: 999px; font-size: .42em; padding: .35em 1em; letter-spacing: .12em;
+    text-transform: uppercase; font-weight: 600;
+  }
+  .fechamento h2 { text-align: center; }
+  .fechamento p { color: #cfe6ec; font-size: .6em; }
+  #qrcode { margin: .4em auto .3em; width: 220px; height: 220px; background: #fff; padding: 12px; border-radius: 14px; }
+  #qrcode img, #qrcode canvas { display: block; margin: 0 auto; }
+  .fechamento .url { color: #9fc4cf; font-size: .44em; }
+
+  /* KPIs */
+  .faixa-stats { display: flex; gap: 16px; margin: .3em 0 .8em; }
   .faixa-stat {
-    flex: 1; border: 1px solid var(--borda); border-radius: 10px; background: #fff;
-    padding: 12px 14px; font-size: .52em; color: var(--suave); line-height: 1.3;
+    flex: 1; border: 1px solid var(--borda); border-radius: 14px; background: #fff;
+    padding: 16px 18px; font-size: .46em; color: var(--suave); line-height: 1.3;
+    border-top: 4px solid var(--petroleo);
   }
-  .faixa-stat .valor { display: block; font-size: 2.3em; color: var(--acento); font-weight: 700; line-height: 1.1; margin-bottom: .1em; }
-  .fecho { color: var(--acento); font-weight: 600; font-size: .78em; margin-top: .7em; }
-  .pergunta-cheia { font-size: 1.5em; color: var(--acento); font-weight: 650; line-height: 1.35; margin-top: 1.3em; }
-  .gancho { color: var(--acento); font-weight: 650; font-size: .82em; margin: 0 0 .5em; }
+  .faixa-stat .valor { display: block; font-family: 'Sora', sans-serif; font-size: 2.4em; color: var(--petroleo); font-weight: 800; line-height: 1.05; margin-bottom: .12em; }
+  .achado {
+    border-left: 5px solid var(--ambar); background: var(--ambar-claro);
+    border-radius: 0 12px 12px 0; padding: .5em .9em;
+    font-size: .56em; line-height: 1.4; color: var(--ink); font-weight: 600;
+  }
+  .pergunta-cheia { font-family: 'Sora', sans-serif; font-size: 1.25em; color: var(--petroleo); font-weight: 800; line-height: 1.3; margin-top: 1em; }
+  .faixa-fatosh3 { display: flex; gap: 10px; justify-content: center; margin-top: 1.2em; flex-wrap: wrap; }
+  .fato {
+    border: 1.5px solid var(--petroleo); color: var(--petroleo); border-radius: 999px;
+    background: #fff; font-size: .48em; font-weight: 700; padding: .4em 1em;
+  }
 
-  /* diagrama do pipeline */
-  .pipe-grid-fontes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
-  .pipe-fonte {
-    display: flex; justify-content: space-between; align-items: center; gap: 8px;
-    border: 1px solid var(--borda); border-radius: 7px; background: #fff;
-    padding: 6px 10px; font-size: .5em;
+  /* arquitetura iconográfica */
+  .arq-flow { display: grid; grid-template-columns: 1.25fr .3fr 1fr .3fr 1.1fr .3fr 1fr; align-items: stretch; gap: 6px; margin-top: .4em; }
+  .arq-coluna { display: flex; flex-direction: column; gap: 8px; }
+  .arq-col-titulo { font-size: .42em; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--suave); text-align: center; }
+  .arq-box {
+    border: 1.5px solid var(--borda); border-radius: 12px; background: #fff;
+    padding: 9px 10px; font-size: .44em; line-height: 1.25; color: var(--suave);
+    display: flex; align-items: center; gap: 9px;
   }
-  .pipe-fonte .nome { font-weight: 600; }
-  .selo { font-size: .82em; font-weight: 700; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
-  .selo-api { background: #e3eff3; color: var(--acento); }
-  .selo-manual { background: #fdf0e3; color: #b45f16; }
-  .pipe-conector { text-align: center; color: var(--acento); font-size: .9em; line-height: 1.1; margin: 2px 0; }
-  .pipe-lake {
-    text-align: center; background: var(--acento); color: #fff; border-radius: 10px;
-    font-size: .62em; font-weight: 650; padding: .5em; width: 46%; margin: 0 auto;
+  .arq-box .rotulo { font-weight: 700; color: var(--ink); display: block; font-size: 1.05em; }
+  .arq-box .sub { display: block; }
+  .arq-box svg { flex: none; }
+  .arq-box.api { border-color: #c9dfe8; background: #f4fafc; }
+  .arq-box.manual { border-color: #f3d9b8; background: var(--ambar-claro); }
+  .arq-box.codigo { border-color: #c9dfe8; background: #eef6f9; }
+  .arq-box.gcs { border-color: #d9cdee; background: #f6f2fc; }
+  .arq-box.bq { border-color: #c9dfe8; background: #fff; }
+  .bq-camadas { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .bq-camada {
+    border-radius: 8px; font-size: .95em; font-weight: 700; padding: .45em .6em;
+    text-align: center; font-family: 'Sora', monospace;
   }
-  .pipe-camadas { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 4px; }
-  .pipe-camada {
-    border: 1.5px solid var(--acento); color: var(--acento); border-radius: 8px;
-    background: #fff; font-size: .5em; font-weight: 650; padding: .45em .8em;
-  }
-  .pipe-seta { color: var(--acento); font-weight: 700; }
+  .bq-camada.raw { background: #eef2f5; color: #45525d; }
+  .bq-camada.trusted { background: #d8ecf2; color: var(--petroleo-medio); }
+  .bq-camada.analytics { background: var(--petroleo); color: #fff; }
+  .arq-seta { display: flex; align-items: center; justify-content: center; color: var(--ambar); font-size: 1.1em; font-weight: 800; }
 
-  /* cards genéricos (preparação e versões) */
-  .cards3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: .3em; }
-  .card3 { border: 1px solid var(--borda); border-radius: 10px; background: #fff; padding: 14px; }
-  .card3 .num {
-    display: inline-block; background: var(--acento); color: #fff; border-radius: 6px;
-    width: 1.5em; height: 1.5em; line-height: 1.5em; text-align: center; font-weight: 700; font-size: .7em;
+  /* fontes / tratamento */
+  .fontes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: .3em 0 .5em; }
+  .fonte-card {
+    border: 1px solid var(--borda); border-radius: 14px; background: #fff;
+    padding: 16px 18px; border-left: 5px solid var(--petroleo);
   }
-  .card3 .tag-versao { display: inline-block; font-size: .62em; font-weight: 700; color: var(--acento); }
-  .card3 h3 { margin-top: .4em; }
-  .card3 p { font-size: .56em; color: var(--suave); line-height: 1.45; margin: .35em 0 0; }
+  .fonte-card .nome { font-size: .54em; font-weight: 700; display: block; line-height: 1.25; }
+  .fonte-card .safra { font-size: .44em; color: var(--suave); display: block; margin-top: .3em; }
+  .fonte-card.manual { border-left-color: var(--ambar); background: var(--ambar-claro); }
+  .trat-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .trat-chip {
+    border-radius: 10px; background: #eef6f9; border: 1px solid #c9dfe8;
+    color: var(--petroleo-medio); font-size: .44em; font-weight: 700; padding: .45em .8em;
+  }
+
+  /* figuras */
+  .fig-slide { width: 100%; }
+  .fig-captura { font-size: .5em; color: var(--suave); margin-top: .4em; text-align: center; }
+  .fig-captura strong { color: var(--petroleo); }
+  .duas-figuras { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  .bullets-min { font-size: .56em; color: var(--suave); line-height: 1.5; margin: .3em 0; }
+  .bullets-min li { margin: .45em 0; }
+  .bullets-min strong { color: var(--ink); }
+  .legenda-cor { display: flex; gap: 18px; justify-content: center; font-size: .44em; color: var(--suave); margin-top: 2px; flex-wrap: wrap; }
+  .lc-item { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+  .lc-dot { width: 13px; height: 13px; border-radius: 3px; display: inline-block; }
 
   /* pilares */
-  .pilares { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: .2em 0 .6em; }
-  .pilar { border: 1px solid var(--borda); border-radius: 10px; padding: 11px 9px; background: #fff; }
-  .pilar .letra { display: inline-block; background: var(--acento); color: #fff; border-radius: 6px; width: 1.5em; height: 1.5em; line-height: 1.5em; text-align: center; font-weight: 700; margin-bottom: .3em; }
-  .pilar .nome { font-size: .54em; font-weight: 600; display: block; line-height: 1.25; }
-  .pilar .comp { font-size: .47em; color: var(--suave); display: block; margin-top: .3em; line-height: 1.35; }
-  .pilar .ancora { font-size: .47em; color: var(--texto); display: block; margin-top: .35em; line-height: 1.3; border-top: 1px dashed var(--borda); padding-top: .35em; }
-  .pilar .peso { font-size: .47em; color: var(--acento); display: block; margin-top: .3em; font-weight: 600; }
-  .formula { text-align: center; background: #eef4f6; border-radius: 8px; padding: .4em .8em; font-size: .7em; color: var(--acento); font-weight: 600; margin-top: .35em; }
-
-  /* figuras interativas */
-  .duas-figuras { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
-  .fig-interativa { width: 100%; }
-  .leitura-slide { font-size: .56em; color: var(--suave); margin-top: .5em; line-height: 1.4; }
+  .pilares { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: .3em 0 .6em; }
+  .pilar { border: 1px solid var(--borda); border-radius: 14px; padding: 13px 10px; background: #fff; border-top: 4px solid var(--petroleo); }
+  .pilar.destaque { border-top-color: var(--ambar); background: var(--ambar-claro); }
+  .pilar .letra { display: inline-block; background: var(--petroleo); color: #fff; border-radius: 7px; width: 1.5em; height: 1.5em; line-height: 1.5em; text-align: center; font-weight: 800; font-family: 'Sora', sans-serif; margin-bottom: .3em; }
+  .pilar.destaque .letra { background: var(--ambar); }
+  .pilar .nome { font-size: .5em; font-weight: 700; display: block; line-height: 1.25; }
+  .pilar .comp { font-size: .43em; color: var(--suave); display: block; margin-top: .3em; line-height: 1.35; }
+  .pilar .peso { font-size: .5em; color: var(--petroleo); display: block; margin-top: .35em; font-weight: 800; font-family: 'Sora', sans-serif; }
+  .pilar.destaque .peso { color: var(--ambar); }
+  .formula { text-align: center; background: #eef4f6; border-radius: 12px; padding: .45em .8em; font-size: .72em; color: var(--petroleo); font-weight: 700; margin-top: .4em; font-family: 'Sora', sans-serif; }
 
   /* mapa no slide */
   .mapa-toolbar { display: flex; gap: 8px; margin-bottom: 6px; }
   .layer-btn {
     border: 1px solid #cdd5dd; background: #fff; color: #33414d;
-    padding: 5px 16px; border-radius: 7px; font-size: .5em; cursor: pointer;
+    padding: 5px 16px; border-radius: 7px; font-size: .46em; cursor: pointer; font-weight: 600;
   }
-  .layer-btn.active { background: var(--acento); border-color: var(--acento); color: #fff; }
+  .layer-btn.active { background: var(--petroleo); border-color: var(--petroleo); color: #fff; }
   .reset-btn {
     border: 1px solid #cdd5dd; background: #fff; color: #33414d;
-    padding: 5px 16px; border-radius: 7px; font-size: .5em; cursor: pointer;
+    padding: 5px 16px; border-radius: 7px; font-size: .46em; cursor: pointer;
   }
-  .mapa-slide-container { border: 1px solid var(--borda); border-radius: 10px; background: #fff; overflow: hidden; }
-  .mapa-slide-container svg { display: block; width: 100%; height: auto; max-height: 44vh; }
+  .mapa-slide-container { border: 1px solid var(--borda); border-radius: 12px; background: #fff; overflow: hidden; }
+  .mapa-slide-container svg { display: block; width: 100%; height: auto; max-height: 56vh; }
   .mun { stroke: #ffffff; stroke-width: .25; }
   .mun:hover { stroke: #24303b; stroke-width: .8; }
   .fronteira-uf { fill: none; stroke: #24303b; stroke-width: .9; stroke-linejoin: round; stroke-linecap: round; pointer-events: none; }
-  .legend-slide { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; font-size: .44em; color: #45525d; margin-top: 4px; }
+  .legend-slide { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; font-size: .4em; color: #45525d; margin-top: 5px; }
   .legend-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
   .legend-item .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
   .legend-scale { display: inline-flex; align-items: center; gap: 6px; }
   .legend-bar { width: 130px; height: 10px; border-radius: 5px; border: 1px solid var(--borda); }
   .legend-title { font-weight: 600; }
-  .leituras { font-size: .54em; color: var(--suave); margin-top: .35em; }
+  .leituras { font-size: .46em; color: var(--suave); margin-top: .35em; }
 
   /* arquétipos */
-  .arq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin-top: .3em; }
-  .arq { font-size: .48em; line-height: 1.3; padding: 4px 7px; border-radius: 6px; background: #fff; border: 1px solid var(--borda); }
-  .arq .chip { display: inline-block; width: .75em; height: .75em; border-radius: 2px; margin-right: .4em; }
-  .arq .n { color: var(--suave); }
+  .arq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 12px; margin-top: .35em; }
+  .arq { font-size: .42em; line-height: 1.3; padding: 5px 8px; border-radius: 8px; background: #fff; border: 1px solid var(--borda); }
+  .arq .chip { display: inline-block; width: .8em; height: .8em; border-radius: 3px; margin-right: .4em; }
+  .arq .n { color: var(--suave); font-weight: 700; }
 
-  /* classificação */
-  .class-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; align-items: start; }
-  .class-lado p { font-size: .6em; color: var(--suave); line-height: 1.45; }
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: .15em 0 .5em; }
-  .stat { border: 1px solid var(--borda); border-radius: 10px; background: #fff; padding: 10px 12px; font-size: .48em; color: var(--suave); line-height: 1.3; }
-  .stat .valor { display: block; font-size: 2.2em; color: var(--acento); font-weight: 700; line-height: 1.1; margin-bottom: .15em; }
-
-  /* resultados */
-  .resultados-grid { display: grid; grid-template-columns: 1fr 1.25fr; gap: 14px; align-items: start; margin-top: .2em; }
+  /* stats e resultados */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: .15em 0 .5em; }
+  .stat { border: 1px solid var(--borda); border-radius: 14px; background: #fff; padding: 12px 14px; font-size: .44em; color: var(--suave); line-height: 1.3; border-top: 4px solid var(--petroleo); }
+  .stat .valor { display: block; font-family: 'Sora', sans-serif; font-size: 2em; color: var(--petroleo); font-weight: 800; line-height: 1.1; margin-bottom: .12em; }
   .takeaway {
-    margin-top: .6em; border-left: 4px solid var(--acento); background: #fff;
-    border-radius: 0 8px 8px 0; padding: .55em .8em; font-size: .62em; line-height: 1.4;
+    margin-top: .5em; border-left: 5px solid var(--ambar); background: var(--ambar-claro);
+    border-radius: 0 12px 12px 0; padding: .5em .9em; font-size: .54em; line-height: 1.4; font-weight: 600;
   }
 
   /* limitações */
-  .lim-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: .3em; }
-  .lim-card { border: 1px solid var(--borda); border-radius: 10px; background: #fff; padding: 12px; }
-  .lim-num { font-size: .95em; font-weight: 700; color: var(--acento); }
-  .lim-card p { font-size: .52em; line-height: 1.4; margin: .3em 0 0; }
+  .lim-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: .3em; }
+  .lim-card { border: 1px solid var(--borda); border-radius: 14px; background: #fff; padding: 13px; }
+  .lim-num { font-family: 'Sora', sans-serif; font-size: .85em; font-weight: 800; color: var(--ambar); }
+  .lim-card p { font-size: .44em; line-height: 1.4; margin: .3em 0 0; }
   .lim-mit { color: var(--suave); border-top: 1px dashed var(--borda); padding-top: .4em; }
-  .chips { display: flex; gap: 8px; justify-content: center; margin-top: .9em; flex-wrap: wrap; }
+  .chips { display: flex; gap: 8px; justify-content: center; margin-top: .8em; flex-wrap: wrap; }
   .chip {
-    border: 1.5px solid var(--acento); color: var(--acento); border-radius: 999px;
-    background: #fff; font-size: .52em; font-weight: 600; padding: .4em .9em;
+    border: 1.5px solid var(--petroleo); color: var(--petroleo); border-radius: 999px;
+    background: #fff; font-size: .44em; font-weight: 700; padding: .4em .9em;
   }
 
-  .fechamento { text-align: center; }
-  .fechamento h2 { text-align: center; }
-  #qrcode { margin: .4em auto .3em; width: 240px; height: 240px; }
-  #qrcode img, #qrcode canvas { display: block; margin: 0 auto; }
-  .url { font-size: .52em; color: var(--suave); }
+  /* comparação de versões (texto) */
+  .ver-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: .3em 0 .5em; }
+  .ver-card { border: 1px solid var(--borda); border-radius: 14px; background: #fff; padding: 14px 16px; border-top: 4px solid var(--petroleo); }
+  .ver-card.oficial { border: 2px solid var(--ambar); background: var(--ambar-claro); border-top: 4px solid var(--ambar); }
+  .ver-card .tag { font-size: .42em; font-weight: 700; color: var(--petroleo); letter-spacing: .06em; text-transform: uppercase; }
+  .ver-card .pergunta { font-family: 'Sora', sans-serif; font-size: .6em; font-weight: 800; color: var(--ink); margin: .3em 0 .4em; line-height: 1.25; }
+  .ver-card ul { margin: 0; padding-left: 1.1em; }
+  .ver-card li { font-size: .44em; color: var(--suave); line-height: 1.4; margin: .35em 0; }
+  .ver-card li strong { color: var(--ink); }
+  .troca-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: .3em 0 .4em; }
+  .troca-col { border: 1px solid var(--borda); border-radius: 14px; background: #fff; padding: 13px 16px; }
+  .troca-col.sai { border-top: 4px solid #d64550; }
+  .troca-col.entra { border-top: 4px solid #2f9e6e; }
+  .troca-col h3 { font-size: .54em; margin-bottom: .1em; }
+  .troca-col .sub { font-size: .42em; color: var(--suave); margin: 0 0 .4em; }
+  .troca-linha { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: .48em; padding: .3em 0; border-bottom: 1px dashed var(--borda); }
+  .troca-linha:last-child { border-bottom: 0; }
+  .troca-linha .ranks { font-weight: 700; white-space: nowrap; }
+  .troca-linha .caiu { color: #d64550; }
+  .troca-linha .subiu { color: #2f9e6e; }
 </style>
 </head>
 <body>
@@ -170,225 +247,260 @@
 
 <!-- ==================== 1. CAPA (~15s) ==================== -->
 <section class="capa">
-  <p class="kicker">Hands On Engenharia de Dados · Grupo 4</p>
-  <h1>IPB — Índice de Potencial Bancário</h1>
-  <!--
-    FRASE DE IMPACTO (provisória — o grupo escolhe a definitiva no ensaio, com calma):
-    "Quase 1 em cada 2 cidades brasileiras não tem agência bancária.
-     Onde está o potencial que os bancos não veem?"
-  -->
-  <p class="pergunta">Onde potencial econômico, adoção digital e baixa concorrência física se encontram?</p>
+  <p><span class="marca">Hands On Engenharia de Dados · Grupo 4</span></p>
+  <h1>IPB — Índice de<br>Potencial Bancário</h1>
+  <p class="pergunta">Onde o potencial econômico, a adoção digital e a baixa<br>concorrência bancária se cruzam?</p>
   <p class="integrantes">Hermes Augusto · Lúcio Franchi Cruz · Vitor Paes · Nathalia Miranda</p>
   <aside class="notes">
-    [Capa — 15s] Boa tarde, a gente é o grupo 4. O projeto responde uma pergunta: onde
-    potencial econômico, adoção digital e baixa concorrência física se encontram? Em dez
-    minutos a gente mostra a resposta, que virou um índice e um site.
+    [Capa — 15s] Boa tarde, somos o Grupo 4. Nosso projeto responde a uma pergunta central de mercado: onde o potencial econômico, a adoção digital e a baixa concorrência bancária se cruzam? A resposta é o IPB, um índice construído sobre um pipeline completo de engenharia de dados.
   </aside>
 </section>
 
-<!-- ==================== 2. O PROBLEMA (~40s) ==================== -->
+<!-- ==================== 2. O PROBLEMA (~35s) ==================== -->
 <section>
-  <h2>O problema</h2>
+  <span class="secao-tag">Contexto</span>
+  <h2>O Problema: Direcionamento Estratégico</h2>
   <div class="faixa-stats">
-    <div class="faixa-stat"><span class="valor">2.656</span>cidades sem nenhuma agência bancária</div>
-    <div class="faixa-stat"><span class="valor">47,7%</span>do Brasil</div>
-    <div class="faixa-stat"><span class="valor">19,8 mi</span>de pessoas moram nelas</div>
+    <div class="faixa-stat"><span class="valor">2.656</span>municípios sem agência bancária</div>
+    <div class="faixa-stat"><span class="valor">47,7%</span>do território nacional</div>
+    <div class="faixa-stat"><span class="valor">19,8 mi</span>de pessoas nessas regiões</div>
   </div>
-  <p>Quem decide onde abrir agência, colocar correspondente ou dar crédito olha para o
-  país inteiro e aposta no escuro.</p>
-  <p class="fecho">Na prática, quem decide tem conta em São Paulo.</p>
+  <p class="achado">Sem uma visão integrada de renda, digital e concorrência, a expansão bancária concentra-se nos grandes centros — e o potencial latente do resto do país fica invisível.</p>
   <aside class="notes">
-    [O problema — 40s] Quase metade das cidades do país não tem banco: 2.656, onde moram
-    quase vinte milhões de pessoas. Quem decide onde investir olha pra isso no escuro,
-    sem nenhum ranking público que junte potencial, digital e concorrência. Na prática,
-    quem decide tem conta em São Paulo.
+    [O problema — 35s] Quase metade dos municípios brasileiros não tem uma única agência bancária: 2.656 cidades, 47,7% do território, quase 20 milhões de pessoas. O problema de negócio é que as instituições não têm uma visão integrada — renda, dinâmica financeira, infraestrutura digital e concorrência moram em bases separadas. Sem isso, o investimento segue para os centros já saturados e oportunidades reais ficam invisíveis.
   </aside>
 </section>
 
-<!-- ==================== 3. O OBJETIVO (~25s) ==================== -->
+<!-- ==================== 3. O OBJETIVO (~20s) ==================== -->
 <section>
-  <h2>O objetivo</h2>
-  <p class="pergunta-cheia">Onde potencial econômico, adoção digital e baixa concorrência
-  física se encontram?</p>
-  <aside class="notes">
-    [O objetivo — 25s] O objetivo virou a pergunta do projeto: onde potencial econômico,
-    adoção digital e baixa concorrência física se encontram? A resposta é um índice que
-    ranqueia as 5.570 cidades nesses três eixos, de 0 a 100.
-  </aside>
-</section>
-
-<!-- ==================== 4. OS DADOS (~40s) ==================== -->
-<section>
-  <h2>Os dados</h2>
-  <div class="pipeline">
-    <div class="pipe-grid-fontes">
-      <div class="pipe-fonte"><span class="nome">Censo 2022 · IBGE</span><span class="selo selo-api">API</span></div>
-      <div class="pipe-fonte"><span class="nome">CEMPRE 2024 · IBGE</span><span class="selo selo-api">API</span></div>
-      <div class="pipe-fonte"><span class="nome">Localidades · IBGE</span><span class="selo selo-api">API</span></div>
-      <div class="pipe-fonte"><span class="nome">Pix · BCB</span><span class="selo selo-api">API</span></div>
-      <div class="pipe-fonte"><span class="nome">Correspondentes · BCB</span><span class="selo selo-api">API</span></div>
-      <div class="pipe-fonte"><span class="nome">IDHM · Ipeadata</span><span class="selo selo-api">API</span></div>
-      <div class="pipe-fonte"><span class="nome">PIB dos Municípios · IBGE</span><span class="selo selo-manual">Manual · GCS</span></div>
-      <div class="pipe-fonte"><span class="nome">Estban · BCB</span><span class="selo selo-manual">Manual · GCS</span></div>
-      <div class="pipe-fonte"><span class="nome">Banda larga fixa · Anatel</span><span class="selo selo-manual">Manual · GCS</span></div>
-    </div>
-    <div class="pipe-conector">↓ ↓ ↓</div>
-    <div class="pipe-lake">Lake no BigQuery</div>
-    <div class="pipe-conector">↓</div>
-    <div class="pipe-camadas">
-      <span class="pipe-camada">raw_</span><span class="pipe-seta">→</span>
-      <span class="pipe-camada">trusted_</span><span class="pipe-seta">→</span>
-      <span class="pipe-camada">analytics_ · IPB V1/V2/V3</span>
-    </div>
+  <span class="secao-tag">Contexto</span>
+  <h2>Nosso Objetivo</h2>
+  <p class="pergunta-cheia">Um índice de 0 a 100 que ranqueie os 5.570 municípios pelo potencial de expansão de serviços financeiros digitais.</p>
+  <div class="faixa-fatosh3">
+    <span class="fato">5.570 municípios</span>
+    <span class="fato">9 fontes públicas</span>
+    <span class="fato">pipeline em nuvem</span>
+    <span class="fato">100% reproduzível</span>
   </div>
-  <p class="fecho">Cada etapa vira tabela no BigQuery (dataset ipb_staging). Dá pra
-  auditar tudo.</p>
   <aside class="notes">
-    [Os dados — 40s] Nove fontes, todas públicas. Seis entram por API, a gente coleta na
-    hora. Três são manuais: o arquivo sobe uma vez pro bucket e o pipeline puxa de lá pra
-    sempre. Cada etapa vira tabela no BigQuery, no dataset ipb_staging, em três camadas:
-    cru, limpo e analytics, onde mora o IPB. Dá pra auditar cada número do início ao fim.
+    [O objetivo — 15s] O objetivo: transformar esse cenário em um índice de 0 a 100, calculado para os 5.570 municípios, somente com dados públicos, num pipeline reproduzível em nuvem. Quem decide expansão ganha uma fila de priorização objetiva.
   </aside>
 </section>
 
-<!-- ==================== 5. PREPARAÇÃO (~50s) ==================== -->
+<!-- ==================== 4. ARQUITETURA (~45s) ==================== -->
 <section>
-  <h2>Preparação: o que a gente aprendeu</h2>
-  <div class="cards3">
-    <div class="card3">
-      <span class="num">1</span>
-      <h3>O que existia no começo</h3>
-      <p>Censo, PIB, Pix, Estban, Anatel e IDHM. Pix de poucos meses, sem correspondentes
-      e sem CEMPRE no índice.</p>
+  <span class="secao-tag">Preparação dos Dados</span>
+  <h2>Arquitetura e Stack</h2>
+  <div class="arq-flow">
+    <div class="arq-coluna">
+      <div class="arq-col-titulo">Fontes</div>
+      <div class="arq-box api"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16637a" stroke-width="2" stroke-linecap="round"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/></svg><div><span class="rotulo">APIs públicas</span><span class="sub">IBGE · BCB/OData · Ipeadata</span></div></div>
+      <div class="arq-box manual"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9a5410" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 20h16"/></svg><div><span class="rotulo">Bases manuais</span><span class="sub">PIB · Estban · Anatel → <strong>upload 1× ao GCS</strong></span></div></div>
     </div>
-    <div class="card3">
-      <span class="num">2</span>
-      <h3>O erro que a gente achou</h3>
-      <p>A primeira fórmula zerou 119 cidades pequenas cheias de lotérica. Era a fórmula
-      que estava errada, não as cidades. Trocamos para gap linear e as versões
-      convergiram.</p>
+    <div class="arq-seta">→</div>
+    <div class="arq-coluna">
+      <div class="arq-col-titulo">Ingestão · Python</div>
+      <div class="arq-box codigo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16637a" stroke-width="2" stroke-linecap="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg><div><span class="rotulo">Ingestores</span><span class="sub">1 módulo por fonte</span></div></div>
+      <div class="arq-box codigo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16637a" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg><div><span class="rotulo">Pandas</span><span class="sub">limpeza · tipagem · chave IBGE</span></div></div>
+      <div class="arq-box codigo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16637a" stroke-width="2" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg><div><span class="rotulo">Parquet</span><span class="sub">cache local idempotente</span></div></div>
     </div>
-    <div class="card3">
-      <span class="num">3</span>
-      <h3>O que a gente tratou</h3>
-      <p>Zero assumido nas 2.656 cidades sem agência. Min-max com winsorize, taxas por
-      100 mil hab, estratos, log1p, correspondentes agregados por tipo.</p>
+    <div class="arq-seta">→</div>
+    <div class="arq-coluna">
+      <div class="arq-col-titulo">Google Cloud</div>
+      <div class="arq-box gcs"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b4fa3" stroke-width="2" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .42-8.98 6.5 6.5 0 0 0-12.6 1.74A4 4 0 0 0 7 19h10.5z"/></svg><div><span class="rotulo">Cloud Storage</span><span class="sub">estágio das manuais</span></div></div>
+      <div class="arq-box bq"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16637a" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></svg>
+        <div class="bq-camadas">
+          <div class="bq-camada raw">raw_</div>
+          <div class="bq-camada trusted">trusted_</div>
+          <div class="bq-camada analytics">analytics_</div>
+        </div>
+      </div>
+    </div>
+    <div class="arq-seta">→</div>
+    <div class="arq-coluna">
+      <div class="arq-col-titulo">Produto</div>
+      <div class="arq-box"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16637a" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/><circle cx="5.5" cy="6.5" r=".5"/><circle cx="8" cy="6.5" r=".5"/></svg><div><span class="rotulo">Site + deck</span><span class="sub">mapa ao vivo · 5.570 cidades</span></div></div>
     </div>
   </div>
-  <p class="fecho">A gente quebrou a fórmula antes de confiar nela.</p>
+  <p class="fig-captura" style="text-align:left;">Camadas do BigQuery: <strong>raw</strong> (como veio da fonte) → <strong>trusted</strong> (limpo e integrado) → <strong>analytics</strong> (índice e modelagem).</p>
   <aside class="notes">
-    [Preparação — 50s] Três aprendizados. O primeiro é de base: ela nasceu pequena, com
-    seis fontes e Pix de janela curta; correspondentes entrou na Etapa 2 e o CEMPRE, em
-    setembro. O segundo é o erro que a gente mesmo achou: a curva hiperbólica do gap
-    explodia o denominador em cidade com muita lotérica e zerava o IPB de 119 cidades
-    pequenas. Era a fórmula que estava errada, não as cidades. Trocamos para gap linear e
-    as três versões convergiram. O terceiro é o tratamento: zero assumido nas 2.656 sem
-    agência, normalização com winsorize, taxas por 100 mil. A gente quebrou a fórmula
-    antes de confiar nela.
+    [Arquitetura — 45s] A stack, em fluxo: à esquerda, as fontes — APIs públicas do IBGE e do Banco Central e bases que só existem como arquivo, que subimos uma única vez ao Cloud Storage. No meio, ingestores em Python e Pandas, um módulo por fonte, com cache local em Parquet para idempotência. Na nuvem, o BigQuery em três camadas: raw, trusted e analytics — o índice é produto da camada analytics, nunca da trusted. Na saída, o site com o mapa ao vivo.
   </aside>
 </section>
 
-<!-- ==================== 6. O QUE OS DADOS CONTAM I — ESCOLARIDADE (~45s) ==================== -->
+<!-- ==================== 5. Oito BASES (~35s) ==================== -->
 <section>
-  <h2>O que os dados contam I · escolaridade</h2>
-  <p class="gancho">Na cidade média do país, só 4 em cada 10 adultos concluíram o
-  ensino médio.</p>
-  <div class="duas-figuras">
-    <div id="fig-esc-hist" class="fig-interativa" data-fig="assets/data/fig_espelho_escolaridade_hist.json"></div>
-    <div id="fig-esc-regiao" class="fig-interativa" data-fig="assets/data/fig_espelho_escolaridade_regiao.json"></div>
+  <span class="secao-tag">Preparação dos Dados</span>
+  <h2>Nove Bases</h2>
+  <div class="fontes-grid">
+    <div class="fonte-card"><span class="nome">Localidades IBGE</span><span class="safra">IBGE · malha 2022 </span></div>
+    <div class="fonte-card"><span class="nome">Censo Demográfico</span><span class="safra">IBGE · 2022</span></div>
+    <div class="fonte-card"><span class="nome">PIB dos Municípios</span><span class="safra">IBGE · 2023</span></div>
+    <div class="fonte-card"><span class="nome">CEMPRE · empresas e empregos</span><span class="safra">IBGE · 2024</span></div>
+    <div class="fonte-card"><span class="nome">Pix por município</span><span class="safra">BCB · ago/25 a ago/26</span></div>
+    <div class="fonte-card"><span class="nome">Correspondentes bancários</span><span class="safra">BCB · 30/08/2026</span></div>
+    <div class="fonte-card"><span class="nome">Estban · rede bancária</span><span class="safra">BCB · 2026</span></div>
+    <div class="fonte-card"><span class="nome">Banda larga fixa</span><span class="safra">Anatel · 2026</span></div>
+    <div class="fonte-card manual"><span class="nome">IDHM</span><span class="safra">Ipeadata · 2010</span></div>
   </div>
-  <p class="leitura-slide">Ponderando pela população, a média sobe para 52%. As grandes
-  cidades são mais escolarizadas, e elas puxam a conta pra cima.</p>
-  <aside class="notes">
-    [Escolaridade — 45s] O que os dados contam. Primeiro, escolaridade. A cidade média do
-    país tem só quatro em cada dez adultos com ensino médio completo: 39,5% entre os
-    5.570 municípios. Ponderando pela população sobe pra 52%, porque as grandes cidades
-    são mais escolarizadas. E o corte regional mostra o Nordeste embaixo, 33,9%, contra
-    44,4% no Sudeste. Banco segue população escolarizada.
-  </aside>
-</section>
-
-<!-- ==================== 7. O QUE OS DADOS CONTAM II — DINHEIRO (~40s) ==================== -->
-<section>
-  <h2>O que os dados contam II · dinheiro em movimento</h2>
-  <div class="duas-figuras">
-    <div id="fig-pix-top15" class="fig-interativa" data-fig="assets/data/fig_espelho_pix_top15.json"></div>
-    <div id="fig-pix-uf" class="fig-interativa" data-fig="assets/data/fig_pix_por_uf.json"></div>
+  <p class="achado">O problema de engenharia: anos de referência de <strong>2010 a 2026</strong> convivendo na mesma tabela. Integrar tudo pela chave IBGE sem perder o significado.</p>
+  <div class="trat-chips" style="margin-top: .55em;">
+    <span class="trat-chip">zero onde não há agência — é a realidade, não falta de dado</span>
+    <span class="trat-chip">min-max + winsorize</span>
+    <span class="trat-chip">log1p na cauda longa</span>
+    <span class="trat-chip">5.570 municípios checados por testes</span>
   </div>
-  <p class="leitura-slide">O agro do Centro-Oeste e o comércio de fronteira do Norte movem
-  mais Pix por habitante que as metrópoles do Sudeste. Dinheiro que circula fora do
-  radar do PIB.</p>
   <aside class="notes">
-    [Dinheiro — 40s] Segundo, dinheiro em movimento. As quinze maiores taxas de Pix per
-    capita do país são cidades pequenas de agro e fronteira: Pacaraima lidera com meio
-    milhão de reais per capita, efeito do comércio de fronteira. E o mapa por estado
-    mostra o Centro-Oeste e o Norte lá em cima, com mediana acima de sessenta mil reais
-    por habitante no Mato Grosso, Goiás e Mato Grosso do Sul. É o agro e a fronteira
-    circulando dinheiro que o PIB sub-declara. Série temporal do Pix ficou pra fase dois,
-    a janela é curta demais.
+    [Nove bases — 35s] São nove bases no total — a nona é a malha de Localidades do IBGE, que fornece o código de 7 dígitos usado como chave em tudo. Olhem as safras: de 2010 a 2026 na mesma base. Censo 2022, PIB 2023, CEMPRE 2024, Pix dos últimos 12 meses, correspondentes de agosto deste ano. Cada fonte no seu ano mais recente disponível — esse vintage misto é uma limitação declarada do projeto, e o trabalho de engenharia foi integrar tudo pela chave IBGE sem destruir o significado. Abaixo, os tratamentos: zero onde não há agência é realidade física; min-max, winsorize e log1p domam a cauda longa da renda brasileira; e testes automáticos seguram as 5.570 linhas.
   </aside>
 </section>
 
-<!-- ==================== 8. A SOLUÇÃO (~50s) ==================== -->
+<!-- ==================== 6. EDA — ESCOLARIDADE I (~30s) ==================== -->
 <section>
-  <h2>A solução: 5 pilares e uma média geométrica</h2>
-  <div class="pilares">
-    <div class="pilar"><span class="letra">A</span><span class="nome">Capacidade de consumo</span><span class="comp">PIB per capita, rendimento, empregos formais</span><span class="ancora">CEMPRE 2024 entra aqui</span><span class="peso">peso 15%</span></div>
-    <div class="pilar"><span class="letra">B</span><span class="nome">Dinamismo financeiro</span><span class="comp">Pix per capita nos últimos 12 meses</span><span class="ancora">R$ 13,8 trilhões movimentados</span><span class="peso">peso 20%</span></div>
-    <div class="pilar"><span class="letra">C</span><span class="nome">Adoção digital</span><span class="comp">Banda larga fixa por 100 habitantes</span><span class="ancora">o proxy do acesso digital</span><span class="peso">peso 15%</span></div>
-    <div class="pilar"><span class="letra">D</span><span class="nome">Gap bancário</span><span class="comp">Agências e correspondentes por tipo, invertido</span><span class="ancora">as 2.656 cidades sem agência moram aqui</span><span class="peso">peso 30%</span></div>
-    <div class="pilar"><span class="letra">E</span><span class="nome">Perfil demográfico</span><span class="comp">Escolaridade e população de 18 a 35 anos</span><span class="ancora">39,5% com ensino médio completo</span><span class="peso">peso 20%</span></div>
+  <span class="secao-tag">EDA</span>
+  <h2>Escolaridade Municipal</h2>
+  <div id="fig-esc-hist" class="fig-slide" data-fig="assets/data/fig_espelho_escolaridade_hist.json" style="height: 540px;"></div>
+  <p class="fig-captura">Leitura: ponderada pela população, a média sobe para <strong>52%</strong> — as grandes cidades puxam a conta pra cima.</p>
+  <aside class="notes">
+    [Escolaridade 1 — 30s] Primeiro espelho: educação. Na cidade média do país, só 4 em cada 10 adultos concluíram o ensino médio — 39,4%. Ponderado pela população, sobe para 52%. A diferença entre as duas médias é ela mesma um achado: capital humano concentrado nos grandes polos.
+  </aside>
+</section>
+
+<!-- ==================== 7. EDA — ESCOLARIDADE II (~30s) ==================== -->
+<section>
+  <span class="secao-tag">EDA</span>
+  <h2>Disparidade Regional</h2>
+  <div id="fig-esc-regiao" class="fig-slide" data-fig="assets/data/fig_espelho_escolaridade_regiao.json" style="height: 540px;"></div>
+  <aside class="notes">
+    [Escolaridade 2 — 30s] O recorte regional confirma a assimetria: Sul e Sudeste sistematicamente acima, Norte e Nordeste embaixo. É o padrão histórico que dita a expansão das instituições tradicionais — e que o índice precisa superar para achar oportunidade fora do eixo.
+  </aside>
+</section>
+
+<!-- ==================== 8. EDA — PIX I (~30s) ==================== -->
+<section>
+  <span class="secao-tag">EDA</span>
+  <h2>Dinamismo Financeiro</h2>
+  <div id="fig-pix-top15" class="fig-slide" data-fig="assets/data/fig_espelho_pix_top15.json" style="height: 520px;"></div>
+  <div class="legenda-cor">
+    <span class="lc-item"><span class="lc-dot" style="background:#59a14f"></span>Norte</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#e15759"></span>Nordeste</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#f28e2b"></span>Centro-Oeste</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#4e79a7"></span>Sudeste</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#76b7b2"></span>Sul</span>
+  </div>
+  <aside class="notes">
+    [Pix 1 — 30s] As cores são as regiões. O ranking dos 15 maiores Pix per capita do país mistura dois padrões: fronteira e agro. Pacaraima, em Roraima — a "capital do Pix" — movimenta fortíssimo por causa da fronteira com a Venezuela: comércio transfronteiriço que o PIB local não captura. Os demais são cidades pequenas do agro e de commodity — Nova Mutum, Sorriso, Primavera do Leste — dinheiro circulando muito acima do que o tamanho da cidade sugere.
+  </aside>
+</section>
+
+<!-- ==================== 9. EDA — PIX II (~30s) ==================== -->
+<section>
+  <span class="secao-tag">EDA</span>
+  <h2>O Reflexo do Agronegócio</h2>
+  <div id="fig-pix-uf" class="fig-slide" data-fig="assets/data/fig_pix_por_uf.json" style="height: 520px;"></div>
+  <div class="legenda-cor">
+    <span class="lc-item"><span class="lc-dot" style="background:#59a14f"></span>Norte</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#e15759"></span>Nordeste</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#f28e2b"></span>Centro-Oeste</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#4e79a7"></span>Sudeste</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#76b7b2"></span>Sul</span>
+  </div>
+  <aside class="notes">
+    [Pix 2 — 30s] De novo as cores são as regiões — e aqui vai uma observação honesta: DF é um único município, então a "mediana" dele é a própria Brasília. Sobre o padrão: Mato Grosso, Mato Grosso do Sul, Goiás e Paraná no topo é consistente com o agro e com as commodities — os recordistas de cada UF são cidades como Sorriso e Nova Mutum. Mas atenção: é uma leitura por correlação, não causalidade comprovada — a gente não isola o efeito agronegócio. O que o gráfico garante é onde o dinheiro está circulando per capita.
+  </aside>
+</section>
+
+<!-- ==================== 10. TRÊS VERSÕES, TRÊS PERGUNTAS (~30s) ==================== -->
+<section>
+  <span class="secao-tag">Do índice</span>
+  <h2>Três Versões, Três Perguntas</h2>
+  <div class="ver-cards">
+    <div class="ver-card">
+      <span class="tag">V1 · Clássico</span>
+      <p class="pergunta">"Onde já tem dinheiro?"</p>
+      <ul>
+        <li>5 pilares com <strong>pesos iguais</strong></li>
+        <li>Topo: Barueri, Itapema, Balneário Camboriú</li>
+        <li><strong>Problema:</strong> ranking de riqueza pura — quem já é rico e bancarizado lidera</li>
+      </ul>
+    </div>
+    <div class="ver-card">
+      <span class="tag">V2 · Recalibrado</span>
+      <p class="pergunta">"Onde falta banco?"</p>
+      <ul>
+        <li>Pesos diferenciados; o gap vira <strong>só agências</strong> + tensão Pix/agência</li>
+        <li>Cidade pequena com muito Pix sobe no ranking</li>
+        <li><strong>Problema:</strong> exagerou no déficit — o topo encheu de cidade pequena demais (Alto Horizonte, Santa Carmem)</li>
+      </ul>
+    </div>
+    <div class="ver-card oficial">
+      <span class="tag" style="color:#9a5410;">V3 · Oficial</span>
+      <p class="pergunta">"Onde falta banco E tem mercado?"</p>
+      <ul>
+        <li>Pilar D redesenhado: <strong>agências + correspondentes</strong> por tipo (216 mil no Brasil)</li>
+        <li>+ empregos formais (CEMPRE) + Pix relativo ao PIB + freio no turismo</li>
+        <li>Topo: Bombinhas, Nova Lima, Confins, Palmas</li>
+      </ul>
+    </div>
+  </div>
+  <p class="achado">A V3 não escolheu um extremo: mede a falta de presença bancária <strong>sem abrir mão da capacidade econômica</strong>.</p>
+  <aside class="notes">
+    [Três versões — 30s] O índice não nasceu pronto — cada versão respondia uma pergunta diferente. A V1 perguntava "onde já tem dinheiro": pesos iguais nos cinco pilares, e o topo virou um ranking de riqueza — Barueri, Itapema, Balneário Camboriú. A V2 perguntava "onde falta banco" — e exagerou na resposta: o topo encheu de cidade pequena demais, com Alto Horizonte e Santa Carmem no Top 5. A V3, a oficial, pergunta "onde falta banco E tem mercado": o pilar D foi redesenhado com correspondentes por tipo — 216 mil no Brasil, porque agência sozinha não descreve mais a realidade — e entram os empregos formais do CEMPRE e o Pix relativo ao PIB.
+  </aside>
+</section>
+
+<!-- ==================== 11. O TOP 100 TROCOU (~20s) ==================== -->
+<section>
+  <span class="secao-tag">Do índice</span>
+  <h2>O Top 100 Quase Inteiro Trocou</h2>
+  <div class="troca-cols">
+    <div class="troca-col sai">
+      <h3>Saíram: as ricas já bancarizadas</h3>
+      <p class="sub">tinham dinheiro e banco — não são oportunidade</p>
+      <div class="troca-linha"><span>Fernando de Noronha (PE)</span><span class="ranks"><span class="caiu">13 → 2.578</span></span></div>
+      <div class="troca-linha"><span>Jundiaí (SP)</span><span class="ranks"><span class="caiu">30 → 110</span></span></div>
+      <div class="troca-linha"><span>São Caetano do Sul (SP)</span><span class="ranks"><span class="caiu">33 → 112</span></span></div>
+      <div class="troca-linha"><span>Blumenau (SC)</span><span class="ranks"><span class="caiu">55 → 143</span></span></div>
+      <div class="troca-linha"><span>Sorocaba (SP)</span><span class="ranks"><span class="caiu">69 → 145</span></span></div>
+    </div>
+    <div class="troca-col entra">
+      <h3>Entraram: capitais e polos formais</h3>
+      <p class="sub">mercado grande com presença bancária reduzida</p>
+      <div class="troca-linha"><span>Brasília (DF)</span><span class="ranks"><span class="subiu">134 → 13</span></span></div>
+      <div class="troca-linha"><span>São Paulo (SP)</span><span class="ranks"><span class="subiu">174 → 15</span></span></div>
+      <div class="troca-linha"><span>Belo Horizonte (MG)</span><span class="ranks"><span class="subiu">202 → 23</span></span></div>
+      <div class="troca-linha"><span>Rio de Janeiro (RJ)</span><span class="ranks"><span class="subiu">611 → 51</span></span></div>
+      <div class="troca-linha"><span>Belém (PA)</span><span class="ranks"><span class="subiu">542 → 99</span></span></div>
+    </div>
+  </div>
+  <p class="fig-captura"><strong>39 das 100 posições são novas</strong> — e o Top 100 abriu espaço fora do eixo: Norte <strong>2 → 7</strong> · Nordeste <strong>4 → 8</strong> cidades, sem abandonar o Sudeste (48 → 52).</p>
+  <aside class="notes">
+    [Top 100 — 20s] E o efeito foi violento: 39 das 100 posições trocaram. Quem saiu? As ricas e já bancarizadas — Fernando de Noronha despenca do 13º para o 2.578º, Jundiaí do 30º para o 110º. Quem entrou? Capitais e polos formais — Brasília vai da 134ª para a 13ª, o Rio de 611 para 51, Belém de 542 para 99. E o Top 100 abriu espaço fora do eixo: Norte de 2 para 7, Nordeste de 4 para 8. O índice mudou de pergunta: de "onde já tem dinheiro" para "onde falta banco".
+  </aside>
+</section>
+
+<!-- ==================== 11. METODOLOGIA V3 (~40s) ==================== -->
+<section>
+  <span class="secao-tag">Do índice</span>
+  <h2>Metodologia: 5 Pilares, Média Geométrica</h2>
+  <div class="pilares" style="margin-top: .35em;">
+    <div class="pilar"><span class="letra">A</span><span class="nome">Cap. de Consumo</span><span class="comp">PIB pc, renda, empregos formais</span><span class="peso">15%</span></div>
+    <div class="pilar"><span class="letra">B</span><span class="nome">Dinamismo</span><span class="comp">Pix per capita e ticket</span><span class="peso">20%</span></div>
+    <div class="pilar"><span class="letra">C</span><span class="nome">Infra Digital</span><span class="comp">Banda larga fixa /100 hab</span><span class="peso">15%</span></div>
+    <div class="pilar destaque"><span class="letra">D</span><span class="nome">Déficit Bancário</span><span class="comp">Inversão: menos banco físico = mais pontos</span><span class="peso">30%</span></div>
+    <div class="pilar"><span class="letra">E</span><span class="nome">Perfil Demográfico</span><span class="comp">Escolaridade e pop. jovem</span><span class="peso">20%</span></div>
   </div>
   <p class="formula">IPB = (A<sup>0,15</sup> × B<sup>0,20</sup> × C<sup>0,15</sup> × D<sup>0,30</sup> × E<sup>0,20</sup>) × 100</p>
-  <p class="fecho">Pilar zerado zera o índice. Quem não tem nada em nenhuma dimensão não
-  entra no ranking à força.</p>
+  <p class="achado" style="margin-top: .5em;">Dois pontos que não podem passar batido: o <strong>pilar D é invertido</strong> — pontua mais quem tem <strong>menos</strong> agência e correspondente. E a média geométrica zera a nota de quem não tem o mínimo em qualquer pilar: nada de cidade rica mas desconectada no topo.</p>
   <aside class="notes">
-    [A solução — 50s] A solução é um índice de cinco pilares. Cada variável é winsorizada
-    e normalizada entre zero e um. O IPB é a média geométrica ponderada, vezes cem. Os
-    números de âncora: treze trilhões e oitocentos bilhões de Pix em doze meses no pilar
-    B; as duas mil seiscentas e cinquenta e seis cidades sem agência no pilar D; os trinta
-    e nove vírgula cinco por cento de escolaridade no pilar E. E a regra que manda em
-    tudo: se qualquer pilar zera, o índice zera. Por isso existem 119 cidades com IPB
-    zero. É propriedade do método, não bug.
+    [Metodologia — 40s] Cinco pilares, média geométrica ponderada. Atenção em dois pontos. Primeiro: o pilar D é invertido — é o único onde menos é mais: quanto menos banco físico a cidade tem, maior o score. É o coração da pergunta de negócio, o "oceano azul", e por isso pesa 30%. Segundo: a média geométrica funciona como seguro — se a cidade não tem o mínimo de infraestrutura digital, o produto zera. O índice não premia potencial pela metade.
   </aside>
 </section>
 
-<!-- ==================== 9. TRÊS VERSÕES (~45s) ==================== -->
-<section>
-  <h2>Três versões do índice</h2>
-  <div class="cards3">
-    <div class="card3">
-      <span class="tag-versao">V1 · Clássico</span>
-      <h3>A fórmula original</h3>
-      <p>Pesos iguais nos cinco pilares. Ranqueou riqueza e chamou de potencial.</p>
-    </div>
-    <div class="card3">
-      <span class="tag-versao">V2 · Recalibrado</span>
-      <h3>O ajuste rápido</h3>
-      <p>Dobrou o peso do gap bancário pra tirar o viês da renda.</p>
-    </div>
-    <div class="card3">
-      <span class="tag-versao">V3 · Presença completa</span>
-      <h3>A oficial</h3>
-      <p>Mede a rede inteira, não só agência, e soma os empregos formais.</p>
-    </div>
-  </div>
-  <p class="fecho">As três concordam em mais de 80% das posições (Spearman 0,840 entre
-  V1 e V3). A V3 é a oficial porque a pergunta do projeto é de concorrência.</p>
-  <aside class="notes">
-    [Três versões — 45s] Foram três versões, não uma. A V1, pesos iguais, ranqueou
-    riqueza e chamou de potencial. A V2 dobrou o peso da concorrência. A V3 redesenhou o
-    pilar D: agência sozinha não mede mais acesso, então mede a rede completa, com
-    correspondentes por tipo, e soma os empregos formais do CEMPRE. As três concordam em
-    mais de oitenta por cento das posições. A V3 é a oficial porque a pergunta do
-    projeto é de concorrência física.
-  </aside>
-</section>
-
-<!-- ==================== 10. O MAPA (~45s) ==================== -->
+<!-- ==================== 13. O MAPA (~30s) ==================== -->
 <section id="slide-mapa">
-  <span class="secao-tag">Além do índice: o que a gente experimentou com ML</span>
-  <h2>O mapa</h2>
+  <span class="secao-tag">Produto</span>
+  <h2>O Mapa, ao Vivo</h2>
   <div class="mapa-toolbar" role="group" aria-label="Camadas do mapa">
     <button type="button" class="layer-btn active" data-layer="ipb">IPB V3</button>
     <button type="button" class="layer-btn" data-layer="arquetipo">Arquétipos</button>
@@ -396,129 +508,157 @@
   </div>
   <div id="mapa-slide" class="mapa-slide-container"></div>
   <div id="legend-slide" class="legend-slide" aria-hidden="true"></div>
-  <p class="leituras">Leituras prontas: o potencial concentra no eixo sul-sudeste, no
-  litoral turístico e nos dormitórios industriais. Ao vivo dá pra dar zoom, trocar para
-  arquétipos e passar o mouse em qualquer cidade.</p>
+  <p class="leituras">Potencial no eixo sul-sudeste, no litoral turístico e nos dormitórios industriais — zoom, troca de camada e hover em qualquer cidade.</p>
   <aside class="notes">
-    [Mapa — 45s] O mapa aqui é o site funcionando dentro do próprio slide. Dá pra dar
-    zoom com a roda, arrastar, trocar a camada pra arquétipos. Três leituras prontas: o
-    potencial concentra no eixo sul-sudeste; o litoral turístico acende, Santa Catarina
-    inteira; e os dormitórios industriais ricos aparecem como oportunidade. Passe o mouse
-    na sua cidade. Clicando fora do mapa, as setas voltam a trocar o slide.
+    [Mapa — 30s] Isso aqui não é print — é o produto rodando ao vivo no nosso site. A camada padrão é o IPB V3; dá pra trocar para os arquétipos, dar zoom em qualquer região e passar o mouse nas cidades. É a ferramenta de decisão, não só um slide.
   </aside>
 </section>
 
-<!-- ==================== 11. ARQUÉTIPOS (~45s) ==================== -->
+<!-- ==================== 14. CLUSTERING — ALGORITMO (~25s) ==================== -->
 <section>
-  <span class="secao-tag">Além do índice: o que a gente experimentou com ML</span>
-  <h2>Arquétipos: 6 tipos de cidade</h2>
-  <div class="duas-figuras">
-    <div id="fig-arq-barras" class="fig-interativa" data-fig="assets/data/fig_arquetipos_barras.json"></div>
-    <div id="fig-pca-arq" class="fig-interativa" data-fig="assets/data/fig_pca_arquetipos.json"></div>
+  <span class="secao-tag">Modelagem ML</span>
+  <h2>Clusterização: Qual Algoritmo e Por Quê</h2>
+  <div class="faixa-stats">
+    <div class="faixa-stat"><span class="valor">K-Means</span>algoritmo principal — agrupa pelas 19 features padronizadas</div>
+    <div class="faixa-stat"><span class="valor">GMM</span>validação — dá a probabilidade de cada cidade pertencer a cada grupo</div>
+    <div class="faixa-stat"><span class="valor">5.570</span>cidades, sem rótulo pronto — os grupos nascem dos dados</div>
   </div>
+  <ul class="bullets-min">
+    <li><strong>Por quê K-Means:</strong> escala bem para 5.570 cidades, é estável entre execuções e produz grupos com cara de negócio — dá para nomear cada um.</li>
+    <li><strong>O que o GMM acrescenta:</strong> o quanto cada cidade é de cada grupo — 4.855 cidades têm mais de 90% de um único arquétipo; um punhado é genuinamente "mestiça".</li>
+    <li><strong>Sem rótulo de verdade:</strong> ninguém diz qual é o arquétipo de uma cidade — os grupos emergem do perfil socioeconômico e financeiro.</li>
+  </ul>
+  <aside class="notes">
+    [Algoritmo — 25s] Na modelagem, o protagonista é a clusterização. Algoritmo: K-Means sobre as 19 variáveis padronizadas. Por quê ele: escala, é estável, e gera grupos que viram nome de negócio. E o GMM entra como validação, dando a probabilidade de cada cidade pertencer a cada grupo — 4.855 cidades têm mais de 90% de um único arquétipo. Detalhe honesto: não existe rótulo de verdade — ninguém classificou essas cidades antes; os grupos emergem dos dados.
+  </aside>
+</section>
+
+<!-- ==================== 15. CLUSTERING — POR QUE K=6 (~25s) ==================== -->
+<section>
+  <span class="secao-tag">Modelagem ML</span>
+  <h2>Por que K = 6</h2>
+  <div id="fig-escolha-k" class="fig-slide" data-fig="assets/data/fig_escolha_k.json" style="height: 540px;"></div>
+  <p class="fig-captura"><strong>K=3 pontua mais alto no silhouette (0,252), mas só separa o porte da cidade.</strong> No cotovelo, a queda desacelera entre 5 e 6 — e acima de 6 os grupos fragmentam sem ganhar leitura de negócio.</p>
+  <aside class="notes">
+    [Por que K=6 — 25s] Por que 6 e não 3? Olhem o painel da esquerda: K=3 tem o silhouette mais alto — mas os grupos viram só "grande, média e pequena". No painel da direita, a inércia — o erro que o algoritmo minimiza — desacelera justamente entre 5 e 6. Acima de 6, os grupos se fragmentam sem ganhar leitura. Qualidade boa com seis jogadas de negócio claras: esse foi o equilíbrio.
+  </aside>
+</section>
+
+<!-- ==================== 16. ARQUÉTIPOS — OS GRUPOS (~30s) ==================== -->
+<section>
+  <span class="secao-tag">Modelagem ML</span>
+  <h2>6 Arquétipos de Cidade</h2>
+  <div id="fig-arq-barras" class="fig-slide" data-fig="assets/data/fig_arquetipos_barras.json" style="height: 430px;"></div>
   <div class="arq-grid">
-    <div class="arq"><span class="chip" style="background:#b07aa1"></span>Turismo - com rede <span class="n">(740)</span>: destinos grandes e ricos, já atendidos</div>
-    <div class="arq"><span class="chip" style="background:#e15759"></span>Sem rede bancária - renda baixa <span class="n">(1.278)</span>: o interior pobre, 100% sem agência</div>
-    <div class="arq"><span class="chip" style="background:#4e79a7"></span>Perfil intermediário - empresarial <span class="n">(1.248)</span>: PIB pc alto, Pix PJ de 42%</div>
-    <div class="arq"><span class="chip" style="background:#f28e2b"></span>Perfil intermediário - tradicional <span class="n">(919)</span>: cidades médias de renda mediana</div>
-    <div class="arq"><span class="chip" style="background:#76b7b2"></span>Turismo - sem banco <span class="n">(653)</span>: pequenas, ricas e 100% sem agência. O achado</div>
-    <div class="arq"><span class="chip" style="background:#59a14f"></span>Sem rede bancária - renda alta <span class="n">(732)</span>: muito pequenas, renda acima da média</div>
+    <div class="arq"><span class="chip" style="background:#b07aa1"></span>Turismo - com rede <span class="n">(740)</span>: destinos grandes, já atendidos</div>
+    <div class="arq"><span class="chip" style="background:#e15759"></span>Sem rede - renda baixa <span class="n">(1.278)</span>: o maior grupo, 100% sem agência</div>
+    <div class="arq"><span class="chip" style="background:#4e79a7"></span>Intermediário - empresarial <span class="n">(1.248)</span>: PIB pc alto, Pix PJ 42%</div>
+    <div class="arq"><span class="chip" style="background:#f28e2b"></span>Intermediário - tradicional <span class="n">(919)</span>: cidades médias de renda mediana</div>
+    <div class="arq" style="border-color:#f3d9b8;"><span class="chip" style="background:#76b7b2"></span>Turismo - sem banco <span class="n">(653)</span>: ricas e 100% sem agência </div>
+    <div class="arq"><span class="chip" style="background:#59a14f"></span>Sem rede - renda alta <span class="n">(732)</span>: muito pequenas, renda acima da média</div>
   </div>
   <aside class="notes">
-    [Arquétipos — 45s] Na Etapa 3, o K-Means com K igual a 6 separou seis arquétipos, com
-    nome de negócio. O gráfico da direita é o mapa de perfil: os dois componentes
-    principais sobre as dezenove variáveis, que resumem 63% da variância, e cada grupo
-    ocupa um território próprio. O achado do projeto é o turismo sem banco: 653 cidades
-    pequenas e ricas, cem por cento sem agência. Bombinhas, líder do IPB, mora aí. Na
-    outra ponta, o interior pobre sem rede é o maior grupo do país: 1.278 cidades.
+    [Arquétipos 1 — 30s] O resultado são seis grupos com nome de negócio. O maior é o interior pobre sem rede bancária — 1.278 cidades, nenhuma com agência. Na outra ponta, os destinos de turismo com rede já consolidada. E tem o achado, destacado: o "Turismo sem banco" — 653 cidades pequenas, de renda alta, com visitação e zero agência. Bombinhas, em Santa Catarina, é a líder do grupo.
   </aside>
 </section>
 
-<!-- ==================== 12. O QUE TENTAMOS (~35s) ==================== -->
+<!-- ==================== 17. ARQUÉTIPOS — O MAPA (~15s) ==================== -->
 <section>
-  <span class="secao-tag">Além do índice: o que a gente experimentou com ML</span>
-  <h2>O que a gente tentou: prever presença bancária</h2>
-  <div class="class-grid">
-    <div id="fig-roc" class="fig-interativa" data-fig="assets/data/fig_classificacao_roc.json"></div>
-    <div class="class-lado">
-      <div class="stats">
-        <div class="stat"><span class="valor">0,94</span>ROC-AUC no teste (n = 1.114)</div>
-        <div class="stat"><span class="valor">0,95</span>PR-AUC</div>
-        <div class="stat"><span class="valor">0,87</span>F1</div>
-      </div>
-      <p>A pergunta: dá pra prever presença bancária olhando só o contexto da cidade?
-      Dá. Presença é prevível, porque banco coloca agência onde tem gente.</p>
-      <p>O produto útil são os desvios: as 56 cidades com cara de bancarizada e zero
-      agência.</p>
-      <p class="fecho">Foi experimentação honesta, com alvo proxy. Sem rótulo de
-      verdade, o modelo cruza com o IPB. Não o substitui.</p>
-    </div>
+  <span class="secao-tag">Modelagem ML</span>
+  <h2>Cada Grupo Ocupa um Território Próprio</h2>
+  <div id="fig-pca-arq" class="fig-slide" data-fig="assets/data/fig_pca_arquetipos.json" style="height: 520px;"></div>
+  <div class="legenda-cor">
+    <span class="lc-item"><span class="lc-dot" style="background:#b07aa1"></span>Turismo - com rede</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#e15759"></span>Sem rede - renda baixa</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#4e79a7"></span>Intermediário - empresarial</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#f28e2b"></span>Intermediário - tradicional</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#76b7b2"></span>Turismo - sem banco</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#59a14f"></span>Sem rede - renda alta</span>
   </div>
+  <p class="fig-captura">Cada ponto é uma cidade. <strong>Perto = perfil parecido.</strong> Os grupos se separam sozinhos — não foi ninguém que desenhou essas fronteiras.</p>
   <aside class="notes">
-    [O que tentamos — 35s] A pergunta era: dá pra prever presença bancária olhando só o
-    contexto da cidade? A curva mostra que dá: AUC zero vírgula noventa e quatro no
-    teste. Mas é alvo proxy, declarado. E a resposta em si é óbvia: banco coloca agência
-    onde tem gente. O produto útil são os desvios, as cinquenta e seis cidades com cara
-    de bancarizada e nenhuma agência. Sem rótulo de verdade no mundo, isso é hipótese
-    gerada, não verdade revelada.
+    [Arquétipos 2 — 15s] E aqui está a prova de que os grupos são reais: cada ponto é uma cidade, e a proximidade significa perfil parecido. Reparem que as cores se separam em ilhas bem definidas — ninguém desenhou essas fronteiras, elas emergem dos dados. Cidades de perfis parecidos ficam juntas, de pontas opostas ficam distantes.
   </aside>
 </section>
 
-<!-- ==================== 13. RESULTADOS (~65s) ==================== -->
+<!-- ==================== 18. ANOMALIAS — ISOLATION FOREST (~25s) ==================== -->
 <section>
-  <h2>Resultados</h2>
+  <span class="secao-tag">Modelagem ML</span>
+  <h2>Anomalias: Isolation Forest, o Detector de Desvios</h2>
+  <div class="faixa-stats">
+    <div class="faixa-stat"><span class="valor">Isolation Forest</span>algoritmo: quanto mais fácil isolar a cidade, mais atípica ela é</div>
+    <div class="faixa-stat"><span class="valor">Top 30</span>lista curta das mais atípicas — custo de erro baixo, valor de leitura alto</div>
+    <div class="faixa-stat"><span class="valor">300 árvores</span>mesmas 19 features padronizadas, mesma seed dos demais modelos</div>
+  </div>
+  <ul class="bullets-min">
+    <li><strong>Por quê Isolation Forest:</strong> não precisa de rótulo de "anomalia" — ninguém sabe de antemão o que é atípico. O modelo isola cada cidade por cortes aleatórios; quem se isola com poucos cortes tem perfil raro.</li>
+    <li><strong>O que achou:</strong> Fernando de Noronha é a anomalia nº 1 do Brasil bancário, seguida de Curitiba, Barueri, São Caetano do Sul e São Paulo. O grupo tem em média <strong>5× mais agências</strong> que a média nacional — os super-bancarizados atípicos.</li>
+    <li><strong>Pra que serve:</strong> gerar hipótese, não verdade — uma lista curta pra leitura humana: cidade com perfil fora do padrão merece olho de negócio. A flag já acompanha cada cidade no site.</li>
+  </ul>
+  <aside class="notes">
+    [Anomalias — 25s] O terceiro modelo da etapa responde outra pergunta: quem foge do padrão? É o Isolation Forest — e a escolha tem um motivo: detecção de anomalia não tem rótulo de verdade, ninguém sabe o que é atípico antes de ver. O algoritmo faz cortes aleatórios nas 19 variáveis; a cidade que se isola com poucos cortes tem um perfil raro. O resultado é uma lista curta — o Top 30 mais atípico do Brasil bancário. Fernando de Noronha lidera o score, seguida de Curitiba, Barueri e São Caetano do Sul: um grupo com, em média, 5 vezes mais agências que o país. É gerador de hipótese pra leitura humana — não verdade — e a flag já acompanha cada cidade no nosso site.
+  </aside>
+</section>
+
+<!-- ==================== 19. RESULTADOS — TOP 15 (~30s) ==================== -->
+<section>
+  <span class="secao-tag">Resultados</span>
+  <h2>O Topo do Ranking</h2>
   <div class="stats">
-    <div class="stat"><span class="valor">R$ 93 mil</span>PIB per capita do Top 30. A mediana nacional é R$ 30 mil.</div>
-    <div class="stat"><span class="valor">0,57</span>Participação PJ no Pix no Top 30. Nos 30 piores, 0,19.</div>
-    <div class="stat"><span class="valor">32</span>Cidades do Top 100 que trocam se o pilar D sair. Mesmo com Spearman de 0,894.</div>
+    <div class="stat"><span class="valor">R$ 93 mil</span>PIB per capita do Top 30 — a mediana nacional é R$ 30 mil</div>
+    <div class="stat"><span class="valor">0,57</span>participação PJ no Pix no Top 30; nos 30 piores, 0,19</div>
+    <div class="stat"><span class="valor">39</span>trocas no Top 100 entre V1 e V3 — o índice mudou de pergunta</div>
   </div>
-  <div class="resultados-grid">
-    <div id="fig-top15" class="fig-interativa" data-fig="assets/data/fig_top15_ipb.json"></div>
-    <div id="fig-ipb-arq" class="fig-interativa" data-fig="assets/data/fig_resultados_ipb_arquetipos.json"></div>
-  </div>
-  <p class="takeaway">Pra quem vai usar: o topo do ranking junta as três coisas de uma
-  vez, dinheiro circulando, cidade digitalizada e pouco banco físico. É isso que separa
-  oportunidade de aparência.</p>
+  <div id="fig-top15" class="fig-slide" data-fig="assets/data/fig_top15_ipb.json" style="height: 460px;"></div>
+  <p class="fig-captura">As cores são o <strong>porte</strong> da cidade: turismo, dormitórios ricos e capitais planejadas — não só metrópole.</p>
   <aside class="notes">
-    [Resultados — 65s] O slide principal. O Top 30 do IPB tem PIB per capita mediano de
-    93 mil reais, contra 30 mil da mediana nacional. Participação de PJ no Pix de 0,57,
-    contra 0,19 nas 30 piores. O Top 15 mistura litoral turístico, renda alta de entorno
-    e capitais planejadas. O gráfico da direita mostra onde cada arquétipo mora no
-    índice: turismo pontua alto, interior sem rede fica embaixo. E o que isso significa
-    pra quem vai usar: o topo junta as três coisas de uma vez, dinheiro circulando,
-    cidade digitalizada e pouco banco físico. Oportunidade de verdade, não aparência. E
-    pra medir o peso da concorrência: tiramos o pilar D e rodamos de novo. O ranking
-    geral mal mexe, Spearman de 0,894. Mas 32 das 100 cidades do topo trocam. O pilar D
-    não reescreve o ranking: ele dá identidade ao recorte.
+    [Resultados 1 — 30s] Fechando com o topo. O Top 30 tem PIB per capita de 93 mil reais, o triplo da mediana nacional, e participação empresarial no Pix de 0,57 contra 0,19 nas piores cidades. As barras mostram o Top 15: Bombinhas na frente, e reparem no recorte — não é só metrópole: é turismo, dormitório rico e capital planejada. E vale repetir as 39 trocas no Top 100 entre V1 e V3: o índice mudou de pergunta.
   </aside>
 </section>
 
-<!-- ==================== 14. LIMITAÇÕES (~35s) ==================== -->
+<!-- ==================== 20. RESULTADOS — ARQUÉTIPOS NO ÍNDICE (~25s) ==================== -->
 <section>
-  <h2>Limitações e próximos passos</h2>
+  <span class="secao-tag">Resultados</span>
+  <h2>Onde Cada Arquétipo Mora no Índice</h2>
+  <div id="fig-ipb-arq" class="fig-slide" data-fig="assets/data/fig_resultados_ipb_arquetipos.json" style="height: 500px;"></div>
+  <div class="legenda-cor">
+    <span class="lc-item"><span class="lc-dot" style="background:#b07aa1"></span>Turismo - com rede</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#e15759"></span>Sem rede - renda baixa</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#4e79a7"></span>Intermediário - empresarial</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#f28e2b"></span>Intermediário - tradicional</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#76b7b2"></span>Turismo - sem banco</span>
+    <span class="lc-item"><span class="lc-dot" style="background:#59a14f"></span>Sem rede - renda alta</span>
+  </div>
+  <p class="takeaway">Onde o índice e a clusterização conversam: turismo pontua alto, o interior sem rede fica embaixo — e o "Turismo sem banco" aparece como faixa de oportunidade com IPB alto e zero concorrência física.</p>
+  <aside class="notes">
+    [Resultados 2 — 25s] E aqui o índice conversa com a clusterização: a distribuição do IPB dentro de cada arquétipo. Turismo com rede pontua alto — e o turismo sem banco vem logo atrás, com IPB alto e zero concorrência física. O interior sem rede de renda baixa fica concentrado embaixo: o índice está coerente com o que os grupos dizem. O topo junta as três coisas ao mesmo tempo: dinheiro circulando, cidade digitalizada e pouco banco físico — é isso que separa oportunidade de aparência.
+  </aside>
+</section>
+
+<!-- ==================== 21. LIMITAÇÕES (~25s) ==================== -->
+<section>
+  <span class="secao-tag">Resultados</span>
+  <h2>Limitações e Próximos Passos</h2>
   <div class="lim-cards">
     <div class="lim-card">
       <span class="lim-num">01</span>
-      <p>Anos de referência misturados entre as fontes: Censo 2022 até correspondentes
-      de 2026.</p>
+      <p>Safras misturadas: Censo 2022 até correspondentes de 2026.</p>
       <p class="lim-mit">Declarado em cada entrega.</p>
     </div>
     <div class="lim-card">
       <span class="lim-num">02</span>
-      <p>Concorrência digital quase impossível de pegar com dado público: só 2,2% dos
-      correspondentes são de banco digital.</p>
-      <p class="lim-mit">O Pix segue medindo adoção instalada.</p>
+      <p>Concorrência digital quase invisível no dado público: só 2,2% dos correspondentes são de banco digital.</p>
+      <p class="lim-mit">Pix mede adoção instalada.</p>
     </div>
     <div class="lim-card">
       <span class="lim-num">03</span>
-      <p>Não existe ground truth. O alvo é proxy, assumido e declarado.</p>
+      <p>Sem ground truth: o alvo da modelagem é proxy, assumido e declarado.</p>
       <p class="lim-mit">Validações objetivas com CEMPRE e turismo.</p>
     </div>
     <div class="lim-card">
       <span class="lim-num">04</span>
-      <p>Faltou coletar: Anatel móvel 4G/5G, CNPJ/Caged, visitação e dados de
-      crédito.</p>
-      <p class="lim-mit">Tudo na fila de enriquecimento.</p>
+      <p>Fora da coleta: 4G/5G, CNPJ/Caged, visitação e crédito.</p>
+      <p class="lim-mit">Fila de enriquecimento da Fase 2.</p>
     </div>
   </div>
   <div class="chips">
@@ -528,24 +668,17 @@
     <span class="chip">Validar o Top 100 com negócio</span>
   </div>
   <aside class="notes">
-    [Limitações — 35s] Quatro limitações, cada uma com o caminho de saída do lado. Anos
-    de referência misturados, declarado. Concorrência digital, que o dado público quase
-    não enxerga: só dois vírgula dois por cento dos correspondentes são de banco
-    digital. Alvo proxy, segurado por validações objetivas. E as bases que faltaram
-    coletar, móvel, CNPJ, visitação, crédito. Os chips de baixo conectam cada limitação à
-    base que a resolve.
+    [Limitações — 25s] Quatro limitações, cada uma com a saída do lado: safras misturadas, declaradas; concorrência digital que o dado público quase não enxerga; alvo proxy, segurado por validações objetivas; e as fontes que ficaram fora da coleta — cada chip de baixo é a base que resolve uma delas.
   </aside>
 </section>
 
-<!-- ==================== 15. FECHAMENTO (~15s) ==================== -->
+<!-- ==================== 22. FECHAMENTO (~15s) ==================== -->
 <section class="fechamento">
-  <h2>Fechamento</h2>
+  <h2>Cada uma das 5.570 cidades,<br>consultável agora</h2>
   <div id="qrcode" aria-label="QR code para a página exploradora"></div>
-  <p>Cada uma das 5.570 cidades dá pra consultar aqui.</p>
   <p class="url">luciofrcruz.github.io/heluvina_projeto_final_202602/explorar.html</p>
   <aside class="notes">
-    [Fechamento — 15s] Fica o convite: cada uma das 5.570 cidades dá pra consultar no QR,
-    com IPB nas três versões, rank e arquétipo. Obrigado, e pode perguntar.
+    [Fechamento — 15s] Apontem a câmera: cada uma das 5.570 cidades tem card completo na plataforma — scores, arquétipo e comparativo. Obrigado, e o Grupo 4 está aberto a perguntas!
   </aside>
 </section>
 
@@ -570,14 +703,16 @@
     transition: 'fade',
     transitionSpeed: 'default',
     backgroundTransition: 'fade',
-    width: 1240,
-    height: 760,
-    margin: 0.04,
+    width: 1280,
+    height: 800,
+    margin: 0.03,
     plugins: [RevealNotes]
   });
 
   /* Renderizacao preguicosa: plotly em slide display:none mede 0x0, entao cada
-     figura so e desenhada quando o slide fica visivel pela primeira vez. */
+     figura so e desenhada quando o slide fica visivel pela primeira vez.
+     A altura do layout e sobrescrita pela do container: sem isso, a altura
+     fixa do JSON transborda e cobre o texto do slide. */
   var figurasProntas = {};
   var mapaIniciado = false;
 
@@ -592,6 +727,8 @@
           return r.json();
         })
         .then(function (fig) {
+          fig.layout.height = el.clientHeight;
+          fig.layout.autosize = true;
           Plotly.newPlot(el, fig.data, fig.layout, { responsive: true, displayModeBar: false });
         })
         .catch(function (err) {
@@ -629,9 +766,9 @@
 
   new QRCode(document.getElementById('qrcode'), {
     text: 'https://luciofrcruz.github.io/heluvina_projeto_final_202602/explorar.html',
-    width: 240,
-    height: 240,
-    colorDark: '#16637a',
+    width: 196,
+    height: 196,
+    colorDark: '#0b3542',
     colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.M
   });
