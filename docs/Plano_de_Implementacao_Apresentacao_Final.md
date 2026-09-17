@@ -96,43 +96,46 @@ agencias_por_100k, correspondentes_por_100k
 
 Checagem de qualidade do export: 5.570 linhas, `id_municipio` único e com 7 dígitos, sem nulo nos campos de identidade e de IPB. Relatório de campos que não existirem em nenhum parquet (ficam de fora e viram nota no plano).
 
-## 6. Roteiro do deck (10 minutos, 22 slides — v3 do deck, repaginado em 16/09)
+## 6. Roteiro do deck (10 minutos, 23 slides — v4.1 do deck, espelhando a PPTX final em 17/09)
 
-> Redesign de 16/09 incorporando o feedback do professor (15/09) e a revisão do grupo
-> (16/09): gráficos quase tela cheia (a altura do plotly é ajustada ao container pelo
-> próprio deck, sem transbordar texto), texto mínimo por slide, diagrama iconográfico da
-> stack, comparação visual das 3 versões do IPB, clusterização como protagonista da
-> modelagem (algoritmo em um slide, escolha de K em outro; arquétipos e resultados
-> também em 2 slides cada, com legenda de cores no próprio slide). A classificação de
-> presença bancária SAIU da fala e ficou registrada no apêndice (A4). Capa/fechamento
-> em gradiente petróleo suavizado, fontes Sora/Inter vendorizadas em `assets/fonts/`.
+> v4.1 de 17/09 replica fielmente a `Apresentacao_Final_IPB (2).pptx`: capa com o mapa
+> noturno do Brasil + logo heluvina (assets extraídos da PPTX), nove bases ANTES da
+> arquitetura, metodologia antes dos insights, EDA por pilar com **figuras interativas
+> plotly** (`fig_empregos_formais`, `fig_banda_larga_regiao` em boxplot, `fig_sem_agencia_uf`
+> no lugar do oceano azul), Top 10 de V1/V2/V3 em tabelas, **"V3 corrige o viés" com
+> `fig_top100_regioes_versoes`** (barras regionais do Top 100 — removeu-se o slide do Top 15
+> e o dumbbell), clusterização em um slide só (cards K-Means/GMM/5.570 + scatter PCA, como
+> na PPTX), Isolation Forest com `fig_anomalias_top15`. Figuras estáticas copiadas da
+> PPTX só na capa. Divisão de fala (PPTX): Nath 2–5, Vitor 6–11, Hermes 12–16, Lúcio
+> 17–22, fechamento em grupo — etiquetada nas notas de cada slide.
 
-| Slide | Conteúdo | Tempo |
-|---|---|---|
-| 1. Capa | Tema, grupo e a pergunta central | 15 s |
-| 2. O problema | 2.656 cidades sem agência (47,7% do território, 19,8 mi de pessoas) e a falta de visão integrada | 35 s |
-| 3. O objetivo | Índice 0–100 para os 5.570 municípios, dados públicos, pipeline reproduzível | 15 s |
-| 4. Arquitetura e stack | Diagrama iconográfico: fontes (APIs + manuais→GCS) → ingestores Python/Pandas → Parquet → BigQuery (raw/trusted/analytics) → site | 45 s |
-| 5. Nove bases, nove safras | Grid das 8 fontes com ano; o problema de engenharia é 2010–2026 convivendo; tratamentos e testes | 35 s |
-| 6. EDA — escolaridade I | Histograma grande; cidade média tem só 39,4% com ensino médio | 30 s |
-| 7. EDA — escolaridade II | Box por região; Sul/Sudeste acima, Norte/Nordeste embaixo | 30 s |
-| 8. EDA — Pix I | Top 15 Pix per capita com legenda de região; Pacaraima (fronteira) + cidades do agro | 30 s |
-| 9. EDA — Pix II | Mediana por UF com legenda; DF é um único município; leitura do agro é correlação, não causalidade | 30 s |
-| 10. Três versões, três perguntas | Texto: V1 "onde já tem dinheiro" (ranking de riqueza) → V2 "onde falta banco" (exagerou no déficit) → V3 "onde falta banco E tem mercado" (correspondentes + CEMPRE) | 30 s |
-| 11. O Top 100 trocou | Texto: 39 posições novas; saíram as ricas bancarizadas (Noronha 13→2.578) e entraram capitais/polos (Brasília 134→13); Norte 2→7, Nordeste 4→8 | 20 s |
-| 12. Metodologia V3 | 5 pilares — D é INVERTIDO (menos banco = mais pontos, 30%) — e média geométrica como seguro | 40 s |
-| 13. Mapa ao vivo | Coroplético interativo (IPB V3 e arquétipos), rodando no site | 30 s |
-| 14. Clusterização — algoritmo | K-Means + GMM e por quê; sem rótulo de verdade; 4.855 cidades >90% de um arquétipo | 25 s |
-| 15. Por que K=6 | Figura silhouette × elbow; K=3 separa porte; queda desacelera entre 5 e 6 | 25 s |
-| 16. Arquétipos — os grupos | Barras + grid dos 6 grupos; o achado "Turismo sem banco" (653 cidades, 100% sem agência) | 30 s |
-| 17. Arquétipos — o mapa | Scatter sem eixos: cada ponto é uma cidade, perto = perfil parecido; legenda de cores | 15 s |
-| 18. Anomalias — Isolation Forest | Qual algoritmo e por quê (sem rótulo de anomalia); Top 30 atípicas, Noronha #1, grupo com 5× agências; gerador de hipótese | 25 s |
-| 19. Resultados — Top 15 | Stats (PIB pc R$ 93 mil × R$ 30 mil; PJ 0,57 × 0,19; 39 trocas) + Top 15 com legenda de porte | 30 s |
-| 20. Resultados — arquétipos no índice | Distribuição do IPB por arquétipo com legenda; turismo alto, interior sem rede embaixo | 25 s |
-| 21. Limitações | Vintage misto, concorrência digital invisível, alvo proxy, fontes fora da coleta — cada uma com o próximo passo | 25 s |
-| 22. Fechamento | QR para a exploradora; "5.570 cidades consultáveis agora" | 15 s |
+| Slide | Conteúdo | Falante | Tempo |
+|---|---|---|---|
+| 1. Capa | Mapa noturno do Brasil + logo heluvina + a pergunta de negócio | grupo | 12 s |
+| 2. Contexto | Índice 0–100; 5.570 municípios · 47,7% sem agência · 216.873 correspondentes | Nath | 25 s |
+| 3. Nove bases, uma chave | Grid 3×3 com safras 2010–2026; Localidades IBGE é a chave das 8 | Nath | 25 s |
+| 4. Arquitetura e stack | Diagrama iconográfico: fontes (APIs + manuais→GCS) → Python/Pandas → Parquet → BigQuery (raw/trusted/analytics) → site | Nath | 35 s |
+| 5. Como o IPB é calculado | 5 pilares (descrições da PPTX); D invertido 30%; média geométrica penaliza desequilíbrio | Nath | 35 s |
+| 6. Pilar A — empregos formais | `fig_empregos_formais`: Borá 1.440 empregos/1000 hab × média 212 | Vitor | 20 s |
+| 7. Pilar B — Pix | Top 15 Pix per capita, legenda de região; Pacaraima (fronteira) + agro | Vitor | 20 s |
+| 8. Pilar C — banda larga | Boxplot por região (`fig_banda_larga_regiao`); Anatel é proxy do Censo | Vitor | 20 s |
+| 9. Pilar D — gap bancário | `% sem agência por UF` (`fig_sem_agencia_uf`); PI/TO/PB/RN > 75% | Vitor | 25 s |
+| 10. Pilar E — escolaridade | Histograma; cidade média 39,4%; ponderado sobe a 52% | Vitor | 20 s |
+| 11. Pilar E — disparidade regional | Box por região; NE 33,9% × SE 44,3% | Vitor | 15 s |
+| 12. V1 — Top 10 | Tabela (Barueri 82,54 …) + card "onde já tem dinheiro?" e o viés | Hermes | 15 s |
+| 13. V2 — Top 10 | Tabela (Bombinhas 83,85 …) + card "onde falta banco?" e o exagero | Hermes | 15 s |
+| 14. V3 — Top 10 | Tabela (Bombinhas 73,33 …) + card "onde falta banco E tem mercado?" — oficial | Hermes | 15 s |
+| 15. A V3 corrige o viés | 4 cards (V1/V2/V3/efeito) + `fig_top100_regioes_versoes` (Norte 2→7, NE 4→8) | Hermes | 30 s |
+| 16. Mapa ao vivo | Coroplético interativo (IPB V3 e arquétipos) + QR para o mapa em tela cheia | Hermes | 20 s |
+| 17. Clusterização | Cards K-Means/GMM/5.570 + scatter PCA ("perto = perfil parecido") | Lúcio | 30 s |
+| 18. Por que K=6 | **OCULTO** (backup de banca; silhouette × elbow) | — | — |
+| 19. Arquétipos de cidade | Barras + grid dos 6 grupos; achado "Turismo sem banco" (653) | Lúcio | 25 s |
+| 20. Arquétipos no índice | Distribuição do IPB por arquétipo; turismo alto, interior sem rede embaixo | Lúcio | 15 s |
+| 21. Isolation Forest | Cards + `fig_anomalias_top15` (Noronha #1, grupo com 5× agências) | Lúcio | 25 s |
+| 22. Limitações | 4 cards: sem target, mix de datas, efeito regional, coleta (4G/5G, CNPJ/Caged, Embratur) | Lúcio | 25 s |
+| 23. Fechamento | "Obrigado! Dúvidas?" + QR para a exploradora ("5.570 cidades consultáveis") | grupo | 12 s |
 
-Soma: 10 min 0 s. Ensaio cronometrado continua obrigatório.
+Soma: 7 min 59 s nas 22 slides visíveis (o slide 18 fica oculto como backup de banca). Ensaio cronometrado continua obrigatório.
 
 Slides de backup (apêndice, fora da fala): A1 top 10 nas três versões, A2 ranking por
 arquétipo, A3 por que K=6, A4 métricas da Etapa 3 (classificação + regressão + potencial
