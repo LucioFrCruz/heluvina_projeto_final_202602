@@ -134,9 +134,13 @@
   </div>
   <p class="nota">Regressão explicativa: R² 0,938 e MAE de 1,9 ponto de IPB (acerto alto
   por construção, as features entram na fórmula). Potencial latente: R² 0,475 no holdout
-  interno; Spearman de 0,449 com o IPB nas cidades sem agência. As métricas de
+  interno; Spearman de 0,449 com o IPB nas 2.656 cidades sem agência — correlação
+  moderada, de propósito: o modelo e o índice capturam dimensões parcialmente distintas,
+  e os resíduos (as 56 cidades com cara de bancarizada e zero agência, ex.: Bombinhas com
+  probabilidade 0,94) são candidatas a validação de negócio. As métricas de
   classificação usam somente as 13 variáveis de perfil, sem as de presença, para não
-  vazar o alvo.</p>
+  vazar o alvo. O classificador de presença e o potencial latente ficam registrados aqui
+  por fora da fala: o deck prioriza a clusterização.</p>
 </section>
 
 <section class="apx" id="a5">

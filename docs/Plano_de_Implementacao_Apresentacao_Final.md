@@ -23,7 +23,7 @@ Armadilhas listadas por ele que tratamos como restrição de design do deck: foc
 ## 2. Decisões do grupo
 
 1. A V3 é a versão oficial da fala. V1 e V2 não saem do deck: entram como comparativo. As três concordam em cerca de 85% das posições (Spearman 0,852 entre V1 e V3), o que vira argumento de robustez.
-2. Classificação entra por cima. Um slide, 30 segundos: tentamos prever presença bancária usando agências como alvo proxy, resultado fica como registro honesto de tentativa.
+2. Clusterização é o protagonista da fala de modelagem: qual algoritmo (K-Means + GMM), por quê, e a escolha de K=6 — sem aula de algoritmo. A classificação de presença bancária saiu do deck (feedback de que ficou "meio inútil") e ficou registrada no apêndice A4 como experimento honesto com alvo proxy.
 3. Q&A não é "deixar pergunta no slide". É o professor perguntar e a gente responder. A preparação é ensaiar respostas curtas para as perguntas previsíveis e ter slides de backup com os números que sustentam cada resposta.
 4. Backup de tudo. PDF estático do deck + deck 100% local (zero CDN).
 5. Mapa do Brasil: só camada V3 e visão de arquétipos. Sem toggle de versão.
@@ -96,28 +96,48 @@ agencias_por_100k, correspondentes_por_100k
 
 Checagem de qualidade do export: 5.570 linhas, `id_municipio` único e com 7 dígitos, sem nulo nos campos de identidade e de IPB. Relatório de campos que não existirem em nenhum parquet (ficam de fora e viram nota no plano).
 
-## 6. Roteiro do deck (10 minutos, 14 slides)
+## 6. Roteiro do deck (10 minutos, 22 slides — v3 do deck, repaginado em 16/09)
+
+> Redesign de 16/09 incorporando o feedback do professor (15/09) e a revisão do grupo
+> (16/09): gráficos quase tela cheia (a altura do plotly é ajustada ao container pelo
+> próprio deck, sem transbordar texto), texto mínimo por slide, diagrama iconográfico da
+> stack, comparação visual das 3 versões do IPB, clusterização como protagonista da
+> modelagem (algoritmo em um slide, escolha de K em outro; arquétipos e resultados
+> também em 2 slides cada, com legenda de cores no próprio slide). A classificação de
+> presença bancária SAIU da fala e ficou registrada no apêndice (A4). Capa/fechamento
+> em gradiente petróleo suavizado, fontes Sora/Inter vendorizadas em `assets/fonts/`.
 
 | Slide | Conteúdo | Tempo |
 |---|---|---|
-| 1. Capa | Nome do grupo, integrantes, tema. Frase de impacto decidida no ensaio, com calma | 20 s |
-| 2. O problema | Bancos e fintechs precisam escolher onde investir (agência, correspondente, crédito, marketing) entre 5.570 cidades e não existe ranking público que una potencial econômico + digital + concorrência. Hoje a decisão é por achismo. E o escuro é real: 2.655 cidades sem agência registrada no Estban | 50 s |
-| 3. O objetivo | A pergunta do IPB: onde potencial econômico, adoção digital e baixa concorrência física se encontram | 30 s |
-| 4. Os dados | 9 fontes públicas, volume (216 mil vínculos de correspondentes), diagrama do pipeline. Ponto forte: tudo público, dá para refazer | 60 s |
-| 5. Preparação | A história do gap em duas frases: a primeira fórmula da V3 punia com IPB zero ~119 cidades pequenas saturadas de lotérica. Testamos a sensibilidade, trocamos para gap linear, e as três versões convergiram. Lição: confiamos na fórmula só depois de testá-la | 70 s |
-| 6. EDA | Os gráficos que a gente mesmo fez: escolaridade, cidades com maiores valores de Pix e de agências, correlações. Cada gráfico com uma frase do que ele mostra | 60 s |
-| 7. A solução | Os 5 pilares e a média geométrica. Por que geométrica: pilar zerado zera o índice, quem não tem nada em nenhuma dimensão não entra no ranking à força | 70 s |
-| 8. Três versões | V1, V2 e V3 lado a lado, o que cada uma testa, as diferenças entre elas, e por que a V3 é a oficial | 60 s |
-| 9. Mapa | O coroplético dos 5.570 municípios na V3. Onde o potencial concentra: eixo sul-sudeste, litoral turístico, dormitórios industriais | 60 s |
-| 10. Arquétipos | Etapa 3: 6 clusters com nome de negócio, potencial latente, anomalias. Figuras regeneradas para ficarem chamativas | 60 s |
-| 11. O que tentamos | Classificação de presença bancária usando agências como alvo proxy. 30 segundos, honesto | 30 s |
-| 12. Resultados | O slide principal: perfil do Top 30 (PIB pc ~R$ 111 mil contra mediana de ~R$ 30 mil), o ranking por cluster, a visão por estrato (pequena/média/grande), o experimento de tirar o pilar D e as trocas do Top 100 com história | 80 s |
-| 13. Limitações e próximos passos | Vintage misto, concorrência digital invisível, alvo proxy, MEI fora do CEMPRE. Um próximo passo real por linha | 40 s |
-| 14. Fechamento | QR para a página exploradora. "Cada uma das 5.570 cidades dá para consultar aqui" | 20 s |
+| 1. Capa | Tema, grupo e a pergunta central | 15 s |
+| 2. O problema | 2.656 cidades sem agência (47,7% do território, 19,8 mi de pessoas) e a falta de visão integrada | 35 s |
+| 3. O objetivo | Índice 0–100 para os 5.570 municípios, dados públicos, pipeline reproduzível | 15 s |
+| 4. Arquitetura e stack | Diagrama iconográfico: fontes (APIs + manuais→GCS) → ingestores Python/Pandas → Parquet → BigQuery (raw/trusted/analytics) → site | 45 s |
+| 5. Nove bases, nove safras | Grid das 8 fontes com ano; o problema de engenharia é 2010–2026 convivendo; tratamentos e testes | 35 s |
+| 6. EDA — escolaridade I | Histograma grande; cidade média tem só 39,4% com ensino médio | 30 s |
+| 7. EDA — escolaridade II | Box por região; Sul/Sudeste acima, Norte/Nordeste embaixo | 30 s |
+| 8. EDA — Pix I | Top 15 Pix per capita com legenda de região; Pacaraima (fronteira) + cidades do agro | 30 s |
+| 9. EDA — Pix II | Mediana por UF com legenda; DF é um único município; leitura do agro é correlação, não causalidade | 30 s |
+| 10. Três versões, três perguntas | Texto: V1 "onde já tem dinheiro" (ranking de riqueza) → V2 "onde falta banco" (exagerou no déficit) → V3 "onde falta banco E tem mercado" (correspondentes + CEMPRE) | 30 s |
+| 11. O Top 100 trocou | Texto: 39 posições novas; saíram as ricas bancarizadas (Noronha 13→2.578) e entraram capitais/polos (Brasília 134→13); Norte 2→7, Nordeste 4→8 | 20 s |
+| 12. Metodologia V3 | 5 pilares — D é INVERTIDO (menos banco = mais pontos, 30%) — e média geométrica como seguro | 40 s |
+| 13. Mapa ao vivo | Coroplético interativo (IPB V3 e arquétipos), rodando no site | 30 s |
+| 14. Clusterização — algoritmo | K-Means + GMM e por quê; sem rótulo de verdade; 4.855 cidades >90% de um arquétipo | 25 s |
+| 15. Por que K=6 | Figura silhouette × elbow; K=3 separa porte; queda desacelera entre 5 e 6 | 25 s |
+| 16. Arquétipos — os grupos | Barras + grid dos 6 grupos; o achado "Turismo sem banco" (653 cidades, 100% sem agência) | 30 s |
+| 17. Arquétipos — o mapa | Scatter sem eixos: cada ponto é uma cidade, perto = perfil parecido; legenda de cores | 15 s |
+| 18. Anomalias — Isolation Forest | Qual algoritmo e por quê (sem rótulo de anomalia); Top 30 atípicas, Noronha #1, grupo com 5× agências; gerador de hipótese | 25 s |
+| 19. Resultados — Top 15 | Stats (PIB pc R$ 93 mil × R$ 30 mil; PJ 0,57 × 0,19; 39 trocas) + Top 15 com legenda de porte | 30 s |
+| 20. Resultados — arquétipos no índice | Distribuição do IPB por arquétipo com legenda; turismo alto, interior sem rede embaixo | 25 s |
+| 21. Limitações | Vintage misto, concorrência digital invisível, alvo proxy, fontes fora da coleta — cada uma com o próximo passo | 25 s |
+| 22. Fechamento | QR para a exploradora; "5.570 cidades consultáveis agora" | 15 s |
 
-Soma: 9 min 50 s. Espaço zero para imprevisto, então o ensaio cronometrado é obrigatório.
+Soma: 10 min 0 s. Ensaio cronometrado continua obrigatório.
 
-Slides de backup (apêndice depois do 14, não entram na fala): tabela completa V1/V2/V3, ranking completo por cluster, detalhe do K=6, métricas de classificação e regressão, construção dos pesos dos correspondentes, dicionário de fontes com ano de referência, caso a caso das trocas do Top 100.
+Slides de backup (apêndice, fora da fala): A1 top 10 nas três versões, A2 ranking por
+arquétipo, A3 por que K=6, A4 métricas da Etapa 3 (classificação + regressão + potencial
+latente com Spearman 0,449), A5 pesos dos correspondentes, A6 fontes com ano/URL,
+A7 trocas do Top 100 com o CEMPRE, A8 rede paralela (agências × correspondentes).
 
 ## 7. Mapa do Brasil
 

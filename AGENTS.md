@@ -91,7 +91,7 @@ heluvina_projeto_final_202602/
 │   ├── Plano_de_Implementacao_Etapa3_Modelagem.md
 │   ├── Plano_de_Implementacao_Apresentacao_Final.md  # plano do site/deck da apresentação de 17/09
 │   ├── index.html / mapa.html / apresentacao.html / apendice.html  # site estático (GitHub Pages, branch feature/apresentacao)
-│   ├── assets/                    # libs vendorizadas (reveal, d3, plotly, topojson, qrcodejs), malha IBGE 2022, figuras, JS do mapa
+│   ├── assets/                    # libs vendorizadas (reveal, d3, plotly, topojson, qrcodejs), fontes Sora/Inter (woff2), malha IBGE 2022, figuras, JS do mapa
 │   └── data/municipios.json       # export derivado (script 09) consumido pelo site
 ├── src/
 │   ├── __init__.py
@@ -308,7 +308,7 @@ A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* e d
   - **Iteração da Etapa 3 com o grupo**: **K=6 confirmado (2026-09-14)**; falta validar os nomes dos arquétipos (sugestões por regra sobre os dados), a leitura dos resíduos da classificação e do Spearman potencial-latente × IPB (0,449);
   - **Fase 2 da Etapa 3** (registrada no relatório): validação espacial por região, PCA como validação do índice, Agglomerative/dendrograma, `idhm` como feature opcional, discussão de pesos do IPB à luz da importância (banda larga + correspondentes + Pix concentram 0,64+0,29+0,17 da queda de R²);
   - **Enriquecimentos**: cobertura 4G/5G (pilar C), CNPJ/MEI + Caged, dados de visitação (Embratur/MTur) para a flag de turismo.
-- **Site da apresentação final (17/09)**: deck HTML interativo (reveal.js), mapa coroplético municipal (D3 + malha IBGE 2022) e apêndice de backup, tudo em `docs/` na branch `feature/apresentacao` e servido via GitHub Pages; dados exportados por `scripts/09` e figuras por `scripts/11`. Plano em `docs/Plano_de_Implementacao_Apresentacao_Final.md`.
+- **Site da apresentação final (17/09)**: deck HTML interativo (reveal.js, repaginado em 16/09 — gráficos em destaque, diagrama iconográfico da stack, comparação V1/V2/V3 como figura, clusterização protagonista; classificação só no apêndice A4), mapa coroplético municipal (D3 + malha IBGE 2022) e apêndice de backup, tudo em `docs/` na branch `feature/apresentacao` e servido via GitHub Pages; dados exportados por `scripts/09` e figuras por `scripts/11` (inclui `fig_comparacao_versoes` e `fig_escolha_k`). Plano em `docs/Plano_de_Implementacao_Apresentacao_Final.md`.
 
 ---
 
@@ -320,4 +320,6 @@ A tabela `trusted_municipios` possui os 5.570 municípios. Principais *gaps* e d
 - Proibido em qualquer hipótese: `rm -rf` fora de `data/`, `git push`, `git reset --hard`, `git clean`, expor conteúdo de `.env` ou credenciais.
 ---
 
-*Última atualização (2026-09-14, v7): sincronização pós-Etapa 3 — estrutura de pastas ampliada (módulos de modelagem, script 08, notebooks/01_modelagem), Diretriz 0.7 (fontes manuais com estágio obrigatório no GCS) e Diretriz 0.8 (AGENTS.md sempre atualizado), tecnologias (GCS, scikit-learn, pre-commit), §9 com decisões registradas (Estban 2.915, `va_servicos` descartada da trusted) e K=6 confirmado.*
+*Última atualização (2026-09-16, v8): repaginação do deck da apresentação final (gráficos ampliados, diagrama iconográfico da stack, figuras `fig_comparacao_versoes`/`fig_escolha_k` no script 11, fontes Sora/Inter vendorizadas, classificação de presença só no apêndice A4, clustering protagonista) e roteiro do plano sincronizado.*
+
+*Anterior (2026-09-14, v7): sincronização pós-Etapa 3 — estrutura de pastas ampliada (módulos de modelagem, script 08, notebooks/01_modelagem), Diretriz 0.7 (fontes manuais com estágio obrigatório no GCS) e Diretriz 0.8 (AGENTS.md sempre atualizado), tecnologias (GCS, scikit-learn, pre-commit), §9 com decisões registradas (Estban 2.915, `va_servicos` descartada da trusted) e K=6 confirmado.*
