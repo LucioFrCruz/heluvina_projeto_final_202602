@@ -18,10 +18,14 @@ Figuras usadas no deck:
     5. fig_arquetipos_barras.json              — quantidade de municipios por arquetipo
     6. fig_pca_arquetipos.json                 — dispersao PCA (2D) dos clusters com
                                                  centroides
-    7. fig_classificacao_roc.json              — curva ROC re-treinada do classificador
-                                                 de presenca bancaria (teste)
-    8. fig_resultados_ipb_arquetipos.json      — distribuicao do IPB V3 por arquetipo
-    9. fig_top15_ipb.json                      — Top 15 do IPB V3 (substitui o PNG)
+    7. fig_resultados_ipb_arquetipos.json      — distribuicao do IPB V3 por arquetipo
+    8. fig_top15_ipb.json                      — Top 15 do IPB V3 (substitui o PNG)
+    9. fig_comparacao_versoes.json             — por que a V3 e a oficial:
+                                                 dumbbell V1->V3 de 7 cidades
+                                                 + quanto do Top 100 de cada
+                                                 versao ja tem agencia bancaria
+   10. fig_escolha_k.json                      — por que K=6: silhouette e elbow
+                                                 lado a lado (re-treina K-Means/GMM)
 
 Figuras geradas para o apendice (docs/apendice.html), fora da fala:
     - fig_rede_por_estrato.json                — agencias vs correspondentes por
@@ -30,9 +34,10 @@ Figuras geradas para o apendice (docs/apendice.html), fora da fala:
 
 Inputs (data/processed/):
     - trusted_municipios_eda.parquet (escolaridade, pix, agencias)
-    - analytics_ipb_v3_presenca_completa.parquet (ipb V3, correspondentes, CEMPRE)
+    - analytics_ipb_v1_classico.parquet / analytics_ipb_v2_recalibrado.parquet /
+      analytics_ipb_v3_presenca_completa.parquet (ipb e rank das 3 versoes)
     - modelagem_resultados.parquet (arquetipo, cluster)
-    - modelagem.parquet (features e alvo da classificacao e do PCA)
+    - modelagem.parquet (features da Etapa 3; PCA e avaliacao de K)
 
 Outputs:
     - docs/assets/data/*.json (um por figura)
@@ -53,13 +58,12 @@ from pathlib import Path
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as pio
+from plotly.subplots import make_subplots
 from sklearn.decomposition import PCA
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import auc, roc_curve
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from src.analytics.modelagem import FEATURES_MODELO, FEATURES_SEM_PRESENCA
+from src.analytics.clustering import avaliar_k
+from src.analytics.modelagem import FEATURES_MODELO, SEED
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -107,7 +111,8 @@ CORES_REGIAO = {
 LAYOUT_BASE = {
     "paper_bgcolor": "white",
     "plot_bgcolor": "white",
-    "font": {"size": 13, "color": "#24303b"},
+    "font": {"size": 15, "color": "#24303b"},
+    "title_font": {"size": 20},
 }
 
 
@@ -188,7 +193,7 @@ def fig_escolaridade_hist(base: pd.DataFrame) -> Path:
         xaxis_title="% da população 18+ com ensino médio completo (Censo 2022)",
         yaxis_title="Nº de municípios",
         showlegend=False,
-        height=470,
+        height=560,
         margin={"l": 60, "r": 30, "t": 75, "b": 55},
     )
     return gravar(fig, "fig_espelho_escolaridade_hist.json")
@@ -228,7 +233,7 @@ def fig_escolaridade_extremos(base: pd.DataFrame) -> Path:
         xaxis_title="% da população 18+ com ensino médio completo",
         yaxis_title="",
         showlegend=False,
-        height=560,
+        height=620,
         margin={"l": 190, "r": 30, "t": 70, "b": 55},
     )
     return gravar(fig, "fig_espelho_escolaridade_extremos.json")
@@ -271,7 +276,7 @@ def fig_escolaridade_regiao(base: pd.DataFrame) -> Path:
         ).replace(".", ","),
         yaxis_title="% da população 18+ com ensino médio completo",
         showlegend=False,
-        height=470,
+        height=560,
         margin={"l": 60, "r": 30, "t": 75, "b": 55},
     )
     return gravar(fig, "fig_espelho_escolaridade_regiao.json")
@@ -300,7 +305,7 @@ def fig_pix_top15(base: pd.DataFrame) -> Path:
         xaxis_title="Pix per capita, últimos 12 meses (R$)",
         yaxis_title="",
         showlegend=False,
-        height=560,
+        height=620,
         margin={"l": 190, "r": 30, "t": 70, "b": 55},
     )
     fig.update_yaxes(categoryorder="total ascending")
@@ -340,7 +345,7 @@ def fig_rede_por_estrato(base: pd.DataFrame) -> Path:
         ).replace(".", ","),
         yaxis_title="Pontos por 100 mil hab (mediana)",
         barmode="group",
-        height=470,
+        height=560,
         margin={"l": 60, "r": 30, "t": 75, "b": 55},
         legend=dict(orientation="h", y=1.12, x=0),
     )
@@ -378,7 +383,7 @@ def fig_pix_por_uf(base: pd.DataFrame) -> Path:
         xaxis_title="Mediana de Pix per capita, 12 meses (R$)",
         yaxis_title="",
         showlegend=False,
-        height=560,
+        height=620,
         margin={"l": 55, "r": 30, "t": 70, "b": 55},
     )
     return gravar(fig, "fig_pix_por_uf.json")
@@ -406,7 +411,7 @@ def fig_top15_ipb(base: pd.DataFrame) -> Path:
         xaxis_title="IPB V3 (0–100)",
         yaxis_title="",
         showlegend=False,
-        height=560,
+        height=620,
         margin={"l": 190, "r": 30, "t": 70, "b": 55},
     )
     fig.update_yaxes(categoryorder="total ascending")
@@ -437,7 +442,7 @@ def fig_arquetipos_barras(base: pd.DataFrame) -> Path:
         xaxis_title="",
         yaxis_title="Nº de municípios",
         showlegend=False,
-        height=470,
+        height=560,
         margin={"l": 60, "r": 30, "t": 75, "b": 95},
     )
     fig.update_xaxes(tickangle=-20)
@@ -497,70 +502,334 @@ def fig_pca_arquetipos() -> Path:
     )
     fig.update_layout(
         **LAYOUT_BASE,
-        title="Cada arquétipo ocupa um território próprio no mapa de perfil das cidades",
-        xaxis_title="Componente principal 1",
-        yaxis_title="Componente principal 2",
-        height=470,
-        margin={"l": 60, "r": 30, "t": 75, "b": 55},
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        height=600,
+        margin={"l": 20, "r": 20, "t": 20, "b": 20},
     )
     return gravar(fig, "fig_pca_arquetipos.json")
 
 
-def fig_classificacao_roc() -> Path:
+def fig_comparacao_versoes() -> Path:
     """
-    Curva ROC do classificador de presenca bancaria, re-treinado aqui.
+    Por que a V3 e a versao oficial: 2 paineis que contam a decisao.
 
-    O parquet de resultados guarda a probabilidade do modelo final (treinado em
-    100% dos dados, in-sample), que separa quase perfeitamente e nao serve pra
-    curva. Aqui a gente reproduz o experimento do notebook: mesmo split
-    estratificado 80/20 (seed 42), mesmas 13 features e mesmo RF tunado
-    (400 arvores, profundidade 20), e mede a ROC no teste.
+    Painel A — dumbbell de 7 cidades conhecidas ligando o rank V1 ao rank
+    V3 (escala log, rank 1 a esquerda): verde sobe, vermelho cai. Ranks
+    confirmados nos parquets (Bombinhas 21 -> 1; Brasilia 134 -> 13;
+    Sao Paulo 174 -> 15; Rio de Janeiro 611 -> 51; Pacaraima 3.545 -> 1.889;
+    Jundiai 30 -> 110; Fernando de Noronha 13 -> 2.578).
+
+    Painel B — o argumento: quanto do Top 100 de cada versao ja esta
+    servido por agencia bancaria (% das 100 com agencia + mediana de
+    agencias/100 mil hab, da trusted). A V1 premia quem ja tem banco;
+    a V3 abre espaco para quem ainda falta.
     """
-    logger.info("Re-treinando RF para a curva ROC (pode levar ~1 min)...")
-    mod = pd.read_parquet(PROCESSED_DATA_DIR / "modelagem.parquet")
-    X = mod[FEATURES_SEM_PRESENCA]
-    y = mod["flag_tem_agencia"]
-    Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-    rf = RandomForestClassifier(n_estimators=400, max_depth=20, random_state=42, n_jobs=-1)
-    rf.fit(Xtr, ytr)
-    prob = rf.predict_proba(Xte)[:, 1]
-    fpr, tpr, _ = roc_curve(yte, prob)
-    valor_auc = auc(fpr, tpr)
-    logger.info("ROC no teste (n=%d): AUC=%.4f", len(yte), valor_auc)
+    logger.info("Comparando as 3 versoes do IPB (decisao V3)...")
+    v1 = pd.read_parquet(PROCESSED_DATA_DIR / "analytics_ipb_v1_classico.parquet")
+    v2 = pd.read_parquet(PROCESSED_DATA_DIR / "analytics_ipb_v2_recalibrado.parquet")
+    v3 = pd.read_parquet(PROCESSED_DATA_DIR / "analytics_ipb_v3_presenca_completa.parquet")
+    eda = pd.read_parquet(PROCESSED_DATA_DIR / "trusted_municipios_eda.parquet")
+    for df in (v1, v2, v3, eda):
+        df["id_municipio"] = df["id_municipio"].astype(str).str.zfill(7)
 
-    fig = go.Figure()
-    fig.add_scatter(
-        x=fpr, y=tpr,
-        mode="lines",
-        line_color="#16637a",
-        line_width=2.5,
-        hovertemplate="FPR %{x:.2f} · TPR %{y:.2f}<extra></extra>".replace(".", ","),
-        name=f"ROC (AUC {valor_auc:.3f})".replace(".", ","),
+    m = (
+        v1[["id_municipio", "nome_municipio", "sigla_uf", "rank"]]
+        .rename(columns={"rank": "rank_v1"})
+        .merge(
+            v2[["id_municipio", "rank"]].rename(columns={"rank": "rank_v2"}),
+            on="id_municipio", validate="one_to_one",
+        )
+        .merge(
+            v3[["id_municipio", "rank"]].rename(columns={"rank": "rank_v3"}),
+            on="id_municipio", validate="one_to_one",
+        )
+        .merge(
+            eda[["id_municipio", "quantidade_agencias", "agencias_por_100k_hab"]],
+            on="id_municipio", validate="one_to_one",
+        )
     )
-    fig.add_scatter(
-        x=[0, 1], y=[0, 1],
-        mode="lines",
-        line_color="#9aa5ae",
-        line_dash="dash",
-        hoverinfo="skip",
-        name="Aleatório (AUC 0,50)",
+    if len(m) != QUANTIDADE_ESPERADA:
+        raise ValueError(f"esperado {QUANTIDADE_ESPERADA} linhas, encontrado {len(m)}")
+
+    fig = make_subplots(
+        rows=2, cols=2,
+        column_widths=[0.58, 0.42],
+        row_heights=[0.55, 0.45],
+        specs=[[{"rowspan": 2}, {}], [None, {}]],
+        subplot_titles=(
+            "Quem sobe e quem cai no ranking",
+            "O Top 100 de cada versão: % com agência bancária",
+            "Mediana de agências por 100 mil hab no Top 100",
+        ),
     )
-    fig.add_annotation(
-        x=0.55, y=0.25,
-        text=f"AUC = {valor_auc:.3f}".replace(".", ","),
-        showarrow=False,
-        font=dict(size=16, color="#16637a"),
+
+    # --- Painel A: dumbbell V1 -> V3 para 7 casos conhecidos ---------------
+    casos = [
+        ("Bombinhas", "SC", 21, 1),
+        ("Brasília", "DF", 134, 13),
+        ("São Paulo", "SP", 174, 15),
+        ("Rio de Janeiro", "RJ", 611, 51),
+        ("Pacaraima", "RR", 3545, 1889),
+        ("Jundiaí", "SP", 30, 110),
+        ("Fernando de Noronha", "PE", 13, 2578),
+    ]
+    casos_df = pd.DataFrame(casos, columns=["nome", "uf", "rank_v1", "rank_v3"])
+    casos_df = casos_df.merge(
+        m[["id_municipio", "nome_municipio", "sigla_uf", "rank_v2"]],
+        left_on=["nome", "uf"], right_on=["nome_municipio", "sigla_uf"],
+        validate="one_to_one",
     )
+    # Ordem de baixo para cima: quem mais caiu no canto superior.
+    casos_df = casos_df.sort_values("rank_v3", ascending=False).reset_index(drop=True)
+    casos_df["y"] = casos_df.index
+    casos_df["sobe"] = casos_df["rank_v3"] < casos_df["rank_v1"]
+    logger.info("casos do dumbbell (rank V1 -> V3): %s",
+                casos_df.set_index("nome")[["rank_v1", "rank_v3"]].astype(int).T.to_dict())
+
+    for _, r in casos_df.iterrows():
+        cor = "#2f9e6e" if r["sobe"] else "#d64550"
+        fig.add_scatter(
+            x=[r["rank_v1"], r["rank_v3"]], y=[r["y"], r["y"]],
+            mode="lines",
+            line=dict(color=cor, width=3),
+            hoverinfo="skip",
+            showlegend=False,
+            row=1, col=1,
+        )
+    hover_rank = (
+        "%{customdata[0]} (%{customdata[1]})<br>Rank V1: %{customdata[2]:.0f}"
+        " · V2: %{customdata[3]:.0f} · V3: %{customdata[4]:.0f}<extra></extra>"
+    )
+    for sobe, cor, nome in [
+        (True, "#2f9e6e", "Sobe na V3"),
+        (False, "#d64550", "Cai na V3"),
+    ]:
+        fatia = casos_df[casos_df["sobe"] == sobe]
+        fig.add_scatter(
+            x=fatia["rank_v1"], y=fatia["y"],
+            mode="markers",
+            marker=dict(symbol="circle-open", size=13, line=dict(color=cor, width=2.5)),
+            name=f"{nome} — V1",
+            customdata=fatia[["nome", "uf", "rank_v1", "rank_v2", "rank_v3"]],
+            hovertemplate=hover_rank,
+            row=1, col=1,
+        )
+        fig.add_scatter(
+            x=fatia["rank_v3"], y=fatia["y"],
+            mode="markers",
+            marker=dict(symbol="circle", size=13, color=cor),
+            name=f"{nome} — V3",
+            customdata=fatia[["nome", "uf", "rank_v1", "rank_v2", "rank_v3"]],
+            hovertemplate=hover_rank,
+            row=1, col=1,
+        )
+    fig.update_yaxes(
+        tickvals=casos_df["y"],
+        ticktext=[f"{r['nome']} ({r['uf']})" for _, r in casos_df.iterrows()],
+        tickfont_size=16,
+        row=1, col=1,
+    )
+    fig.update_xaxes(
+        title_text="Rank (log) — 1º à direita",
+        title_font_size=16,
+        type="log",
+        autorange="reversed",
+        tickfont_size=16,
+        row=1, col=1,
+    )
+
+    # --- Painel B: quanto do Top 100 de cada versao ja tem banco -----------
+    versoes = [("V1", "rank_v1", "#4e79a7"), ("V2", "rank_v2", "#f28e2b"), ("V3", "rank_v3", "#16637a")]
+    pct_com_agencia, mediana_ag = [], []
+    for nome, rk, _ in versoes:
+        top = m.nsmallest(100, rk)
+        pct = (top["quantidade_agencias"] > 0).mean() * 100
+        med = top["agencias_por_100k_hab"].median()
+        pct_com_agencia.append(pct)
+        mediana_ag.append(med)
+        logger.info("Top 100 %s: %.0f%% com agencia | mediana %.1f ag/100k hab", nome, pct, med)
+
+    nomes_versoes = [v[0] for v in versoes]
+    cores_versoes = [v[2] for v in versoes]
+    fig.add_bar(
+        x=nomes_versoes,
+        y=[round(p) for p in pct_com_agencia],
+        marker_color=cores_versoes,
+        text=[f"{p:.0f}%" for p in pct_com_agencia],
+        textposition="outside",
+        textfont_size=16,
+        hovertemplate="Top 100 %{x}: %{y:.0f}% das cidades têm agência bancária<extra></extra>",
+        showlegend=False,
+        row=1, col=2,
+    )
+    fig.add_bar(
+        x=nomes_versoes,
+        y=[round(med, 1) for med in mediana_ag],
+        marker_color=cores_versoes,
+        text=[f"{med:.1f}".replace(".", ",") for med in mediana_ag],
+        textposition="outside",
+        textfont_size=16,
+        hovertemplate="Top 100 %{x}: mediana de %{y:.1f} agências/100 mil hab<extra></extra>".replace(".", ","),
+        showlegend=False,
+        row=2, col=2,
+    )
+    fig.update_yaxes(range=[0, 108], tickfont_size=16, row=1, col=2)
+    fig.update_yaxes(range=[0, 8.5], tickfont_size=16, row=2, col=2)
+    fig.update_xaxes(tickfont_size=16, row=1, col=2)
+    fig.update_xaxes(tickfont_size=16, row=2, col=2)
+
     fig.update_layout(
         **LAYOUT_BASE,
-        title="O modelo separa bem quem tem agência. A pergunta que ele responde é a do proxy",
-        xaxis_title="Taxa de falso positivo",
-        yaxis_title="Taxa de verdadeiro positivo",
-        height=470,
-        margin={"l": 70, "r": 25, "t": 80, "b": 62},
-        legend=dict(orientation="h", x=0.3, y=0.06),
+        title=dict(
+            text="A V3 troca “onde já tem banco” por “onde ainda falta banco”",
+            font=dict(size=22),
+        ),
+        height=620,
+        margin={"l": 200, "r": 30, "t": 95, "b": 60},
+        # Legenda no canto inferior direito do painel A (regiao de rank 1,
+        # onde so ha pontos das cidades do topo — longe das linhas de baixo).
+        legend=dict(
+            orientation="v",
+            x=0.44, y=0.04, xanchor="left", yanchor="bottom",
+            font_size=15,
+            bgcolor="rgba(255,255,255,0.85)",
+            bordercolor="#c7cdd3", borderwidth=1,
+        ),
     )
-    return gravar(fig, "fig_classificacao_roc.json")
+    fig.update_annotations(font_size=17)
+    return gravar(fig, "fig_comparacao_versoes.json")
+
+
+def fig_escolha_k() -> Path:
+    """
+    Por que K=6: silhouette (K-Means e GMM) e elbow (inercia WSS) lado a lado.
+
+    Re-treina os modelos via `avaliar_k` (mesmo pipeline dos notebooks:
+    log1p ja aplicado no parquet, padronizacao interna, seed 42, n_init=10).
+    As anotacoes usam os valores reais computados — conferidos contra o
+    Relatorio_Modelagem_Etapa3 (silhouette 0,252 em K=3 e 0,200 em K=6;
+    BIC do GMM -20.591 em K=6).
+    """
+    logger.info("Avaliando K (KMeans/GMM, ks=3..8 — leva ~1 min)...")
+    mod = pd.read_parquet(PROCESSED_DATA_DIR / "modelagem.parquet")
+    aval = avaliar_k(mod, FEATURES_MODELO, ks=range(3, 9), seed=SEED)
+    ks = aval["k"].tolist()
+    sil_km = aval["silhouette_kmeans"]
+    sil_gmm = aval["silhouette_gmm"]
+    inercia_mil = aval["inercia_wss_kmeans"] / 1000
+
+    def valor(k: int, coluna: str) -> float:
+        return float(aval.loc[aval["k"] == k, coluna].iloc[0])
+
+    sil3 = valor(3, "silhouette_kmeans")
+    sil6 = valor(6, "silhouette_kmeans")
+    bic6 = valor(6, "bic_gmm")
+    queda_56 = valor(5, "inercia_wss_kmeans") / 1000 - valor(6, "inercia_wss_kmeans") / 1000
+    queda_45 = valor(4, "inercia_wss_kmeans") / 1000 - valor(5, "inercia_wss_kmeans") / 1000
+    logger.info(
+        "silhouette K=3: %.3f | K=6: %.3f | BIC K=6: %.0f | queda inercia 4->5: %.1f mil | 5->6: %.1f mil",
+        sil3, sil6, bic6, queda_45, queda_56,
+    )
+
+    fig = make_subplots(
+        rows=1, cols=2,
+        subplot_titles=(
+            "Silhouette por K (maior é melhor)",
+            "Elbow: inércia (WSS) por K, em milhares",
+        ),
+    )
+    fig.add_scatter(
+        x=ks, y=sil_km.round(3),
+        mode="lines+markers",
+        line=dict(color="#16637a", width=2.5),
+        marker=dict(size=9),
+        name="K-Means",
+        hovertemplate="K=%{x}<br>Silhouette: %{y:.3f}<extra></extra>",
+        row=1, col=1,
+    )
+    fig.add_scatter(
+        x=ks, y=sil_gmm.round(3),
+        mode="lines+markers",
+        line=dict(color="#f28e2b", width=2.5, dash="dot"),
+        marker=dict(size=9),
+        name="GMM",
+        hovertemplate="K=%{x}<br>Silhouette: %{y:.3f}<extra></extra>",
+        row=1, col=1,
+    )
+    fig.add_scatter(
+        x=[6], y=[round(sil6, 3)],
+        mode="markers",
+        marker=dict(symbol="star", size=20, color="#16637a", line=dict(color="#24303b", width=1.5)),
+        name="K escolhido (6)",
+        hovertemplate="K=6 · Silhouette K-Means: %{y:.3f}<extra></extra>".replace(".", ","),
+        row=1, col=1,
+    )
+    fig.add_annotation(
+        x=3, y=sil3,
+        text=f"K=3: {sil3:.3f} — mas vira divisão por porte".replace(".", ","),
+        showarrow=True, arrowhead=2, arrowsize=1.2, arrowcolor="#24303b",
+        ax=30, ay=-45,
+        font=dict(size=13, color="#24303b"),
+        bgcolor="rgba(255,255,255,0.85)",
+        row=1, col=1,
+    )
+    fig.add_annotation(
+        x=6, y=sil6,
+        text=f"K=6: {sil6:.3f} — 6 arquétipos legíveis".replace(".", ","),
+        showarrow=True, arrowhead=2, arrowsize=1.2, arrowcolor="#24303b",
+        ax=-25, ay=55,
+        font=dict(size=13, color="#24303b"),
+        bgcolor="rgba(255,255,255,0.85)",
+        row=1, col=1,
+    )
+
+    fig.add_scatter(
+        x=ks, y=inercia_mil.round(1),
+        mode="lines+markers",
+        line=dict(color="#16637a", width=2.5),
+        marker=dict(size=9),
+        name="Inércia (WSS)",
+        hovertemplate="K=%{x}<br>Inércia: %{y:,.1f} mil<extra></extra>".replace(",", "X").replace(".", ",").replace("X", "."),
+        showlegend=False,
+        row=1, col=2,
+    )
+    fig.add_annotation(
+        x=5.5, y=inercia_mil.iloc[list(ks).index(6)] + 2.5,
+        text=(
+            f"Joelho entre K=5 e K=6: a queda desacelera de "
+            f"{queda_45:.1f} mil (4→5) para {queda_56:.1f} mil (5→6)"
+        ).replace(".", ","),
+        showarrow=False,
+        font=dict(size=13, color="#24303b"),
+        bgcolor="rgba(255,255,255,0.85)",
+        row=1, col=2,
+    )
+    fig.add_annotation(
+        x=0.5, y=-0.18, xref="x2 domain", yref="y2 domain",
+        text=(
+            f"GMM concorda no equilíbrio: BIC = {bic6:,.0f} em K=6 e segue em queda na faixa,"
+            " mas os grupos de K>6 deixam de ter leitura de negócio"
+        ).replace(",", "X").replace(".", ",").replace("X", "."),
+        showarrow=False,
+        font=dict(size=13, color="#24303b"),
+        row=1, col=2,
+    )
+
+    fig.update_xaxes(title_text="Número de clusters (K)", dtick=1, row=1, col=1)
+    fig.update_yaxes(title_text="Silhouette", row=1, col=1)
+    fig.update_xaxes(title_text="Número de clusters (K)", dtick=1, row=1, col=2)
+    fig.update_yaxes(title_text="Inércia WSS (milhares)", row=1, col=2)
+
+    fig.update_layout(
+        **LAYOUT_BASE,
+        title="Por que 6 arquétipos: silhouette e elbow convergem, e a narrativa de negócio fecha",
+        height=600,
+        margin={"l": 70, "r": 30, "t": 90, "b": 70},
+        legend=dict(orientation="h", y=1.1, x=0),
+    )
+    fig.update_annotations(font_size=15)
+    return gravar(fig, "fig_escolha_k.json")
 
 
 def fig_ipb_por_arquetipo(base: pd.DataFrame) -> Path:
@@ -588,7 +857,7 @@ def fig_ipb_por_arquetipo(base: pd.DataFrame) -> Path:
         title="Onde cada arquétipo mora no índice: turismo pontua alto, interior sem rede fica embaixo",
         yaxis_title="IPB V3 (0–100)",
         showlegend=False,
-        height=470,
+        height=560,
         margin={"l": 60, "r": 30, "t": 75, "b": 110},
     )
     fig.update_xaxes(tickangle=-18)
@@ -618,8 +887,9 @@ def main() -> None:
         fig_top15_ipb(base),
         fig_arquetipos_barras(base),
         fig_pca_arquetipos(),
-        fig_classificacao_roc(),
         fig_ipb_por_arquetipo(base),
+        fig_comparacao_versoes(),
+        fig_escolha_k(),
     ]
     validar_jsons(caminhos)
     logger.info("Concluído: %d figuras interativas geradas em %s.", len(caminhos), SAIDA_DIR)
