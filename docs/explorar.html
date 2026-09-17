@@ -74,6 +74,11 @@
   .card-topo h2 { font-size: 1.35rem; margin: 0; }
   .selo-arq { font-size: .72rem; font-weight: 700; border-radius: 999px; padding: 4px 10px; color: #fff; }
   .selo-anomalia { font-size: .72rem; font-weight: 700; border-radius: 999px; padding: 4px 10px; background: #7c2d12; color: #fff; }
+  .nota-anomalia {
+    border-left: 3px solid var(--ambar); background: #fdf3e7; border-radius: 0 8px 8px 0;
+    padding: 8px 12px; font-size: .78rem; color: var(--suave); line-height: 1.45; margin: 2px 0 12px;
+  }
+  .nota-anomalia strong { color: var(--texto); }
   .card-meta { color: var(--suave); font-size: .82rem; margin: 4px 0 14px; }
   .ipb-destaque { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--borda); padding-bottom: 12px; margin-bottom: 12px; flex-wrap: wrap; }
   .ipb-destaque .valor { font-size: 2.4rem; font-weight: 700; color: var(--acento); line-height: 1; }
@@ -397,6 +402,11 @@
       (mun.flag_anomalia ? '<span class="selo-anomalia">perfil atípico</span>' : '') + '</div>';
     html += '<p class="card-meta">' + mun.nome_regiao + ' · estrato ' + mun.estrato_populacional +
       ' · código IBGE ' + mun.id_municipio + '</p>';
+    if (mun.flag_anomalia) {
+      html += '<p class="nota-anomalia"><strong>Perfil atípico:</strong> segundo o Isolation Forest, este ' +
+        'município foge do padrão e está entre os 30 mais atípicos do país. Não é um alerta de problema, ' +
+        'é um perfil incomum em relação ao resto do país — pode ser fronteira, muito turismo etc.</p>';
+    }
 
     html += '<div class="ipb-destaque"><span class="valor">' + fmt(mun.ipb_v3, 1) + '</span>' +
       '<span class="rotulo">IPB V3 (0–100)</span>' +
